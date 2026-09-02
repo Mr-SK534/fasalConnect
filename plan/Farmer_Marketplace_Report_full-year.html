@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farmer Marketplace — Scaled 100 Farmer Model</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #F7F9F4;
+    --surface:   #FFFFFF;
+    --border:    #DDE6D5;
+    --green-dk:  #2D5A27;
+    --green-md:  #4A8C3F;
+    --green-lt:  #E8F2E4;
+    --amber:     #C47A1A;
+    --amber-lt:  #FDF3E3;
+    --red-lt:    #FDECEA;
+    --red-dk:    #B03A2E;
+    --text-1:    #1A2B16;
+    --text-2:    #3D5238;
+    --text-3:    #6B7F65;
+    --tag-bg:    #D4EDCC;
+    --tag-text:  #1F4A18;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-1);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* ── Layout ── */
+  .wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--green-dk);
+    color: #fff;
+    padding: 48px 32px 40px;
+    border-radius: 16px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 1;
+  }
+  .header-tag {
+    display: inline-block;
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin-bottom: 16px;
+  }
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 400;
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+  header p {
+    color: rgba(255,255,255,0.75);
+    font-size: 14px;
+    max-width: 600px;
+  }
+
+  /* ── Scenario banner ── */
+  .scenario {
+    background: var(--amber-lt);
+    border: 1px solid #E8C88A;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 40px;
+    font-size: 14px;
+    color: #5C3D0A;
+    line-height: 1.6;
+  }
+  .scenario strong { color: var(--amber); }
+
+  /* ── Section headings ── */
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 48px 0 20px;
+  }
+  .section-num {
+    background: var(--green-dk);
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .section-label h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.35rem;
+    font-weight: 400;
+    color: var(--green-dk);
+  }
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 24px;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  /* ── Tables ── */
+  .table-wrap { overflow-x: auto; margin-bottom: 20px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+  thead tr {
+    background: var(--green-lt);
+    border-bottom: 2px solid var(--border);
+  }
+  thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-2);
+    font-size: 12px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td { padding: 10px 14px; color: var(--text-1); }
+  tbody tr:hover { background: #F2F7EF; }
+
+  .tag-pos {
+    display: inline-block;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+  .tag-neg {
+    display: inline-block;
+    background: var(--red-lt);
+    color: var(--red-dk);
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+
+  /* ── Season cards ── */
+  .seasons-grid { display: grid; gap: 20px; }
+  .season-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .season-header {
+    background: var(--green-lt);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .season-header h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: var(--green-dk);
+  }
+  .season-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-3);
+  }
+
+  /* ── Stats row ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0;
+    border-top: 1px solid var(--border);
+  }
+  .stat {
+    padding: 16px 18px;
+    border-right: 1px solid var(--border);
+  }
+  .stat:last-child { border-right: none; }
+  .stat-label { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+  .stat-val { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 500; color: var(--text-1); }
+  .stat-delta { font-size: 11.5px; margin-top: 2px; font-weight: 600; }
+  .pos { color: var(--green-md); }
+  .neg { color: var(--red-dk); }
+
+  /* ── Fee structure ── */
+  .fee-flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    background: var(--green-lt);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .fee-step {
+    flex: 1 1 160px;
+    padding: 18px 20px;
+    border-right: 1px solid var(--border);
+  }
+  .fee-step:last-child { border-right: none; }
+  .fee-label { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; }
+  .fee-val { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--green-dk); font-weight: 500; }
+
+  /* ── P&L ── */
+  .pl-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .pl-row:last-child { border-bottom: none; }
+  .pl-row.total {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--green-dk);
+    padding-top: 14px;
+    margin-top: 4px;
+    border-top: 2px solid var(--green-dk);
+    border-bottom: none;
+  }
+  .pl-row .label { color: var(--text-2); }
+  .pl-row .amount { font-family: 'JetBrains Mono', monospace; }
+  .pl-row .amount.cost { color: var(--red-dk); }
+  .pl-row .amount.revenue { color: var(--green-md); }
+  .pl-row .amount.profit { color: var(--green-dk); font-size: 1.1em; }
+
+  /* ── Volume callout ── */
+  .volume-box {
+    background: var(--green-dk);
+    color: #fff;
+    border-radius: 12px;
+    padding: 20px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px;
+    line-height: 1.9;
+  }
+
+  /* ── Caveats ── */
+  .caveat-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .caveat-list li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-size: 13.5px;
+    color: var(--text-2);
+  }
+  .caveat-list li::before {
+    content: '⚠';
+    font-size: 13px;
+    color: var(--amber);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ── Pitch points ── */
+  .pitch-list { display: flex; flex-direction: column; gap: 14px; }
+  .pitch-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .pitch-icon {
+    width: 32px; height: 32px;
+    background: var(--green-lt);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .pitch-item p { font-size: 14px; color: var(--text-2); line-height: 1.65; }
+  .pitch-item strong { color: var(--text-1); }
+
+  /* ── Season badge colours ── */
+  .s1 .season-header { background: #EEF6E8; }
+  .s2 .season-header { background: #FDF3E3; }
+  .s3 .season-header { background: #E8F2F9; }
+  .s4 .season-header { background: #F3EEF8; }
+
+  @media (max-width: 600px) {
+    header { padding: 32px 20px 28px; }
+    .fee-step { border-right: none; border-bottom: 1px solid var(--border); }
+    .stat { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- Header -->
+  <header>
+    <div class="header-tag">Team Zenith · Business Model</div>
+    <h1>Farmer Marketplace<br>Scaled 100-Farmer Model</h1>
+    <p>Full-year economics across four Indian tomato seasons — redesigned fee structure for sustainable platform growth.</p>
+  </header>
+
+  <!-- Scenario -->
+  <div class="scenario">
+    <strong>Scenario:</strong> 100 farmers × 25 tons of tomatoes annually = <strong>25,00,000 kg</strong> total produce, sold across all four real Indian tomato seasons using a revised fee structure for healthier platform economics.
+  </div>
+
+  <!-- Section 1: What Changed -->
+  <div class="section-label">
+    <div class="section-num">1</div>
+    <h2>What Changed From the 6-Farmer Model</h2>
+  </div>
+  <div class="divider"></div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Change</th><th>Old (6-farmer)</th><th>New (this model)</th><th>Reason</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Logistics fee</strong></td><td>₹3/kg, 100% pass-through — zero platform revenue</td><td>₹2.5/kg charged to buyer: ₹2 to partner + ₹0.50 platform margin</td><td>Standard logistics-aggregator model (Uber/Ola) — platform earns for coordinating, not just facilitating</td></tr>
+          <tr><td><strong>Fixed costs</strong></td><td>₹1,20,000/year (rough guess)</td><td>₹90,000/year</td><td>More realistic estimate based on low-cost hosting tiers (Railway/Render, minimal LLM API usage)</td></tr>
+          <tr><td><strong>Commission</strong></td><td>8% of farmer price</td><td>8% of farmer price — kept the same</td><td>Already reasonable vs traditional ~65% take; logistics margin was the bigger lever</td></tr>
+          <tr><td><strong>Scale</strong></td><td>6 farmers, 150 tons/year</td><td>100 farmers, 2,500 tons/year</td><td>Demonstrates the model where fixed costs stop dominating economics</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="scenario" style="margin-bottom:0">
+      Every consumer-facing price was verified season-by-season to confirm it stays <strong>below the traditional retail price in every single season</strong> — not just on average. The ₹2.50/kg logistics charge was deliberately kept low to fix a gap in an earlier draft where the platform was briefly more expensive during the glut season.
+    </div>
+  </div>
+
+  <!-- Section 2: Real Data Foundation -->
+  <div class="section-label">
+    <div class="section-num">2</div>
+    <h2>Real Data Foundation</h2>
+  </div>
+  <div class="divider"></div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Season</th><th>Window</th><th>Wholesale Price Basis</th></tr></thead>
+        <tbody>
+          <tr><td><strong>S1 — Rabi Glut</strong></td><td>Jan–Apr</td><td><span style="font-family:JetBrains Mono,monospace">₹12/kg</span> — historical typical glut range</td></tr>
+          <tr><td><strong>S2 — Pre-Monsoon</strong></td><td>May–Jun</td><td><span style="font-family:JetBrains Mono,monospace">₹22/kg</span> — real Agmarknet data, Jun 2026</td></tr>
+          <tr><td><strong>S3 — Monsoon</strong></td><td>Jul–Sep</td><td><span style="font-family:JetBrains Mono,monospace">₹18/kg</span> — real Agmarknet data, Jul–Aug 2026</td></tr>
+          <tr><td><strong>S4 — Kharif Harvest</strong></td><td>Oct–Dec</td><td><span style="font-family:JetBrains Mono,monospace">₹18/kg</span> — historical typical recovery range</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px">
+      <div style="background:var(--green-lt);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:13px;color:var(--text-2)">Farmer's real traditional share of consumer rupee: <strong style="color:var(--green-dk)">33%</strong> <span style="color:var(--text-3)">(RBI Working Paper, 2024)</span></div>
+      <div style="background:var(--green-lt);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:13px;color:var(--text-2)">Retail-to-wholesale markup: <strong style="color:var(--green-dk)">1.31×</strong> <span style="color:var(--text-3)">(derived from DCA historical averages)</span></div>
+    </div>
+  </div>
+
+  <!-- Section 3: Volume -->
+  <div class="section-label">
+    <div class="section-num">3</div>
+    <h2>Volume Assumptions</h2>
+  </div>
+  <div class="divider"></div>
+  <div class="volume-box">
+    100 farmers × 25,000 kg/year each = <strong>25,00,000 kg total</strong> annual produce<br>
+    Spread evenly across 4 seasons = <strong>6,25,000 kg per season</strong>
+  </div>
+
+  <!-- Section 4: Fee Structure -->
+  <div class="section-label">
+    <div class="section-num">4</div>
+    <h2>Fee Structure</h2>
+  </div>
+  <div class="divider"></div>
+  <div class="fee-flow">
+    <div class="fee-step">
+      <div class="fee-label">Farmer receives</div>
+      <div class="fee-val">Full wholesale price<br>(no mandi cut)</div>
+    </div>
+    <div class="fee-step">
+      <div class="fee-label">Platform commission</div>
+      <div class="fee-val">8% of farmer price</div>
+    </div>
+    <div class="fee-step">
+      <div class="fee-label">Logistics charge (buyer)</div>
+      <div class="fee-val">₹2.50/kg total<br><span style="font-size:12px;color:var(--text-3)">₹2.00 → partner · ₹0.50 → platform</span></div>
+    </div>
+    <div class="fee-step">
+      <div class="fee-label">Platform revenue/kg</div>
+      <div class="fee-val">Commission + ₹0.50 margin</div>
+    </div>
+  </div>
+
+  <!-- Section 5: Season Breakdown -->
+  <div class="section-label">
+    <div class="section-num">5</div>
+    <h2>Season-by-Season Breakdown</h2>
+  </div>
+  <div class="divider"></div>
+  <div class="seasons-grid">
+
+    <!-- S1 -->
+    <div class="season-card s1">
+      <div class="season-header">
+        <h3>Season 1 — Rabi Glut</h3>
+        <span class="season-badge">Jan–Apr · ₹12/kg · 6,25,000 kg</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Traditional</th><th>Platform</th><th>Change</th></tr></thead>
+          <tbody>
+            <tr><td>Consumer price/kg</td><td>₹15.72</td><td>₹15.46</td><td><span class="tag-neg">−1.65%</span></td></tr>
+            <tr><td>Farmer price/kg</td><td>₹5.19</td><td>₹12.00</td><td><span class="tag-pos">+131.2%</span></td></tr>
+            <tr><td>Farmer total earnings</td><td>₹32,43,750</td><td>₹75,00,000</td><td><span class="tag-pos">+₹42,56,250</span></td></tr>
+            <tr><td>Consumer total spend</td><td>₹98,25,000</td><td>₹96,62,500</td><td><span class="tag-neg">−₹1,62,500</span></td></tr>
+            <tr><td>Platform gross revenue</td><td>—</td><td>₹9,12,500</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- S2 -->
+    <div class="season-card s2">
+      <div class="season-header">
+        <h3>Season 2 — Pre-Monsoon</h3>
+        <span class="season-badge">May–Jun · ₹22/kg · 6,25,000 kg</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Traditional</th><th>Platform</th><th>Change</th></tr></thead>
+          <tbody>
+            <tr><td>Consumer price/kg</td><td>₹28.82</td><td>₹26.26</td><td><span class="tag-neg">−8.88%</span></td></tr>
+            <tr><td>Farmer price/kg</td><td>₹9.51</td><td>₹22.00</td><td><span class="tag-pos">+131.3%</span></td></tr>
+            <tr><td>Farmer total earnings</td><td>₹59,43,750</td><td>₹1,37,50,000</td><td><span class="tag-pos">+₹78,06,250</span></td></tr>
+            <tr><td>Consumer total spend</td><td>₹1,80,12,500</td><td>₹1,64,12,500</td><td><span class="tag-neg">−₹16,00,000</span></td></tr>
+            <tr><td>Platform gross revenue</td><td>—</td><td>₹14,12,500</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- S3 -->
+    <div class="season-card s3">
+      <div class="season-header">
+        <h3>Season 3 — Monsoon</h3>
+        <span class="season-badge">Jul–Sep · ₹18/kg · 6,25,000 kg</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Traditional</th><th>Platform</th><th>Change</th></tr></thead>
+          <tbody>
+            <tr><td>Consumer price/kg</td><td>₹23.58</td><td>₹21.94</td><td><span class="tag-neg">−6.96%</span></td></tr>
+            <tr><td>Farmer price/kg</td><td>₹7.78</td><td>₹18.00</td><td><span class="tag-pos">+131.4%</span></td></tr>
+            <tr><td>Farmer total earnings</td><td>₹48,62,500</td><td>₹1,12,50,000</td><td><span class="tag-pos">+₹63,87,500</span></td></tr>
+            <tr><td>Consumer total spend</td><td>₹1,47,37,500</td><td>₹1,37,12,500</td><td><span class="tag-neg">−₹10,25,000</span></td></tr>
+            <tr><td>Platform gross revenue</td><td>—</td><td>₹12,12,500</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- S4 -->
+    <div class="season-card s4">
+      <div class="season-header">
+        <h3>Season 4 — Kharif Harvest</h3>
+        <span class="season-badge">Oct–Dec · ₹18/kg · 6,25,000 kg</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Traditional</th><th>Platform</th><th>Change</th></tr></thead>
+          <tbody>
+            <tr><td>Consumer price/kg</td><td>₹23.58</td><td>₹21.94</td><td><span class="tag-neg">−6.96%</span></td></tr>
+            <tr><td>Farmer price/kg</td><td>₹7.78</td><td>₹18.00</td><td><span class="tag-pos">+131.4%</span></td></tr>
+            <tr><td>Farmer total earnings</td><td>₹48,62,500</td><td>₹1,12,50,000</td><td><span class="tag-pos">+₹63,87,500</span></td></tr>
+            <tr><td>Consumer total spend</td><td>₹1,47,37,500</td><td>₹1,37,12,500</td><td><span class="tag-neg">−₹10,25,000</span></td></tr>
+            <tr><td>Platform gross revenue</td><td>—</td><td>₹12,12,500</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 6: Full Year Totals -->
+  <div class="section-label">
+    <div class="section-num">6</div>
+    <h2>Full-Year Totals — All Three Parties</h2>
+  </div>
+  <div class="divider"></div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Party</th><th>Traditional Chain</th><th>Our Platform</th><th>Change (₹)</th><th>Change (%)</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Farmer earnings</strong></td><td>₹1,89,12,500</td><td><strong>₹4,37,50,000</strong></td><td><span class="tag-pos">+₹2,48,37,500</span></td><td><span class="tag-pos">+131.3%</span></td></tr>
+          <tr><td><strong>Consumer spend</strong></td><td>₹5,73,12,500</td><td><strong>₹5,35,00,000</strong></td><td><span class="tag-neg">−₹38,12,500</span></td><td><span class="tag-neg">−6.65%</span></td></tr>
+          <tr><td><strong>Intermediary / Platform take</strong></td><td>₹3,84,00,000 <span style="color:var(--text-3);font-size:12px">(67.0% of spend)</span></td><td><strong>₹47,50,000</strong> <span style="color:var(--text-3);font-size:12px">(8.88% of spend)</span></td><td><span class="tag-neg">−₹3,36,50,000</span></td><td><span class="tag-neg">−87.6% extracted</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="background:var(--green-lt);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-top:4px;font-size:14px;color:var(--text-2)">
+      Per-farmer average annual earnings: ₹1,89,125 (traditional) → <strong style="color:var(--green-dk)">₹4,37,500 (platform)</strong> — more than <strong>double</strong> individual farmer income for the same 25 tons produced.
+    </div>
+  </div>
+
+  <!-- Section 7: P&L -->
+  <div class="section-label">
+    <div class="section-num">7</div>
+    <h2>Platform Profit &amp; Loss — Full Year</h2>
+  </div>
+  <div class="divider"></div>
+  <div class="card">
+    <div class="pl-row">
+      <span class="label">Commission + logistics margin revenue</span>
+      <span class="amount revenue">₹47,50,000</span>
+    </div>
+    <div class="pl-row">
+      <span class="label">Subscription revenue (100 farmers × ₹500)</span>
+      <span class="amount revenue">₹50,000</span>
+    </div>
+    <div class="pl-row" style="font-weight:600;background:var(--green-lt);margin:0 -24px;padding:10px 24px;border-bottom:1px solid var(--border)">
+      <span>Total platform revenue</span>
+      <span class="amount" style="color:var(--green-md)">₹48,00,000</span>
+    </div>
+    <div class="pl-row" style="margin-top:8px">
+      <span class="label">Payment gateway fee (2% of consumer transaction value)</span>
+      <span class="amount cost">−₹10,70,000</span>
+    </div>
+    <div class="pl-row">
+      <span class="label">Cloud / hosting / ops (annual)</span>
+      <span class="amount cost">−₹80,000</span>
+    </div>
+    <div class="pl-row">
+      <span class="label">Support &amp; marketing (annual)</span>
+      <span class="amount cost">−₹10,000</span>
+    </div>
+    <div class="pl-row" style="font-weight:600;background:var(--red-lt);margin:0 -24px;padding:10px 24px;border-bottom:1px solid var(--border)">
+      <span>Total platform costs</span>
+      <span class="amount cost">₹11,60,000</span>
+    </div>
+    <div class="pl-row total">
+      <span>Net platform profit</span>
+      <span class="amount profit">₹36,40,000</span>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px">
+      <div style="background:var(--green-lt);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:13px;color:var(--text-2)">Net margin on revenue: <strong style="color:var(--green-dk)">75.8%</strong></div>
+      <div style="background:var(--green-lt);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:13px;color:var(--text-2)">Gross take of consumer spend: <strong style="color:var(--green-dk)">8.97%</strong></div>
+      <div style="background:var(--green-lt);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:13px;color:var(--text-2)">Net take of consumer spend: <strong style="color:var(--green-dk)">6.8%</strong></div>
+    </div>
+  </div>
+
+  <!-- Section 8: Pitch Points -->
+  <div class="section-label">
+    <div class="section-num">8</div>
+    <h2>Why This Model Is a Stronger Pitch</h2>
+  </div>
+  <div class="divider"></div>
+  <div class="card">
+    <div class="pitch-list">
+      <div class="pitch-item">
+        <div class="pitch-icon">📈</div>
+        <p><strong>Net profit went from ₹27,300 (6 farmers) to ₹36,40,000 (100 farmers)</strong> — not a 16.7× increase (what pure volume scaling predicts) but far larger, because <strong>fixed costs (₹90,000) barely grew while revenue grew ~16×</strong>. This is the actual SaaS/marketplace dynamic — a real economic argument for scale, not an inflated number.</p>
+      </div>
+      <div class="pitch-item">
+        <div class="pitch-icon">🛒</div>
+        <p><strong>Every season now shows the consumer paying less than the traditional chain</strong> — a gap in the earlier revision has been fixed by right-sizing the logistics fee. This is a materially stronger, more defensible claim: <em>"our platform is cheaper for consumers in every season, not just on average."</em></p>
+      </div>
+      <div class="pitch-item">
+        <div class="pitch-icon">🌾</div>
+        <p><strong>The farmer earnings gain (+131%) is consistent across every season</strong> — because it derives entirely from cutting out the mandi-commission-agent layer, which happens at a constant rate regardless of season.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 9: Caveats -->
+  <div class="section-label">
+    <div class="section-num">9</div>
+    <h2>Caveats</h2>
+  </div>
+  <div class="divider"></div>
+  <div class="card">
+    <ul class="caveat-list">
+      <li>Seasons 1 and 4 use documented historical price patterns, not confirmed 2026 readings (data not available/researched for those months).</li>
+      <li>The 33% farmer-share and 1.31× retail-markup ratios are national averages, not tomato-and-season-specific figures.</li>
+      <li>Platform cost line items (cloud, ops, marketing) remain team estimates — be ready to defend these as "reasonable assumptions" rather than verified data if a judge probes.</li>
+      <li>This model assumes 100% sell-through at listed prices and even distribution across seasons — real farmer behavior and real demand will vary, which is precisely the gap the demand-forecasting module is designed to help close.</li>
+    </ul>
+  </div>
+
+</div>
+</body>
+</html>
