@@ -1,0 +1,58 @@
+# ============================================================
+# Farmer Marketplace — Root .gitignore
+# ============================================================
+
+# --- Environment / secrets (NEVER commit real values) ---
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+
+# --- Python (backend) ---
+venv/
+backend/venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+dev.db
+*.sqlite3
+
+# --- Alembic (keep migration scripts, ignore local DB artifacts) ---
+backend/alembic/versions/__pycache__/
+
+# --- Node / Frontend ---
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+build/
+.vite/
+
+# --- Logs ---
+*.log
+npm-debug.log*
+pip-log.txt
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Editor / IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Data / generated outputs (keep seed CSV, ignore generated ones) ---
+farmer_marketplace_results.csv
+
+# --- Misc ---
+*.bak
+*.tmp
