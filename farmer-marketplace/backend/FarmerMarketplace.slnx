@@ -1,7 +1,3 @@
 <Solution>
   <Project Path="FarmerMarketplace.Api/FarmerMarketplace.Api.csproj" />
-  <Project Path="FarmerMarketplace.Application/FarmerMarketplace.Application.csproj" />
-  <Project Path="FarmerMarketplace.Domain/FarmerMarketplace.Domain.csproj" />
-  <Project Path="FarmerMarketplace.Infrastructure/FarmerMarketplace.Infrastructure.csproj" />
-  <Project Path="FarmerMarketplace.Tests/FarmerMarketplace.Tests.csproj" />
 </Solution>
