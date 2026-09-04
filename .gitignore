@@ -67,4 +67,4 @@ farmer_marketplace_results.csv
 # --- Misc ---
 *.bak
 *.tmp
-*.setup_project.sh
+setup_project.sh
