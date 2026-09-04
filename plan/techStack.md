@@ -1,36 +1,87 @@
-**Layer**	      					**Tech**
-*Design*						Figma, Canva
+# Tech Stack — Farmer Marketplace
+**Team Zenith · SIH Project**
 
+---
 
-*Frontend*					React (Vite) + React Router, Tailwind CSS v4, shadcn/ui, Leaflet, Recharts, react-i18next
+## 🎨 Design
+| Tool | Purpose |
+|------|---------|
+| Figma | UI/UX design, wireframes, prototypes |
+| Canva | Graphics, presentations, marketing assets |
 
+---
 
-*Backend*						ASP.NET Core Web API (.NET 10) — single flat project (Controllers → Services → Data, no Clean Architecture layering)
+## 🖥️ Frontend
+| Tech | Purpose |
+|------|---------|
+| React + Vite | Core framework + fast dev build tool |
+| React Router | Client-side routing |
+| Tailwind CSS v4 | Utility-first styling |
+| shadcn/ui | Accessible, pre-built component library |
+| Leaflet | Interactive maps (route optimization dashboard) |
+| Recharts | Charts and analytics visualizations |
+| react-i18next | Multi-language support (EN, HI, BN, regional) |
 
+---
 
-*Database*					PostgreSQL (via Entity Framework Core + Npgsql)
+## ⚙️ Backend
+| Tech | Purpose |
+|------|---------|
+| ASP.NET Core Web API | REST API framework |
+| .NET 10 | Runtime |
+| Single flat project | Controllers → Services → Data (no Clean Architecture layering) |
 
+---
 
-*Auth*						JWT (Microsoft.AspNetCore.Authentication.JwtBearer)
+## 🗄️ Database
+| Tech | Purpose |
+|------|---------|
+| PostgreSQL | Primary relational database |
+| Entity Framework Core | ORM — migrations, queries, seeding |
+| Npgsql | EF Core driver for PostgreSQL |
 
+---
 
-*Password Hashing*				BCrypt.Net-Next
+## 🔒 Auth & Security
+| Tech | Purpose |
+|------|---------|
+| JWT (Microsoft.AspNetCore.Authentication.JwtBearer) | Role-based auth — Farmer, FPO Admin, Buyer, Platform Admin |
+| BCrypt.Net-Next | Password hashing |
 
+---
 
-*Demand Forecasting*				ML.NET (SSA time-series)
+## 🧠 Smart Features
+| Tech | Purpose |
+|------|---------|
+| ML.NET (SSA time-series) | Demand forecasting for crop categories |
+| Google OR-Tools | Delivery route optimization |
 
+---
 
-*Route Optimization*				Google.OrTools
+## 💳 Payments
+| Tech | Purpose |
+|------|---------|
+| Razorpay .NET SDK | Checkout integration (test mode) |
+| Razorpay Route | Split payouts to multiple farmers for bulk/FPO orders |
 
+---
 
-*Payments*					Razorpay (.NET SDK, test mode) + Razorpay Route (split payments)
+## 💬 Notifications
+| Tech | Purpose |
+|------|---------|
+| Twilio WhatsApp API | Order and payment status notifications (sandbox mode) |
 
+---
 
-*Notifications*					Twilio WhatsApp API (sandbox)
+## 📄 API Docs
+| Tech | Purpose |
+|------|---------|
+| Swashbuckle | Swagger UI — built into ASP.NET Core template |
 
+---
 
-*API Docs*					Swashbuckle (Swagger — built into ASP.NET Core template)
-
-
-*Deployment*					Vercel/Netlify (frontend) + Railway/Render (backend + DB)
-
+## 🚀 Deployment
+| Layer | Platform |
+|-------|---------|
+| Frontend | Vercel / Netlify |
+| Backend + DB | Railway / Render |
