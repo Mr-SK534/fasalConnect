@@ -9,9 +9,19 @@
 backend/.env
 frontend/.env
 
+# --- .NET (backend) ---
+bin/
+obj/
+backend/**/bin/
+backend/**/obj/
+*.user
+*.suo
+.vs/
+
 # --- Python (backend) ---
 venv/
 backend/venv/
+farmer-marketplace/backend/venv/
 __pycache__/
 *.pyc
 *.pyo
@@ -29,6 +39,7 @@ backend/alembic/versions/__pycache__/
 # --- Node / Frontend ---
 node_modules/
 frontend/node_modules/
+farmer-marketplace/frontend/node_modules/
 dist/
 frontend/dist/
 build/
