@@ -1,25 +1,69 @@
-import { FiBox, FiClipboard, FiGrid, FiLogOut, FiUsers } from "react-icons/fi";
+import { 
+  FiBox, 
+  FiCalendar, 
+  FiCheckSquare, 
+  FiGrid, 
+  FiLogOut, 
+  FiSettings, 
+  FiTrendingUp, 
+  FiUser, 
+  FiUsers 
+} from "react-icons/fi";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { ROLES } from "../utils/roles";
 
 const navigationByRole = {
   [ROLES.FARMER]: [
-    { label: "Dashboard", to: "/farmer/dashboard", icon: FiGrid },
-    { label: "List product", to: "/farmer/list-product", icon: FiBox },
-    { label: "Orders", to: "/farmer/orders", icon: FiClipboard },
+    {
+      section: "MAIN",
+      items: [
+        { label: "Dashboard", to: "/farmer/dashboard", icon: FiGrid },
+        { label: "My Products", to: "/farmer/list-product", icon: FiBox },
+        { label: "Orders", to: "/farmer/orders", icon: FiCheckSquare },
+      ],
+    },
+    {
+      section: "SMART",
+      items: [
+        { label: "Forecast", to: "/farmer/forecast", icon: FiTrendingUp },
+        { label: "Schedule", to: "/farmer/schedule", icon: FiCalendar },
+      ],
+    },
+    {
+      section: "ACCOUNT",
+      items: [
+        { label: "Profile", to: "/farmer/profile", icon: FiUser },
+        { label: "Settings", to: "/farmer/settings", icon: FiSettings },
+      ],
+    },
   ],
   [ROLES.BUYER]: [
-    { label: "Browse products", to: "/buyer/browse", icon: FiGrid },
-    { label: "Cart", to: "/buyer/cart", icon: FiBox },
-    { label: "My orders", to: "/buyer/orders", icon: FiClipboard },
+    {
+      section: "MAIN",
+      items: [
+        { label: "Browse Products", to: "/buyer/browse", icon: FiGrid },
+        { label: "Cart", to: "/buyer/cart", icon: FiBox },
+        { label: "My Orders", to: "/buyer/orders", icon: FiCheckSquare },
+      ],
+    },
   ],
   [ROLES.FPO_ADMIN]: [
-    { label: "Dashboard", to: "/fpo-admin/dashboard", icon: FiGrid },
-    { label: "Linked farmers", to: "/fpo-admin/farmers", icon: FiUsers },
+    {
+      section: "MAIN",
+      items: [
+        { label: "Dashboard", to: "/fpo-admin/dashboard", icon: FiGrid },
+        { label: "Linked Farmers", to: "/fpo-admin/farmers", icon: FiUsers },
+      ],
+    },
   ],
   [ROLES.PLATFORM_ADMIN]: [
-    { label: "Dashboard", to: "/admin/dashboard", icon: FiGrid },
+    {
+      section: "MAIN",
+      items: [
+        { label: "Dashboard", to: "/admin/dashboard", icon: FiGrid },
+      ],
+    },
   ],
 };
 
@@ -34,9 +78,11 @@ function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  const navigation = navigationByRole[user?.role] || [];
-  const dashboardPath = navigation[0]?.to || "/login";
-  const activeItem = navigation.find((item) => location.pathname === item.to);
+  
+  const sections = navigationByRole[user?.role] || [];
+  const allItems = sections.flatMap((s) => s.items);
+  const dashboardPath = allItems[0]?.to || "/login";
+  const activeItem = allItems.find((item) => location.pathname === item.to);
 
   const handleLogout = () => {
     logout();
@@ -44,86 +90,107 @@ function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fffaf0] text-slate-800">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 flex-col bg-[#174d35] text-white shadow-xl md:flex">
-        <div className="flex h-20 items-center border-b border-white/15 px-7">
+    <div className="min-h-screen bg-[#fcf9ee] text-slate-900 font-sans antialiased text-xl leading-relaxed">
+      {/* Sidebar Navigation */}
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-80 flex-col bg-gradient-to-b from-[#2e7d32] via-[#246b28] to-[#1b5e20] text-white shadow-2xl md:flex">
+        {/* Brand Header */}
+        <div className="flex h-24 items-center border-b border-white/10 px-8">
           <NavLink
             to={dashboardPath}
-            className="text-2xl font-bold tracking-tight"
+            className="flex items-center gap-2 text-3xl font-extrabold tracking-tight"
           >
-            Fasal<span className="text-[#f3c969]">Connect</span>
+            <span className="text-4xl">🌱</span>
+            <span>Fasal<span className="text-[#f5d77f]">Connect</span></span>
           </NavLink>
         </div>
-        <div className="px-7 py-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#b9d6a2]">
-            Workspace
-          </p>
-          <p className="mt-2 text-lg font-semibold">
-            {roleLabels[user?.role] || "Marketplace"}
-          </p>
-        </div>
-        <nav
-          className="flex-1 space-y-2 px-4"
-          aria-label="Dashboard navigation"
-        >
-          {navigation.map(({ label, to, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-xl px-4 py-3 text-base font-semibold transition ${isActive ? "bg-[#f3c969] text-[#174d35] shadow-sm" : "text-white/80 hover:bg-white/10 hover:text-white"}`
-              }
-            >
-              <Icon size={20} />
-              {label}
-            </NavLink>
+
+        {/* Navigation Sections */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
+          {sections.map((sec, idx) => (
+            <div key={idx}>
+              <p className="mb-3 px-3 text-sm font-extrabold uppercase tracking-widest text-[#a3e2a7]">
+                {sec.section}
+              </p>
+              <nav className="space-y-1.5" aria-label={`Sidebar section ${sec.section}`}>
+                {sec.items.map(({ label, to, icon: Icon }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3.5 rounded-2xl px-4 py-3.5 text-xl font-bold transition-all duration-200 ${
+                        isActive
+                          ? "bg-white text-[#1b5e20] shadow-md shadow-black/10 translate-x-1"
+                          : "text-white/90 hover:bg-white/10 hover:text-white"
+                      }`
+                    }
+                  >
+                    <Icon size={24} className="shrink-0" />
+                    <span>{label}</span>
+                  </NavLink>
+                ))}
+              </nav>
+            </div>
           ))}
-        </nav>
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="mx-4 mb-6 flex items-center gap-3 rounded-xl px-4 py-3 text-base font-semibold text-white/80 transition hover:bg-red-500/20 hover:text-white"
-        >
-          <FiLogOut size={20} />
-          Log out
-        </button>
+        </div>
+
+        {/* Footer Brand Tag / Logout Button */}
+        <div className="p-6 border-t border-white/10">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3.5 rounded-2xl px-4 py-3.5 text-xl font-bold text-red-200 transition-all duration-200 hover:bg-red-500/20 hover:text-white"
+          >
+            <FiLogOut size={24} className="shrink-0" />
+            <span>Log Out</span>
+          </button>
+        </div>
       </aside>
 
-      <div className="md:pl-72">
-        <header className="sticky top-0 z-20 border-b border-[#eadfbe] bg-[#fffdf7]/95 px-5 py-4 shadow-sm backdrop-blur sm:px-8">
-          <div className="flex items-center justify-between gap-4">
+      {/* Main Content Area */}
+      <div className="md:pl-80">
+        {/* Sticky Navbar Header */}
+        <header className="sticky top-0 z-20 border-b border-[#eadaaf] bg-[#fffef9]/95 px-6 py-6 shadow-sm backdrop-blur-md sm:px-10">
+          <div className="flex items-center justify-between gap-6">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#668357]">
-                FasalConnect
+              <p className="text-base font-extrabold uppercase tracking-widest text-[#406836]">
+                {roleLabels[user?.role] || "Dashboard"} &gt;
               </p>
-              <h1 className="mt-1 text-2xl font-bold text-[#193b2a]">
-                {activeItem?.label || "Dashboard"}
+              <h1 className="mt-1 text-4xl font-black tracking-tight text-[#163820]">
+                {activeItem?.label || "Farmer Dashboard"}
               </h1>
             </div>
-            <div className="flex items-center gap-3">
+
+            {/* Profile Bar */}
+            <div className="flex items-center gap-4 bg-white/80 border border-[#e5d8b6] px-5 py-2.5 rounded-2xl shadow-sm">
               <div className="hidden text-right sm:block">
-                <p className="text-base font-semibold text-slate-800">
-                  {user?.name || "Account"}
+                <p className="text-xl font-bold text-slate-900 leading-tight">
+                  {user?.name || "Farmer Name"}
                 </p>
-                <p className="text-sm text-slate-500">
-                  {roleLabels[user?.role]}
+                <p className="text-sm font-bold uppercase text-slate-500 tracking-wider">
+                  {roleLabels[user?.role] || "Verified Member"}
                 </p>
               </div>
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#d9ebc9] text-lg font-bold text-[#174d35]">
-                {(user?.name || "A").charAt(0).toUpperCase()}
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#d2e8bf] text-2xl font-black text-[#174d35] ring-2 ring-[#a8d488]">
+                {(user?.name || "F").charAt(0).toUpperCase()}
               </div>
             </div>
           </div>
+
+          {/* Mobile Bottom Navigation */}
           <nav
-            className="mt-4 flex gap-2 overflow-x-auto md:hidden"
+            className="mt-4 flex gap-2 overflow-x-auto md:hidden pt-2"
             aria-label="Mobile dashboard navigation"
           >
-            {navigation.map(({ label, to }) => (
+            {allItems.map(({ label, to }) => (
               <NavLink
                 key={to}
                 to={to}
                 className={({ isActive }) =>
-                  `whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold ${isActive ? "bg-[#174d35] text-white" : "bg-[#f4e8c5] text-[#31553d]"}`
+                  `whitespace-nowrap rounded-xl px-4 py-3 text-lg font-bold transition ${
+                    isActive
+                      ? "bg-[#2e7d32] text-white shadow"
+                      : "bg-[#f4e8c5] text-[#284a2f]"
+                  }`
                 }
               >
                 {label}
@@ -131,7 +198,9 @@ function DashboardLayout() {
             ))}
           </nav>
         </header>
-        <main className="min-h-[calc(100vh-88px)] p-5 sm:p-8">
+
+        {/* Dashboard Main Viewport (Applies text-xl to all rendered nested route components) */}
+        <main className="min-h-[calc(100vh-100px)] p-6 sm:p-10 text-xl font-medium text-slate-800">
           <Outlet />
         </main>
       </div>
