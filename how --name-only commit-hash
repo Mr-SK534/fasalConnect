@@ -1,0 +1,9 @@
+[33mcommit e6d8427c247f2ca59a09f524ab167f123acc7b96[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Merge: 32bb49b 984a1ab
+Author: Sharad Kumar <ksharad534@gmail.com>
+Date:   Sat Sep 5 11:02:04 2026 +0530
+
+    feat(auth): add Auth/User response DTOs and initial EF Core migration
+    
+    Setup backend authentication and database
+

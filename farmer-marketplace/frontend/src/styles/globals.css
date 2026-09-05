@@ -1,1 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&display=swap');
 @import "tailwindcss";
+/* frontend/src/styles/globals.css
+   Additions for the FarmerConnect auth design.
+   Safe to append to your existing globals.css — does not touch
+   index.css (which stays reserved for the Tailwind import). */
+
+
+
+/* Cursive/rounded brand wordmark with a yellow fill + dark outline,
+   matching the "FarmerConnect" logo text in the mockup */
+.brand-title {
+  font-family: 'Baloo 2', cursive;
+  color: #FBBF24; /* yellow-400 */
+  -webkit-text-stroke: 1.5px #1a2e1a;
+  text-stroke: 1.5px #1a2e1a;
+  letter-spacing: 0.5px;
+}
+
+/* Reusable translucent dark glass effect used on inputs, buttons,
+   dropdowns and toggle cards throughout the auth screens */
+.glass-panel {
+  background-color: rgba(20, 30, 20, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.glass-panel-light {
+  background-color: rgba(20, 30, 20, 0.35);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
