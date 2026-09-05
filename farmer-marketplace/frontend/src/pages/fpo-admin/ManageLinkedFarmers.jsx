@@ -4,6 +4,7 @@ import api from "../../services/api";
 export default function ManageLinkedFarmers() {
   const [farmers, setFarmers] = useState([]);
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     api
       .get("/admin/users?role=Farmer")
@@ -13,53 +14,72 @@ export default function ManageLinkedFarmers() {
       .catch(() => setFarmers([]))
       .finally(() => setLoading(false));
   }, []);
+
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-6xl text-xl">
+      {/* Header Section */}
       <div className="mb-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#668357]">
-          FPO network
+        <p className="text-base font-extrabold uppercase tracking-widest text-[#406836]">
+          FPO Network
         </p>
-        <h2 className="mt-2 text-3xl font-bold text-[#193b2a]">
-          Linked farmers
+        <h2 className="mt-1 text-4xl font-black text-[#163820]">
+          Linked Farmers
         </h2>
-        <p className="mt-2 text-base text-slate-600">
+        <p className="mt-2 text-xl font-semibold text-slate-600">
           Farmers connected to your producer organisation.
         </p>
       </div>
-      <section className="overflow-hidden rounded-2xl border border-[#eadfbe] bg-white shadow-sm">
-        <div className="grid grid-cols-[1.3fr_1fr_1fr] border-b border-[#eadfbe] bg-[#fffaf0] px-6 py-4 text-sm font-bold uppercase tracking-wide text-[#668357]">
+
+      {/* Farmers Data Table Card */}
+      <section className="overflow-hidden rounded-3xl border border-[#eadaaf] bg-white shadow-md">
+        {/* Table Header Row */}
+        <div className="grid grid-cols-[1.3fr_1fr_1fr] border-b border-[#eadaaf] bg-[#fdfbf3] px-8 py-5 text-lg font-black uppercase tracking-wider text-[#406836]">
           <span>Farmer</span>
           <span>Phone</span>
           <span>Profile</span>
         </div>
+
+        {/* Loading State */}
         {loading ? (
-          <p className="p-6 text-base text-slate-500">Loading farmers...</p>
+          <p className="p-8 text-xl font-bold text-slate-500">
+            Loading farmers...
+          </p>
         ) : farmers.length ? (
+          /* Farmers Row Items */
           farmers.map((farmer) => (
             <div
               key={farmer.id}
-              className="grid grid-cols-[1.3fr_1fr_1fr] items-center border-b border-[#f0e7cd] px-6 py-5 last:border-0"
+              className="grid grid-cols-[1.3fr_1fr_1fr] items-center border-b border-[#eee5cc] px-8 py-6 last:border-0 hover:bg-[#fffef9] transition-colors"
             >
               <div>
-                <p className="text-lg font-semibold text-slate-800">
+                <p className="text-2xl font-extrabold text-slate-900">
                   {farmer.name}
                 </p>
-                <p className="text-sm text-slate-500">
+                <p className="mt-1 text-lg font-semibold text-slate-500">
                   {farmer.email || "No email provided"}
                 </p>
               </div>
-              <p className="text-base text-slate-600">
+
+              <p className="text-xl font-bold text-slate-700">
                 {farmer.phone || "Not provided"}
               </p>
-              <span
-                className={`w-fit rounded-full px-3 py-1 text-sm font-semibold ${farmer.isProfileComplete ? "bg-[#d9ebc9] text-[#28613e]" : "bg-[#f4e8c5] text-[#80631b]"}`}
-              >
-                {farmer.isProfileComplete ? "Complete" : "Incomplete"}
-              </span>
+
+              <div>
+                <span
+                  className={`inline-block rounded-full px-4 py-1.5 text-base font-black uppercase tracking-wide ${
+                    farmer.isProfileComplete
+                      ? "bg-[#d2e8bf] text-[#174d35] ring-1 ring-[#a8d488]"
+                      : "bg-[#f4e8c5] text-[#745512] ring-1 ring-[#e2cd93]"
+                  }`}
+                >
+                  {farmer.isProfileComplete ? "Complete" : "Incomplete"}
+                </span>
+              </div>
             </div>
           ))
         ) : (
-          <p className="p-8 text-center text-base text-slate-500">
+          /* Empty State */
+          <p className="p-12 text-center text-xl font-bold text-slate-500">
             No linked farmers found.
           </p>
         )}
