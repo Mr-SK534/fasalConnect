@@ -31,18 +31,23 @@ export default function FarmerDashboard() {
   );
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8">
-      <section className="rounded-2xl bg-[#174d35] p-7 text-white shadow-lg sm:p-9">
-        <p className="text-base font-semibold text-[#f3c969]">
-          Good to see you, {user?.name || "Farmer"}
+    <div className="mx-auto max-w-7xl space-y-10 text-xl font-medium">
+      {/* Header Banner */}
+      <section className="rounded-3xl bg-gradient-to-r from-[#2e7d32] via-[#246b28] to-[#1b5e20] p-8 text-white shadow-xl sm:p-12">
+        <p className="text-xl font-extrabold uppercase tracking-widest text-[#f5d77f]">
+          Good to see you, {user?.name || "Farmer"} 👋
         </p>
-        <h2 className="mt-2 text-3xl font-bold">Your farm marketplace</h2>
-        <p className="mt-3 max-w-2xl text-base leading-7 text-white/75">
+        <h2 className="mt-3 text-4xl font-black sm:text-5xl">
+          Your Farm Marketplace
+        </h2>
+        <p className="mt-4 max-w-3xl text-xl leading-relaxed text-emerald-100">
           Keep your produce visible, your inventory current, and your buyers
           close.
         </p>
       </section>
-      <section className="grid gap-4 sm:grid-cols-3">
+
+      {/* Overview Metric Cards */}
+      <section className="grid gap-6 sm:grid-cols-3">
         {[
           ["Listed products", products.length, "Your catalogue"],
           ["Active listings", activeProducts, "Visible to buyers"],
@@ -50,58 +55,81 @@ export default function FarmerDashboard() {
         ].map(([label, value, hint]) => (
           <article
             key={label}
-            className="rounded-2xl border border-[#eadfbe] bg-white p-6 shadow-sm"
+            className="rounded-3xl border border-[#eadaaf] bg-white/90 p-8 shadow-md backdrop-blur transition hover:shadow-lg"
           >
-            <p className="text-base font-semibold text-slate-500">{label}</p>
-            <p className="mt-3 text-3xl font-bold text-[#174d35]">
+            <p className="text-lg font-extrabold uppercase tracking-wider text-slate-500">
+              {label}
+            </p>
+            <p className="mt-4 text-5xl font-black text-[#1b5e20]">
               {loading ? "..." : value}
             </p>
-            <p className="mt-2 text-sm text-slate-500">{hint}</p>
+            <p className="mt-3 text-lg font-bold text-slate-600">{hint}</p>
           </article>
         ))}
       </section>
-      <section className="rounded-2xl border border-[#eadfbe] bg-white p-6 shadow-sm sm:p-7">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+
+      {/* Recent Listings List */}
+      <section className="rounded-3xl border border-[#eadaaf] bg-white p-8 shadow-md sm:p-10">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h3 className="text-xl font-bold text-[#193b2a]">
-              Recent listings
+            <h3 className="text-3xl font-black text-[#163820]">
+              Recent Listings
             </h3>
-            <p className="mt-1 text-base text-slate-500">
+            <p className="mt-1 text-xl font-semibold text-slate-600">
               Products connected to your account.
             </p>
           </div>
           <NavLink
             to="/farmer/list-product"
-            className="rounded-lg bg-[#f3c969] px-4 py-2.5 text-base font-bold text-[#174d35] hover:bg-[#e8ba4c]"
+            className="rounded-2xl bg-[#f5d77f] px-6 py-3.5 text-xl font-extrabold text-[#1b5e20] shadow-sm transition hover:bg-[#eac459] hover:shadow"
           >
-            Add product
+            + Add Product
           </NavLink>
         </div>
+
         {products.length ? (
-          <div className="mt-6 divide-y divide-[#f0e7cd]">
+          <div className="mt-8 divide-y divide-[#eee5cc]">
             {products.slice(0, 5).map((product) => (
               <div
                 key={product.id}
-                className="flex flex-wrap items-center justify-between gap-3 py-4"
+                className="flex flex-wrap items-center justify-between gap-4 py-5"
               >
-                <div>
-                  <p className="text-lg font-semibold text-slate-800">
-                    {product.cropName}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    {product.category} · {product.quantity} {product.unit}
-                  </p>
+                <div className="flex items-center gap-5">
+                  {product.imageUrl ? (
+                    <img
+                      src={product.imageUrl}
+                      alt=""
+                      className="h-16 w-16 rounded-2xl object-cover ring-2 ring-[#eadaaf]"
+                    />
+                  ) : (
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#f4e8c5] text-3xl ring-2 ring-[#eadaaf]">
+                      🌾
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-2xl font-extrabold text-slate-900">
+                      {product.cropName}
+                    </p>
+                    <p className="mt-1 text-lg font-bold text-slate-500">
+                      {product.category} · {product.quantity} {product.unit}
+                    </p>
+                    {product.description && (
+                      <p className="mt-2 max-w-2xl text-base font-medium leading-6 text-slate-600">
+                        {product.description}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <p className="text-lg font-bold text-[#174d35]">
+                <p className="text-2xl font-black text-[#1b5e20]">
                   ₹{Number(product.price || 0).toLocaleString("en-IN")}
                 </p>
               </div>
             ))}
           </div>
         ) : (
-          <p className="mt-6 rounded-xl bg-[#fffaf0] p-5 text-base text-slate-600">
+          <div className="mt-8 rounded-2xl border border-dashed border-[#eadaaf] bg-[#fdfbf3] p-8 text-center text-xl font-bold text-slate-600">
             No products listed yet. Add your first crop to start selling.
-          </p>
+          </div>
         )}
       </section>
     </div>
