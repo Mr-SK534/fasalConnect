@@ -197,53 +197,53 @@ export default function ProfileSetup() {
 
   return (
     <div
-      className="min-h-screen w-full bg-cover bg-center relative flex items-center justify-center px-4 py-8"
+      className="min-h-screen w-full bg-cover bg-center relative flex items-center justify-center px-4 py-4"
       style={{ backgroundImage: `url('/hero.jpg')` }}
     >
-      <div className="relative z-10 w-full max-w-lg bg-transparent backdrop-blur-none p-8 rounded-2xl shadow-2xl border border-white/5">
+      <div className="relative z-10 w-full max-w-2xl bg-transparent backdrop-blur-none p-5 sm:p-7 rounded-3xl shadow-2xl border border-white/5 my-auto">
         {/* Language switcher */}
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-end mb-2">
           <select
             value={preferredLanguage}
             onChange={(e) => handleLanguageChange(e.target.value)}
-            className="bg-white/20 border border-white/30 text-white rounded-lg px-3 py-1 text-sm backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50"
+            className="bg-white/20 border border-white/40 text-white rounded-lg px-3 py-1.5 text-sm font-black backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer"
           >
-            <option value="en" className="text-gray-900">
+            <option value="en" className="text-gray-900 font-bold">
               English
             </option>
-            <option value="hi" className="text-gray-900">
+            <option value="hi" className="text-gray-900 font-bold">
               हिन्दी
             </option>
-            <option value="bn" className="text-gray-900">
+            <option value="bn" className="text-gray-900 font-bold">
               বাংলা
             </option>
-            <option value="mr" className="text-gray-900">
+            <option value="mr" className="text-gray-900 font-bold">
               मराठी
             </option>
           </select>
         </div>
 
         {/* Heading */}
-        <div className="text-center mb-6">
-          <div className="text-4xl mb-2">🌿</div>
-          <h1 className="text-3xl font-bold text-white drop-shadow-lg">
-            {t("profileSetup.heading", "Complete your profile")}
+        <div className="text-center mb-4">
+          <div className="text-4xl mb-1">🌿</div>
+          <h1 className="text-3xl sm:text-4xl font-black text-white drop-shadow-xl tracking-tight leading-tight">
+            {t("profileSetup.heading", "Complete Your Profile")}
           </h1>
-          <p className="text-white/90 text-sm mt-1 drop-shadow-lg">
+          <p className="text-white/95 text-lg font-bold mt-1 drop-shadow-md">
             {t("profileSetup.subtitle", "Help us personalise your experience")}
           </p>
         </div>
 
         {error && (
-          <div className="mb-4 text-sm text-red-100 bg-red-600/80 backdrop-blur-sm border border-red-400/50 rounded-lg px-3 py-2">
+          <div className="mb-3 text-base font-bold text-red-100 bg-red-600/80 backdrop-blur-sm border border-red-400/50 rounded-xl px-4 py-2.5 shadow-md">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* ── Section A: Location ── */}
-          <div>
-            <p className="text-white font-bold text-sm mb-3 drop-shadow uppercase tracking-wide">
+          <div className="space-y-2.5">
+            <p className="text-white font-black text-base drop-shadow-md uppercase tracking-wider border-b border-white/20 pb-1">
               {t("profileSetup.locationSection", "📍 Your Location")}
             </p>
 
@@ -251,16 +251,16 @@ export default function ProfileSetup() {
               type="button"
               onClick={handleAutoDetect}
               disabled={detecting}
-              className="w-full mb-3 py-2 rounded-lg border border-white/40 bg-white/10 text-white text-sm font-semibold hover:bg-white/20 transition disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-2 rounded-xl border border-white/50 bg-white/15 text-white text-base font-black hover:bg-white/25 transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-md"
             >
               {detecting
                 ? t("profileSetup.detecting", "Detecting...")
                 : t("profileSetup.autoDetect", "📡 Auto-detect my location")}
             </button>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
+                <label className="block text-base font-extrabold text-white mb-1 drop-shadow-md">
                   {t("profileSetup.village", "Village / Town")} *
                 </label>
                 <input
@@ -268,11 +268,11 @@ export default function ProfileSetup() {
                   required
                   value={village}
                   onChange={(e) => setVillage(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className="w-full px-3.5 py-2 text-lg font-semibold text-slate-900 bg-white/80 backdrop-blur-sm border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400/50 shadow-md"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
+                <label className="block text-base font-extrabold text-white mb-1 drop-shadow-md">
                   {t("profileSetup.district", "District")} *
                 </label>
                 <input
@@ -280,18 +280,18 @@ export default function ProfileSetup() {
                   required
                   value={district}
                   onChange={(e) => setDistrict(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className="w-full px-3.5 py-2 text-lg font-semibold text-slate-900 bg-white/80 backdrop-blur-sm border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400/50 shadow-md"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
+                <label className="block text-base font-extrabold text-white mb-1 drop-shadow-md">
                   {t("profileSetup.state", "State")} *
                 </label>
                 <select
                   required
                   value={state}
                   onChange={(e) => setState(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className="w-full px-3.5 py-2 text-lg font-semibold text-slate-900 bg-white/80 backdrop-blur-sm border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400/50 shadow-md"
                 >
                   <option value="">Select state</option>
                   {INDIAN_STATES.map((s) => (
@@ -302,7 +302,7 @@ export default function ProfileSetup() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
+                <label className="block text-base font-extrabold text-white mb-1 drop-shadow-md">
                   {t("profileSetup.pincode", "Pincode")} *
                 </label>
                 <input
@@ -311,7 +311,7 @@ export default function ProfileSetup() {
                   maxLength={6}
                   value={pincode}
                   onChange={(e) => setPincode(e.target.value.replace(/\D/, ""))}
-                  className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className="w-full px-3.5 py-2 text-lg font-semibold text-slate-900 bg-white/80 backdrop-blur-sm border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400/50 shadow-md"
                 />
               </div>
             </div>
@@ -319,27 +319,27 @@ export default function ProfileSetup() {
 
           {/* ── Section B: Farmer / FPO ── */}
           {isFarmer && (
-            <div>
-              <p className="text-white font-bold text-sm mb-3 drop-shadow uppercase tracking-wide">
+            <div className="space-y-2.5">
+              <p className="text-white font-black text-base drop-shadow-md uppercase tracking-wider border-b border-white/20 pb-1">
                 {t("profileSetup.roleSection", "🌾 Farming Details")}
               </p>
 
               {/* Crop tag input */}
-              <div className="mb-3">
-                <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
+              <div>
+                <label className="block text-base font-extrabold text-white mb-1 drop-shadow-md">
                   {t("profileSetup.primaryCrops", "Primary Crops")}
                 </label>
-                <div className="w-full px-3 py-2 bg-white/80 border border-white/40 rounded-lg flex flex-wrap gap-2 min-h-[48px]">
+                <div className="w-full px-3.5 py-2 bg-white/80 border border-white/40 rounded-xl flex flex-wrap gap-2 min-h-[46px] items-center shadow-md">
                   {crops.map((crop) => (
                     <span
                       key={crop}
-                      className="flex items-center gap-1 bg-green-600 text-white text-xs px-2 py-1 rounded-full"
+                      className="flex items-center gap-1.5 bg-green-700 text-white text-sm font-bold px-2.5 py-1 rounded-lg shadow-sm"
                     >
                       {crop}
                       <button
                         type="button"
                         onClick={() => removeCrop(crop)}
-                        className="hover:text-red-200"
+                        className="hover:text-red-300 font-extrabold text-sm"
                       >
                         ✕
                       </button>
@@ -354,14 +354,14 @@ export default function ProfileSetup() {
                       "profileSetup.cropPlaceholder",
                       "Type crop & press Enter",
                     )}
-                    className="flex-1 min-w-[120px] bg-transparent outline-none text-sm text-gray-800"
+                    className="flex-1 min-w-[160px] bg-transparent outline-none text-lg font-semibold text-slate-900 placeholder:text-gray-500 placeholder:text-base"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
+                  <label className="block text-base font-extrabold text-white mb-1 drop-shadow-md">
                     {t("profileSetup.bankAccount", "Bank Account No.")} *
                   </label>
                   <input
@@ -369,11 +369,11 @@ export default function ProfileSetup() {
                     required
                     value={bankAccount}
                     onChange={(e) => setBankAccount(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/80 border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full px-3.5 py-2 text-lg font-semibold text-slate-900 bg-white/80 border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400/50 shadow-md"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
+                  <label className="block text-base font-extrabold text-white mb-1 drop-shadow-md">
                     {t("profileSetup.ifsc", "IFSC Code")} *
                   </label>
                   <input
@@ -381,11 +381,11 @@ export default function ProfileSetup() {
                     required
                     value={ifsc}
                     onChange={(e) => setIfsc(e.target.value.toUpperCase())}
-                    className="w-full px-4 py-3 bg-white/80 border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full px-3.5 py-2 text-lg font-semibold text-slate-900 bg-white/80 border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400/50 shadow-md uppercase"
                   />
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
+                <div>
+                  <label className="block text-base font-extrabold text-white mb-1 drop-shadow-md">
                     {t("profileSetup.accountHolder", "Account Holder Name")} *
                   </label>
                   <input
@@ -393,13 +393,13 @@ export default function ProfileSetup() {
                     required
                     value={accountHolder}
                     onChange={(e) => setAccountHolder(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/80 border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full px-3.5 py-2 text-lg font-semibold text-slate-900 bg-white/80 border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400/50 shadow-md"
                   />
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
+                <div>
+                  <label className="block text-base font-extrabold text-white mb-1 drop-shadow-md">
                     {t("profileSetup.upiId", "UPI ID")}
-                    <span className="font-normal opacity-70 ml-1">
+                    <span className="font-semibold text-white/90 ml-1 text-xs">
                       (optional)
                     </span>
                   </label>
@@ -407,7 +407,7 @@ export default function ProfileSetup() {
                     type="text"
                     value={upiId}
                     onChange={(e) => setUpiId(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/80 border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full px-3.5 py-2 text-lg font-semibold text-slate-900 bg-white/80 border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400/50 shadow-md"
                   />
                 </div>
               </div>
@@ -416,15 +416,15 @@ export default function ProfileSetup() {
 
           {/* ── Section B: Buyer ── */}
           {isBuyer && (
-            <div>
-              <p className="text-white font-bold text-sm mb-3 drop-shadow uppercase tracking-wide">
+            <div className="space-y-2.5">
+              <p className="text-white font-black text-base drop-shadow-md uppercase tracking-wider border-b border-white/20 pb-1">
                 {t("profileSetup.roleSection", "🛒 Buyer Details")}
               </p>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
+                  <label className="block text-base font-extrabold text-white mb-1 drop-shadow-md">
                     {t("profileSetup.businessName", "Business Name")}
-                    <span className="font-normal opacity-70 ml-1">
+                    <span className="font-semibold text-white/90 ml-1 text-xs">
                       (optional)
                     </span>
                   </label>
@@ -432,25 +432,25 @@ export default function ProfileSetup() {
                     type="text"
                     value={businessName}
                     onChange={(e) => setBusinessName(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/80 border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full px-3.5 py-2 text-lg font-semibold text-slate-900 bg-white/80 border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400/50 shadow-md"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
+                  <label className="block text-base font-extrabold text-white mb-1 drop-shadow-md">
                     {t("profileSetup.deliveryAddress", "Delivery Address")} *
                   </label>
                   <textarea
                     required
-                    rows={3}
+                    rows={2}
                     value={deliveryAddress}
                     onChange={(e) => setDeliveryAddress(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/80 border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 resize-none"
+                    className="w-full px-3.5 py-2 text-lg font-semibold text-slate-900 bg-white/80 border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400/50 shadow-md resize-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
+                  <label className="block text-base font-extrabold text-white mb-1 drop-shadow-md">
                     {t("profileSetup.gstNumber", "GST Number")}
-                    <span className="font-normal opacity-70 ml-1">
+                    <span className="font-semibold text-white/90 ml-1 text-xs">
                       (optional)
                     </span>
                   </label>
@@ -458,7 +458,7 @@ export default function ProfileSetup() {
                     type="text"
                     value={gstNumber}
                     onChange={(e) => setGstNumber(e.target.value.toUpperCase())}
-                    className="w-full px-4 py-3 bg-white/80 border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                    className="w-full px-3.5 py-2 text-lg font-semibold text-slate-900 bg-white/80 border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400/50 shadow-md uppercase"
                   />
                 </div>
               </div>
@@ -467,13 +467,13 @@ export default function ProfileSetup() {
 
           {/* ── Section C: Preferred Language ── */}
           <div>
-            <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
+            <label className="block text-base font-extrabold text-white mb-1 drop-shadow-md">
               {t("profileSetup.preferredLanguage", "Preferred Language")}
             </label>
             <select
               value={preferredLanguage}
               onChange={(e) => handleLanguageChange(e.target.value)}
-              className="w-full px-4 py-3 bg-white/80 border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+              className="w-full px-3.5 py-2 text-lg font-semibold text-slate-900 bg-white/80 border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400/50 shadow-md"
             >
               <option value="en">English</option>
               <option value="hi">हिन्दी</option>
@@ -486,7 +486,7 @@ export default function ProfileSetup() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 disabled:opacity-50 shadow-xl transition transform hover:scale-[1.02]"
+            className="w-full bg-green-600 text-white py-3 rounded-xl text-xl font-black hover:bg-green-700 disabled:opacity-50 shadow-xl transition transform hover:scale-[1.01] active:scale-[0.99] mt-4"
           >
             {isSubmitting
               ? t("profileSetup.saving", "Saving...")

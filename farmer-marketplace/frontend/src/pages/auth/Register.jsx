@@ -52,56 +52,56 @@ export default function Register() {
 
   return (
     <div
-      className="min-h-screen w-full bg-cover bg-center relative flex items-center justify-center px-4 py-8"
+      className="h-screen w-full bg-cover bg-center relative flex items-center justify-center px-4 overflow-hidden"
       style={{ backgroundImage: `url('/hero.jpg')` }}
     >
-      {/* Glassmorphism card - no overlay on background */}
-      <div className="relative z-10 w-full max-w-xl bg-transparent backdrop-blur-none p-8 sm:p-10 rounded-2xl shadow-2xl border border-white/5">
+      {/* Glassmorphism card - Compact vertical layout to guarantee single-screen fit */}
+      <div className="relative z-10 w-full max-w-2xl bg-transparent backdrop-blur-none p-5 sm:p-6 rounded-3xl shadow-2xl border border-white/5 my-auto max-h-[96vh] flex flex-col justify-center">
         {/* Language Switcher */}
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-end mb-2">
           <select
             value={i18n.language}
             onChange={(e) => changeLanguage(e.target.value)}
-            className="bg-white/20 border border-white/30 text-white rounded-lg px-3 py-1 text-sm backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50"
+            className="bg-white/20 border border-white/40 text-white rounded-lg px-3 py-1 text-sm font-bold backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer"
           >
-            <option value="en" className="text-gray-900">
+            <option value="en" className="text-gray-900 font-semibold">
               English
             </option>
-            <option value="hi" className="text-gray-900">
+            <option value="hi" className="text-gray-900 font-semibold">
               हिन्दी
             </option>
-            <option value="bn" className="text-gray-900">
+            <option value="bn" className="text-gray-900 font-semibold">
               বাংলা
             </option>
-            <option value="mr" className="text-gray-900">
+            <option value="mr" className="text-gray-900 font-semibold">
               मराठी
             </option>
           </select>
         </div>
 
-        <div className="text-center mb-6">
-          <div className="text-4xl mb-2">🌿</div>
-          <h1 className="text-3xl font-bold text-white drop-shadow-lg">
+        <div className="text-center mb-3">
+          <div className="text-3xl mb-1">🌿</div>
+          <h1 className="text-3xl font-black text-white drop-shadow-xl tracking-tight leading-tight">
             {t("register.heading")}
           </h1>
-          <p className="text-white/90 text-sm mt-1 drop-shadow-lg">
+          <p className="text-white/95 text-base font-semibold mt-0.5 drop-shadow-md">
             {t("register.subtitle")}
           </p>
         </div>
 
         {error && (
-          <div className="mb-4 text-sm text-red-100 bg-red-600/80 backdrop-blur-sm border border-red-400/50 rounded-lg px-3 py-2">
+          <div className="mb-3 text-base font-bold text-red-100 bg-red-600/80 backdrop-blur-sm border border-red-400/50 rounded-xl px-4 py-2 shadow-md">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <RoleSelector value={role} onChange={setRole} />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
+            <label className="block text-base font-bold text-white mb-1 drop-shadow-md">
               {t("register.fullName")}
             </label>
             <input
@@ -109,13 +109,13 @@ export default function Register() {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 shadow-lg"
+              className="w-full px-4 py-2.5 text-3xl font-medium text-slate-900 bg-white/80 backdrop-blur-sm border border-white/40 rounded-xl focus:outline-none focus:ring-4 focus:ring-green-400/50 shadow-lg placeholder:text-gray-500 placeholder:text-xl"
               placeholder={t("register.namePlaceholder")}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
+            <label className="block text-base font-bold text-white mb-1 drop-shadow-md">
               {t("register.phoneNumber")}
             </label>
             <input
@@ -123,42 +123,42 @@ export default function Register() {
               required
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 shadow-lg"
+              className="w-full px-4 py-2.5 text-3xl font-medium text-slate-900 bg-white/80 backdrop-blur-sm border border-white/40 rounded-xl focus:outline-none focus:ring-4 focus:ring-green-400/50 shadow-lg placeholder:text-gray-500 placeholder:text-xl"
               placeholder={t("register.phonePlaceholder")}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
+            <label className="block text-base font-bold text-white mb-1 drop-shadow-md">
               {t("register.emailOptional")}
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 shadow-lg"
+              className="w-full px-4 py-2.5 text-3xl font-medium text-slate-900 bg-white/80 backdrop-blur-sm border border-white/40 rounded-xl focus:outline-none focus:ring-4 focus:ring-green-400/50 shadow-lg placeholder:text-gray-500 placeholder:text-xl"
               placeholder={t("register.emailPlaceholder")}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
+            <label className="block text-base font-bold text-white mb-1 drop-shadow-md">
               {t("register.password")}
             </label>
-            <div style={{ position: "relative" }}>
+            <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 required
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 pr-12 bg-white/80 backdrop-blur-sm border border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 shadow-lg"
+                className="w-full px-4 py-2.5 pr-14 text-3xl font-medium text-slate-900 bg-white/80 backdrop-blur-sm border border-white/40 rounded-xl focus:outline-none focus:ring-4 focus:ring-green-400/50 shadow-lg placeholder:text-gray-500 placeholder:text-xl"
                 placeholder={t("register.passwordPlaceholder")}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-800 focus:outline-none"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-700 hover:text-gray-900 focus:outline-none p-1"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -166,9 +166,9 @@ export default function Register() {
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
-                    strokeWidth={1.5}
+                    strokeWidth={2}
                     stroke="currentColor"
-                    className="w-5 h-5"
+                    className="w-7 h-7"
                   >
                     <path
                       strokeLinecap="round"
@@ -181,9 +181,9 @@ export default function Register() {
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
-                    strokeWidth={1.5}
+                    strokeWidth={2}
                     stroke="currentColor"
-                    className="w-5 h-5"
+                    className="w-7 h-7"
                   >
                     <path
                       strokeLinecap="round"
@@ -204,7 +204,7 @@ export default function Register() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 disabled:opacity-50 shadow-xl transition transform hover:scale-[1.02]"
+            className="w-full bg-green-600 text-white py-3 rounded-xl text-2xl font-black hover:bg-green-700 disabled:opacity-50 shadow-xl transition transform hover:scale-[1.01] active:scale-[0.99] mt-2"
           >
             {isSubmitting
               ? t("register.registeringButton")
@@ -212,11 +212,11 @@ export default function Register() {
           </button>
         </form>
 
-        <p className="text-sm text-white font-bold mt-6 text-center drop-shadow">
+        <p className="text-lg text-white font-extrabold mt-3 text-center drop-shadow-md">
           {t("register.alreadyHaveAccount")}{" "}
           <Link
             to="/login"
-            className="text-yellow-300 font-extrabold hover:underline"
+            className="text-yellow-300 font-black hover:underline ml-1"
           >
             {t("register.loginLink")}
           </Link>
