@@ -8,13 +8,42 @@ import { ROLES, DASHBOARD_PATH_BY_ROLE } from "../../utils/roles";
 import axiosClient from "../../services/api";
 
 const INDIAN_STATES = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
-  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
-  "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
-  "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
-  "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
-  "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
-  "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry",
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry",
 ];
 
 export default function ProfileSetup() {
@@ -45,12 +74,15 @@ export default function ProfileSetup() {
   const [gstNumber, setGstNumber] = useState("");
 
   // Section C — Language
-  const [preferredLanguage, setPreferredLanguage] = useState(i18n.language || "en");
+  const [preferredLanguage, setPreferredLanguage] = useState(
+    i18n.language || "en",
+  );
 
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isFarmer = user?.role === ROLES.FARMER || user?.role === ROLES.FPO_ADMIN;
+  const isFarmer =
+    user?.role === ROLES.FARMER || user?.role === ROLES.FPO_ADMIN;
   const isBuyer = user?.role === ROLES.BUYER;
 
   // Auto-detect location
@@ -67,16 +99,22 @@ export default function ProfileSetup() {
         setLongitude(lng);
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
           );
           const data = await res.json();
           const addr = data.address || {};
-          setVillage(addr.village || addr.town || addr.city || addr.suburb || "");
-          setDistrict(addr.county || addr.district || addr.state_district || "");
+          setVillage(
+            addr.village || addr.town || addr.city || addr.suburb || "",
+          );
+          setDistrict(
+            addr.county || addr.district || addr.state_district || "",
+          );
           setState(addr.state || "");
           setPincode(addr.postcode || "");
         } catch {
-          setError("Could not reverse geocode location. Please fill in manually.");
+          setError(
+            "Could not reverse geocode location. Please fill in manually.",
+          );
         } finally {
           setDetecting(false);
         }
@@ -84,7 +122,7 @@ export default function ProfileSetup() {
       () => {
         setError("Location access denied. Please fill in manually.");
         setDetecting(false);
-      }
+      },
     );
   };
 
@@ -113,6 +151,12 @@ export default function ProfileSetup() {
     setError("");
     setIsSubmitting(true);
 
+    const pendingCrop = cropInput.trim();
+    const selectedCrops =
+      pendingCrop && !crops.includes(pendingCrop)
+        ? [...crops, pendingCrop]
+        : crops;
+
     const payload = {
       village,
       district,
@@ -122,7 +166,7 @@ export default function ProfileSetup() {
       longitude,
       preferredLanguage,
       // Farmer/FPO fields
-      primaryCrops: isFarmer ? crops.join(",") : null,
+      primaryCrops: isFarmer ? selectedCrops.join(",") : null,
       bankAccountNumber: isFarmer ? bankAccount : null,
       bankIfsc: isFarmer ? ifsc.toUpperCase() : null,
       accountHolderName: isFarmer ? accountHolder : null,
@@ -157,7 +201,6 @@ export default function ProfileSetup() {
       style={{ backgroundImage: `url('/hero.jpg')` }}
     >
       <div className="relative z-10 w-full max-w-lg bg-transparent backdrop-blur-none p-8 rounded-2xl shadow-2xl border border-white/5">
-
         {/* Language switcher */}
         <div className="flex justify-end mb-4">
           <select
@@ -165,10 +208,18 @@ export default function ProfileSetup() {
             onChange={(e) => handleLanguageChange(e.target.value)}
             className="bg-white/20 border border-white/30 text-white rounded-lg px-3 py-1 text-sm backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50"
           >
-            <option value="en" className="text-gray-900">English</option>
-            <option value="hi" className="text-gray-900">हिन्दी</option>
-            <option value="bn" className="text-gray-900">বাংলা</option>
-            <option value="mr" className="text-gray-900">मराठी</option>
+            <option value="en" className="text-gray-900">
+              English
+            </option>
+            <option value="hi" className="text-gray-900">
+              हिन्दी
+            </option>
+            <option value="bn" className="text-gray-900">
+              বাংলা
+            </option>
+            <option value="mr" className="text-gray-900">
+              मराठी
+            </option>
           </select>
         </div>
 
@@ -190,7 +241,6 @@ export default function ProfileSetup() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-
           {/* ── Section A: Location ── */}
           <div>
             <p className="text-white font-bold text-sm mb-3 drop-shadow uppercase tracking-wide">
@@ -245,7 +295,9 @@ export default function ProfileSetup() {
                 >
                   <option value="">Select state</option>
                   {INDIAN_STATES.map((s) => (
-                    <option key={s} value={s}>{s}</option>
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -284,7 +336,13 @@ export default function ProfileSetup() {
                       className="flex items-center gap-1 bg-green-600 text-white text-xs px-2 py-1 rounded-full"
                     >
                       {crop}
-                      <button type="button" onClick={() => removeCrop(crop)} className="hover:text-red-200">✕</button>
+                      <button
+                        type="button"
+                        onClick={() => removeCrop(crop)}
+                        className="hover:text-red-200"
+                      >
+                        ✕
+                      </button>
                     </span>
                   ))}
                   <input
@@ -292,7 +350,10 @@ export default function ProfileSetup() {
                     value={cropInput}
                     onChange={(e) => setCropInput(e.target.value)}
                     onKeyDown={handleCropKeyDown}
-                    placeholder={t("profileSetup.cropPlaceholder", "Type crop & press Enter")}
+                    placeholder={t(
+                      "profileSetup.cropPlaceholder",
+                      "Type crop & press Enter",
+                    )}
                     className="flex-1 min-w-[120px] bg-transparent outline-none text-sm text-gray-800"
                   />
                 </div>
@@ -338,7 +399,9 @@ export default function ProfileSetup() {
                 <div className="col-span-2">
                   <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
                     {t("profileSetup.upiId", "UPI ID")}
-                    <span className="font-normal opacity-70 ml-1">(optional)</span>
+                    <span className="font-normal opacity-70 ml-1">
+                      (optional)
+                    </span>
                   </label>
                   <input
                     type="text"
@@ -361,7 +424,9 @@ export default function ProfileSetup() {
                 <div>
                   <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
                     {t("profileSetup.businessName", "Business Name")}
-                    <span className="font-normal opacity-70 ml-1">(optional)</span>
+                    <span className="font-normal opacity-70 ml-1">
+                      (optional)
+                    </span>
                   </label>
                   <input
                     type="text"
@@ -385,7 +450,9 @@ export default function ProfileSetup() {
                 <div>
                   <label className="block text-sm font-semibold text-white mb-1 drop-shadow">
                     {t("profileSetup.gstNumber", "GST Number")}
-                    <span className="font-normal opacity-70 ml-1">(optional)</span>
+                    <span className="font-normal opacity-70 ml-1">
+                      (optional)
+                    </span>
                   </label>
                   <input
                     type="text"

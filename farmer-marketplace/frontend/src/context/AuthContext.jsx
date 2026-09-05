@@ -47,7 +47,9 @@ export function AuthProvider({ children }) {
       return data.user;
     } catch (err) {
       const message =
-        err.response?.data?.error?.message || "Login failed. Check your credentials.";
+        err.response?.data?.message ||
+        err.response?.data?.error?.message ||
+        "Login failed. Check your credentials.";
       setError(message);
       throw new Error(message);
     }
@@ -64,7 +66,9 @@ export function AuthProvider({ children }) {
       return data.user;
     } catch (err) {
       const message =
-        err.response?.data?.error?.message || "Registration failed. Please try again.";
+        err.response?.data?.message ||
+        err.response?.data?.error?.message ||
+        "Registration failed. Please try again.";
       setError(message);
       throw new Error(message);
     }
@@ -77,9 +81,30 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const updateUser = (updatedUser) => {
+    setUser((currentUser) => {
+      const nextUser = {
+        ...currentUser,
+        ...updatedUser,
+        isProfileComplete: true,
+      };
+      localStorage.setItem("user", JSON.stringify(nextUser));
+      return nextUser;
+    });
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, error, login, register, logout }}
+      value={{
+        user,
+        token,
+        isLoading,
+        error,
+        login,
+        register,
+        updateUser,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>

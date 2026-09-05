@@ -3,11 +3,11 @@
 import api from "./api";
 
 /**
- * Matches backend LoginDto: { email, password }
+ * Matches backend LoginDto: { emailOrPhone, password }
  * Returns AuthResponseDto: { token, user: { id, name, email, role, ... } }
  */
-export const login = async (email, password) => {
-  const response = await api.post("/auth/login", { email, password });
+export const login = async (emailOrPhone, password) => {
+  const response = await api.post("/auth/login", { emailOrPhone, password });
   return response.data;
 };
 

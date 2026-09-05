@@ -58,7 +58,7 @@ export default function AppRoutes() {
   return (
     <Routes>
       {/* ---------- Public routes ---------- */}
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 

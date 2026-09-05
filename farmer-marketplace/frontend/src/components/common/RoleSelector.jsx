@@ -1,10 +1,13 @@
 // frontend/src/components/common/RoleSelector.jsx
 
 import { ROLE_OPTIONS } from "../../utils/roles";
+import { useTranslation } from "react-i18next";
 
 export default function RoleSelector({ value, onChange }) {
+  const { t } = useTranslation();
+
   return (
-    <div className="grid grid-cols-3 gap-2">
+    <div className="grid grid-cols-2 gap-2">
       {ROLE_OPTIONS.map((option) => (
         <button
           key={option.value}
@@ -16,7 +19,16 @@ export default function RoleSelector({ value, onChange }) {
               : "bg-white text-gray-700 border-gray-300 hover:border-green-400"
           }`}
         >
-          {option.label}
+          {t(
+            `register.roles.${
+              option.value === "FpoAdmin"
+                ? "fpoAdmin"
+                : option.value === "PlatformAdmin"
+                  ? "platformAdmin"
+                  : option.value.toLowerCase()
+            }`,
+            option.label,
+          )}
         </button>
       ))}
     </div>
