@@ -12,6 +12,7 @@ namespace FarmerMarketplace.Api.Data
         }
 
         public DbSet<User> Users { get; set; }
+        
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -20,6 +21,6 @@ namespace FarmerMarketplace.Api.Data
                 .WithMany()
                 .HasForeignKey(u => u.FpoId)
                 .OnDelete(DeleteBehavior.Restrict);
-        }
+        }       
     }
 }
