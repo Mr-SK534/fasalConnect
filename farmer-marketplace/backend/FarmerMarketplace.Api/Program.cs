@@ -1,6 +1,8 @@
 // backend/FarmerMarketplace.Api/Program.cs
 
 using System.Text;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json.Serialization;
 using FarmerMarketplace.Api.Data;
 using FarmerMarketplace.Api.Interfaces;
@@ -11,7 +13,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,7 +42,6 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -52,7 +52,10 @@ builder.Services.AddSingleton<JwtService>();
 
 // Services (DI)
 builder.Services.AddScoped<IAuthService, AuthService>();
-// TODO: register IProductService, IOrderService, IForecastService,
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IAdminService,AdminService>();
+builder.Services.AddScoped<IUserService, UserService>();
+// TODO: register IOrderService, IForecastService,
 // IRouteService, IPaymentService, IWhatsAppService here as they're built
 
 // JWT Authentication
@@ -74,6 +77,21 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(jwtSettings["Key"]!))
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = async context =>
+        {
+            var jti = context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Jti);
+            if (jti == null) return;
+
+            var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+            var isBlocked = await db.TokenBlocklist.AnyAsync(t => t.Jti == jti);
+
+            if (isBlocked)
+                context.Fail("Token has been logged out.");
+        }
     };
 });
 
