@@ -19,49 +19,49 @@ export default function FPODashboard() {
   ];
 
   return (
-    <div className="mx-auto max-w-7xl space-y-10 text-xl font-medium">
+    <div className="mx-auto max-w-7xl space-y-6">
       {/* Header Banner */}
-      <section className="rounded-3xl bg-gradient-to-r from-[#2e7d32] via-[#246b28] to-[#1b5e20] p-8 text-white shadow-xl sm:p-12">
-        <p className="text-xl font-extrabold uppercase tracking-widest text-[#f5d77f]">
+      <section className="rounded-2xl bg-gradient-to-r from-[#2e7d32] via-[#246b28] to-[#1b5e20] p-6 text-white shadow-md sm:p-8">
+        <p className="text-xs font-extrabold uppercase tracking-wider text-[#f5d77f]">
           FPO Operations
         </p>
-        <h2 className="mt-3 text-4xl font-black sm:text-5xl">
+        <h2 className="mt-1 text-2xl font-black sm:text-3xl tracking-tight">
           Grow Your Farmer Network
         </h2>
-        <p className="mt-4 max-w-3xl text-xl leading-relaxed text-emerald-100">
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-emerald-100 font-normal">
           Keep your members supported and their harvests moving through the
           marketplace.
         </p>
       </section>
 
       {/* Summary Cards */}
-      <section className="grid gap-6 sm:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-3">
         {cards.map(([label, value, hint]) => (
           <article
             key={label}
-            className="rounded-3xl border border-[#eadaaf] bg-white/90 p-8 shadow-md backdrop-blur transition hover:shadow-lg"
+            className="rounded-2xl border border-[#eadaaf] bg-white/90 p-5 shadow-xs backdrop-blur transition hover:shadow-md"
           >
-            <p className="text-lg font-extrabold uppercase tracking-wider text-slate-500">
+            <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
               {label}
             </p>
-            <p className="mt-4 text-5xl font-black text-[#1b5e20]">
+            <p className="mt-2 text-3xl font-black text-[#1b5e20]">
               {value ?? "..."}
             </p>
-            <p className="mt-3 text-lg font-bold text-slate-600">{hint}</p>
+            <p className="mt-1 text-xs font-semibold text-slate-500">{hint}</p>
           </article>
         ))}
       </section>
 
       {/* Manage Members Box */}
-      <section className="rounded-3xl border border-[#eadaaf] bg-white p-8 shadow-md sm:p-10">
-        <h3 className="text-3xl font-black text-[#163820]">Manage Members</h3>
-        <p className="mt-2 text-xl font-semibold text-slate-600">
+      <section className="rounded-2xl border border-[#eadaaf] bg-white p-5 shadow-xs sm:p-6">
+        <h3 className="text-lg font-bold text-[#163820]">Manage Members</h3>
+        <p className="mt-0.5 text-xs text-slate-500">
           Review the farmers linked to your FPO and keep their details up to
           date.
         </p>
         <NavLink
           to="/fpo-admin/farmers"
-          className="mt-6 inline-block rounded-2xl bg-[#f5d77f] px-8 py-4 text-xl font-extrabold text-[#1b5e20] shadow-sm transition hover:bg-[#eac459] hover:shadow"
+          className="mt-4 inline-block rounded-xl bg-[#f5d77f] px-4 py-2 text-xs font-bold text-[#1b5e20] shadow-2xs transition hover:bg-[#eac459] hover:shadow-xs"
         >
           View Linked Farmers →
         </NavLink>

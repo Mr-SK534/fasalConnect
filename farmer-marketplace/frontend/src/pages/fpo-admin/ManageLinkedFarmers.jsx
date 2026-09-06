@@ -16,24 +16,24 @@ export default function ManageLinkedFarmers() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-6xl text-xl">
+    <div className="mx-auto max-w-6xl space-y-5 text-sm">
       {/* Header Section */}
-      <div className="mb-8">
-        <p className="text-base font-extrabold uppercase tracking-widest text-[#406836]">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wider text-[#406836]">
           FPO Network
         </p>
-        <h2 className="mt-1 text-4xl font-black text-[#163820]">
+        <h2 className="mt-0.5 text-2xl font-black text-[#163820]">
           Linked Farmers
         </h2>
-        <p className="mt-2 text-xl font-semibold text-slate-600">
+        <p className="mt-1 text-xs text-slate-500">
           Farmers connected to your producer organisation.
         </p>
       </div>
 
       {/* Farmers Data Table Card */}
-      <section className="overflow-hidden rounded-3xl border border-[#eadaaf] bg-white shadow-md">
+      <section className="overflow-hidden rounded-2xl border border-[#eadaaf] bg-white shadow-xs">
         {/* Table Header Row */}
-        <div className="grid grid-cols-[1.3fr_1fr_1fr] border-b border-[#eadaaf] bg-[#fdfbf3] px-8 py-5 text-lg font-black uppercase tracking-wider text-[#406836]">
+        <div className="grid grid-cols-[1.3fr_1fr_1fr] border-b border-[#eadaaf] bg-[#fdfbf3] px-5 py-3 text-[11px] font-extrabold uppercase tracking-wider text-[#406836]">
           <span>Farmer</span>
           <span>Phone</span>
           <span>Profile</span>
@@ -41,7 +41,7 @@ export default function ManageLinkedFarmers() {
 
         {/* Loading State */}
         {loading ? (
-          <p className="p-8 text-xl font-bold text-slate-500">
+          <p className="p-6 text-xs font-semibold text-slate-500">
             Loading farmers...
           </p>
         ) : farmers.length ? (
@@ -49,24 +49,24 @@ export default function ManageLinkedFarmers() {
           farmers.map((farmer) => (
             <div
               key={farmer.id}
-              className="grid grid-cols-[1.3fr_1fr_1fr] items-center border-b border-[#eee5cc] px-8 py-6 last:border-0 hover:bg-[#fffef9] transition-colors"
+              className="grid grid-cols-[1.3fr_1fr_1fr] items-center border-b border-[#eee5cc] px-5 py-3.5 last:border-0 hover:bg-[#fffef9] transition-colors"
             >
               <div>
-                <p className="text-2xl font-extrabold text-slate-900">
+                <p className="text-sm font-bold text-slate-900">
                   {farmer.name}
                 </p>
-                <p className="mt-1 text-lg font-semibold text-slate-500">
+                <p className="text-xs font-normal text-slate-500">
                   {farmer.email || "No email provided"}
                 </p>
               </div>
 
-              <p className="text-xl font-bold text-slate-700">
+              <p className="text-xs font-semibold text-slate-700">
                 {farmer.phone || "Not provided"}
               </p>
 
               <div>
                 <span
-                  className={`inline-block rounded-full px-4 py-1.5 text-base font-black uppercase tracking-wide ${
+                  className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${
                     farmer.isProfileComplete
                       ? "bg-[#d2e8bf] text-[#174d35] ring-1 ring-[#a8d488]"
                       : "bg-[#f4e8c5] text-[#745512] ring-1 ring-[#e2cd93]"
@@ -79,7 +79,7 @@ export default function ManageLinkedFarmers() {
           ))
         ) : (
           /* Empty State */
-          <p className="p-12 text-center text-xl font-bold text-slate-500">
+          <p className="p-8 text-center text-xs font-semibold text-slate-500">
             No linked farmers found.
           </p>
         )}

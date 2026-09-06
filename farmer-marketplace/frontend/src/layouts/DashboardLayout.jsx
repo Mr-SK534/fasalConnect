@@ -90,41 +90,41 @@ function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fcf9ee] text-slate-900 font-sans antialiased text-xl leading-relaxed">
+    <div className="min-h-screen bg-[#fcf9ee] text-slate-800 font-sans antialiased text-base leading-normal">
       {/* Sidebar Navigation */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-80 flex-col bg-gradient-to-b from-[#2e7d32] via-[#246b28] to-[#1b5e20] text-white shadow-2xl md:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-gradient-to-b from-[#2e7d32] via-[#246b28] to-[#1b5e20] text-white shadow-xl md:flex">
         {/* Brand Header */}
-        <div className="flex h-24 items-center border-b border-white/10 px-8">
+        <div className="flex h-16 items-center border-b border-white/10 px-6">
           <NavLink
             to={dashboardPath}
-            className="flex items-center gap-2 text-3xl font-extrabold tracking-tight"
+            className="flex items-center gap-2 text-xl font-extrabold tracking-tight"
           >
-            <span className="text-4xl">🌱</span>
+            <span className="text-2xl">🌱</span>
             <span>Fasal<span className="text-[#f5d77f]">Connect</span></span>
           </NavLink>
         </div>
 
         {/* Navigation Sections */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
+        <div className="flex-1 overflow-y-auto px-4 py-5 space-y-6">
           {sections.map((sec, idx) => (
             <div key={idx}>
-              <p className="mb-3 px-3 text-sm font-extrabold uppercase tracking-widest text-[#a3e2a7]">
+              <p className="mb-2 px-3 text-[11px] font-extrabold uppercase tracking-wider text-[#a3e2a7]">
                 {sec.section}
               </p>
-              <nav className="space-y-1.5" aria-label={`Sidebar section ${sec.section}`}>
+              <nav className="space-y-1" aria-label={`Sidebar section ${sec.section}`}>
                 {sec.items.map(({ label, to, icon: Icon }) => (
                   <NavLink
                     key={to}
                     to={to}
                     className={({ isActive }) =>
-                      `flex items-center gap-3.5 rounded-2xl px-4 py-3.5 text-xl font-bold transition-all duration-200 ${
+                      `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200 ${
                         isActive
-                          ? "bg-white text-[#1b5e20] shadow-md shadow-black/10 translate-x-1"
+                          ? "bg-white text-[#1b5e20] shadow-sm translate-x-1"
                           : "text-white/90 hover:bg-white/10 hover:text-white"
                       }`
                     }
                   >
-                    <Icon size={24} className="shrink-0" />
+                    <Icon size={18} className="shrink-0" />
                     <span>{label}</span>
                   </NavLink>
                 ))}
@@ -134,43 +134,43 @@ function DashboardLayout() {
         </div>
 
         {/* Footer Brand Tag / Logout Button */}
-        <div className="p-6 border-t border-white/10">
+        <div className="p-4 border-t border-white/10">
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-3.5 rounded-2xl px-4 py-3.5 text-xl font-bold text-red-200 transition-all duration-200 hover:bg-red-500/20 hover:text-white"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-200 transition-all duration-200 hover:bg-red-500/20 hover:text-white"
           >
-            <FiLogOut size={24} className="shrink-0" />
+            <FiLogOut size={18} className="shrink-0" />
             <span>Log Out</span>
           </button>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="md:pl-80">
+      <div className="md:pl-64">
         {/* Sticky Navbar Header */}
-        <header className="sticky top-0 z-20 border-b border-[#eadaaf] bg-[#fffef9]/95 px-6 py-6 shadow-sm backdrop-blur-md sm:px-10">
-          <div className="flex items-center justify-between gap-6">
+        <header className="sticky top-0 z-20 border-b border-[#eadaaf] bg-[#fffef9]/95 px-6 py-4 shadow-xs backdrop-blur-md sm:px-8">
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-base font-extrabold uppercase tracking-widest text-[#406836]">
+              <p className="text-xs font-bold uppercase tracking-wider text-[#406836]">
                 {roleLabels[user?.role] || "Dashboard"} &gt;
               </p>
-              <h1 className="mt-1 text-4xl font-black tracking-tight text-[#163820]">
+              <h1 className="mt-0.5 text-2xl font-black tracking-tight text-[#163820]">
                 {activeItem?.label || "Farmer Dashboard"}
               </h1>
             </div>
 
             {/* Profile Bar */}
-            <div className="flex items-center gap-4 bg-white/80 border border-[#e5d8b6] px-5 py-2.5 rounded-2xl shadow-sm">
+            <div className="flex items-center gap-3 bg-white/80 border border-[#e5d8b6] px-3.5 py-1.5 rounded-xl shadow-xs">
               <div className="hidden text-right sm:block">
-                <p className="text-xl font-bold text-slate-900 leading-tight">
+                <p className="text-sm font-bold text-slate-900 leading-tight">
                   {user?.name || "Farmer Name"}
                 </p>
-                <p className="text-sm font-bold uppercase text-slate-500 tracking-wider">
+                <p className="text-[11px] font-semibold uppercase text-slate-500 tracking-wider">
                   {roleLabels[user?.role] || "Verified Member"}
                 </p>
               </div>
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#d2e8bf] text-2xl font-black text-[#174d35] ring-2 ring-[#a8d488]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#d2e8bf] text-base font-black text-[#174d35] ring-2 ring-[#a8d488]">
                 {(user?.name || "F").charAt(0).toUpperCase()}
               </div>
             </div>
@@ -178,7 +178,7 @@ function DashboardLayout() {
 
           {/* Mobile Bottom Navigation */}
           <nav
-            className="mt-4 flex gap-2 overflow-x-auto md:hidden pt-2"
+            className="mt-3 flex gap-2 overflow-x-auto md:hidden pt-1"
             aria-label="Mobile dashboard navigation"
           >
             {allItems.map(({ label, to }) => (
@@ -186,9 +186,9 @@ function DashboardLayout() {
                 key={to}
                 to={to}
                 className={({ isActive }) =>
-                  `whitespace-nowrap rounded-xl px-4 py-3 text-lg font-bold transition ${
+                  `whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
                     isActive
-                      ? "bg-[#2e7d32] text-white shadow"
+                      ? "bg-[#2e7d32] text-white shadow-xs"
                       : "bg-[#f4e8c5] text-[#284a2f]"
                   }`
                 }
@@ -199,8 +199,8 @@ function DashboardLayout() {
           </nav>
         </header>
 
-        {/* Dashboard Main Viewport (Applies text-xl to all rendered nested route components) */}
-        <main className="min-h-[calc(100vh-100px)] p-6 sm:p-10 text-xl font-medium text-slate-800">
+        {/* Dashboard Main Viewport */}
+        <main className="min-h-[calc(100vh-80px)] p-6 sm:p-8 text-sm font-normal text-slate-800">
           <Outlet />
         </main>
       </div>

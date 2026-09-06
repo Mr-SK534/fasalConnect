@@ -1,5 +1,3 @@
-// frontend/src/pages/auth/Register.jsx
-
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -52,56 +50,55 @@ export default function Register() {
 
   return (
     <div
-      className="h-screen w-full bg-cover bg-center relative flex items-center justify-center px-4 overflow-hidden"
+      className="min-h-screen w-full bg-cover bg-center relative flex items-center justify-center px-4 py-6"
       style={{ backgroundImage: `url('/hero.jpg')` }}
     >
-      {/* Glassmorphism card - Compact vertical layout to guarantee single-screen fit */}
-      <div className="relative z-10 w-full max-w-2xl bg-transparent backdrop-blur-none p-5 sm:p-6 rounded-3xl shadow-2xl border border-white/5 my-auto max-h-[96vh] flex flex-col justify-center">
+      <div className="relative z-10 w-full max-w-lg bg-transparent backdrop-blur-none p-6 sm:p-7 rounded-2xl shadow-xl border border-white/5 my-auto">
         {/* Language Switcher */}
         <div className="flex justify-end mb-2">
           <select
             value={i18n.language}
             onChange={(e) => changeLanguage(e.target.value)}
-            className="bg-white/20 border border-white/40 text-white rounded-lg px-3 py-1 text-sm font-bold backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer"
+            className="bg-white/20 border border-white/40 text-white rounded-lg px-2.5 py-1 text-sm font-bold backdrop-blur-xs focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer"
           >
-            <option value="en" className="text-gray-900 font-semibold">
+            <option value="en" className="text-slate-900 font-semibold">
               English
             </option>
-            <option value="hi" className="text-gray-900 font-semibold">
+            <option value="hi" className="text-slate-900 font-semibold">
               हिन्दी
             </option>
-            <option value="bn" className="text-gray-900 font-semibold">
+            <option value="bn" className="text-slate-900 font-semibold">
               বাংলা
             </option>
-            <option value="mr" className="text-gray-900 font-semibold">
+            <option value="mr" className="text-slate-900 font-semibold">
               मराठी
             </option>
           </select>
         </div>
 
-        <div className="text-center mb-3">
+        <div className="text-center mb-4">
           <div className="text-3xl mb-1">🌿</div>
-          <h1 className="text-3xl font-black text-white drop-shadow-xl tracking-tight leading-tight">
+          <h1 className="text-2xl font-black text-white drop-shadow-md tracking-tight">
             {t("register.heading")}
           </h1>
-          <p className="text-white/95 text-base font-semibold mt-0.5 drop-shadow-md">
+          <p className="text-white/95 text-sm font-medium mt-0.5 drop-shadow-xs">
             {t("register.subtitle")}
           </p>
         </div>
 
         {error && (
-          <div className="mb-3 text-base font-bold text-red-100 bg-red-600/80 backdrop-blur-sm border border-red-400/50 rounded-xl px-4 py-2 shadow-md">
+          <div className="mb-3 text-sm font-semibold text-red-100 bg-red-600/80 backdrop-blur-xs border border-red-400/50 rounded-xl px-3.5 py-2 shadow-xs">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3.5 text-sm">
           <div>
             <RoleSelector value={role} onChange={setRole} />
           </div>
 
           <div>
-            <label className="block text-base font-bold text-white mb-1 drop-shadow-md">
+            <label className="block font-bold text-white mb-1 drop-shadow-xs">
               {t("register.fullName")}
             </label>
             <input
@@ -109,13 +106,13 @@ export default function Register() {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-2.5 text-3xl font-medium text-slate-900 bg-white/80 backdrop-blur-sm border border-white/40 rounded-xl focus:outline-none focus:ring-4 focus:ring-green-400/50 shadow-lg placeholder:text-gray-500 placeholder:text-xl"
+              className="w-full px-3.5 py-2 text-sm font-medium text-slate-900 bg-white/80 backdrop-blur-xs border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400/50 shadow-xs placeholder:text-slate-400"
               placeholder={t("register.namePlaceholder")}
             />
           </div>
 
           <div>
-            <label className="block text-base font-bold text-white mb-1 drop-shadow-md">
+            <label className="block font-bold text-white mb-1 drop-shadow-xs">
               {t("register.phoneNumber")}
             </label>
             <input
@@ -123,26 +120,26 @@ export default function Register() {
               required
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-4 py-2.5 text-3xl font-medium text-slate-900 bg-white/80 backdrop-blur-sm border border-white/40 rounded-xl focus:outline-none focus:ring-4 focus:ring-green-400/50 shadow-lg placeholder:text-gray-500 placeholder:text-xl"
+              className="w-full px-3.5 py-2 text-sm font-medium text-slate-900 bg-white/80 backdrop-blur-xs border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400/50 shadow-xs placeholder:text-slate-400"
               placeholder={t("register.phonePlaceholder")}
             />
           </div>
 
           <div>
-            <label className="block text-base font-bold text-white mb-1 drop-shadow-md">
+            <label className="block font-bold text-white mb-1 drop-shadow-xs">
               {t("register.emailOptional")}
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2.5 text-3xl font-medium text-slate-900 bg-white/80 backdrop-blur-sm border border-white/40 rounded-xl focus:outline-none focus:ring-4 focus:ring-green-400/50 shadow-lg placeholder:text-gray-500 placeholder:text-xl"
+              className="w-full px-3.5 py-2 text-sm font-medium text-slate-900 bg-white/80 backdrop-blur-xs border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400/50 shadow-xs placeholder:text-slate-400"
               placeholder={t("register.emailPlaceholder")}
             />
           </div>
 
           <div>
-            <label className="block text-base font-bold text-white mb-1 drop-shadow-md">
+            <label className="block font-bold text-white mb-1 drop-shadow-xs">
               {t("register.password")}
             </label>
             <div className="relative">
@@ -152,13 +149,13 @@ export default function Register() {
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2.5 pr-14 text-3xl font-medium text-slate-900 bg-white/80 backdrop-blur-sm border border-white/40 rounded-xl focus:outline-none focus:ring-4 focus:ring-green-400/50 shadow-lg placeholder:text-gray-500 placeholder:text-xl"
+                className="w-full px-3.5 py-2 pr-10 text-sm font-medium text-slate-900 bg-white/80 backdrop-blur-xs border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400/50 shadow-xs placeholder:text-slate-400"
                 placeholder={t("register.passwordPlaceholder")}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-700 hover:text-gray-900 focus:outline-none p-1"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-700 hover:text-slate-900 focus:outline-none p-1"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -168,7 +165,7 @@ export default function Register() {
                     viewBox="0 0 24 24"
                     strokeWidth={2}
                     stroke="currentColor"
-                    className="w-7 h-7"
+                    className="w-5 h-5"
                   >
                     <path
                       strokeLinecap="round"
@@ -183,7 +180,7 @@ export default function Register() {
                     viewBox="0 0 24 24"
                     strokeWidth={2}
                     stroke="currentColor"
-                    className="w-7 h-7"
+                    className="w-5 h-5"
                   >
                     <path
                       strokeLinecap="round"
@@ -204,7 +201,7 @@ export default function Register() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-green-600 text-white py-3 rounded-xl text-2xl font-black hover:bg-green-700 disabled:opacity-50 shadow-xl transition transform hover:scale-[1.01] active:scale-[0.99] mt-2"
+            className="w-full bg-[#2e7d32] text-white py-2.5 rounded-xl text-sm font-bold hover:bg-[#246b28] disabled:opacity-50 shadow-xs transition mt-2"
           >
             {isSubmitting
               ? t("register.registeringButton")
@@ -212,11 +209,11 @@ export default function Register() {
           </button>
         </form>
 
-        <p className="text-lg text-white font-extrabold mt-3 text-center drop-shadow-md">
+        <p className="text-sm text-white font-semibold mt-4 text-center drop-shadow-xs">
           {t("register.alreadyHaveAccount")}{" "}
           <Link
             to="/login"
-            className="text-yellow-300 font-black hover:underline ml-1"
+            className="text-yellow-300 font-bold hover:underline ml-1"
           >
             {t("register.loginLink")}
           </Link>
