@@ -10,6 +10,11 @@ namespace FarmerMarketplace.Api.DTOs
         public double Longitude { get; set; }
         public decimal DistanceFromPreviousKm { get; set; }
         public DateTime EstimatedArrival { get; set; }
+        public string StopType { get; set; } = "Delivery";
+        public string? Address { get; set; }
+        public string? FarmerName { get; set; }
+        public DateTime PickupDate { get; set; }
+        public DateTime DeliveryDate { get; set; }
     }
 
     public class RouteResponseDto

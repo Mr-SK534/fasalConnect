@@ -3,14 +3,20 @@ using FarmerMarketplace.Api.DTOs;
 using FarmerMarketplace.Api.Interfaces;
 using FarmerMarketplace.Api.Models;
 using Microsoft.EntityFrameworkCore;
+using FarmerMarketplace.Api.Security;
 
 namespace FarmerMarketplace.Api.Services
 {
     public class AdminService : IAdminService
     {
         private readonly AppDbContext _context;
+        private readonly PasswordHasher _passwordHasher;
 
-        public AdminService(AppDbContext context) => _context = context;
+        public AdminService(AppDbContext context, PasswordHasher passwordHasher)
+        {
+            _context = context;
+            _passwordHasher = passwordHasher;
+        }
 
         public async Task<AdminUserListResponseDto> GetUsersAsync(Guid requestingUserId, string? role, string? userRole, string? search, int page, int pageSize)
         {
@@ -27,6 +33,40 @@ namespace FarmerMarketplace.Api.Services
         public async Task<UserResponseDto> GetUserByIdAsync(Guid id)
         {
             var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(item => item.Id == id) ?? throw new KeyNotFoundException("User not found.");
+            return MapUser(user);
+        }
+
+        public async Task<UserResponseDto> CreateUserAsync(CreateAdminUserDto dto)
+        {
+            var phone = dto.Phone.Trim();
+            var email = string.IsNullOrWhiteSpace(dto.Email) ? null : dto.Email.Trim().ToLowerInvariant();
+
+            if (await _context.Users.AnyAsync(user => user.Phone == phone))
+                throw new InvalidOperationException("An account with this phone number already exists.");
+            if (email != null && await _context.Users.AnyAsync(user => user.Email != null && user.Email.ToLower() == email))
+                throw new InvalidOperationException("An account with this email already exists.");
+
+            var profileComplete = !string.IsNullOrWhiteSpace(dto.Village)
+                || !string.IsNullOrWhiteSpace(dto.District)
+                || !string.IsNullOrWhiteSpace(dto.State)
+                || !string.IsNullOrWhiteSpace(dto.BusinessName)
+                || !string.IsNullOrWhiteSpace(dto.DeliveryAddress)
+                || !string.IsNullOrWhiteSpace(dto.PrimaryCrops);
+
+            var user = new User
+            {
+                Name = dto.Name.Trim(), Phone = phone, Email = email,
+                PasswordHash = _passwordHasher.HashPassword(dto.Password), Role = dto.Role,
+                PreferredLanguage = string.IsNullOrWhiteSpace(dto.PreferredLanguage) ? "en" : dto.PreferredLanguage,
+                Village = dto.Village, District = dto.District, State = dto.State, Pincode = dto.Pincode,
+                PrimaryCrops = dto.PrimaryCrops, BankAccountNumber = dto.BankAccountNumber,
+                BankIfsc = dto.BankIfsc, AccountHolderName = dto.AccountHolderName, UpiId = dto.UpiId,
+                BusinessName = dto.BusinessName, GstNumber = dto.GstNumber, DeliveryAddress = dto.DeliveryAddress,
+                IsProfileComplete = profileComplete, UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
             return MapUser(user);
         }
 

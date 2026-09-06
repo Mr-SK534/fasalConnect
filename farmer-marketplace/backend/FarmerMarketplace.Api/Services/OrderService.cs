@@ -5,16 +5,23 @@ using FarmerMarketplace.Api.DTOs;
 using FarmerMarketplace.Api.Interfaces;
 using FarmerMarketplace.Api.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace FarmerMarketplace.Api.Services
 {
     public class OrderService : IOrderService
     {
         private readonly AppDbContext _context;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<OrderService> _logger;
 
-        public OrderService(AppDbContext context)
+        public OrderService(AppDbContext context, IHttpClientFactory httpClientFactory, ILogger<OrderService> logger)
         {
             _context = context;
+            _httpClientFactory = httpClientFactory;
+            _logger = logger;
         }
 
         public async Task<OrderResponseDto> CreateAsync(Guid buyerId, OrderDto dto)
@@ -34,6 +41,20 @@ namespace FarmerMarketplace.Api.Services
                 DeliveryAddress = dto.DeliveryType == DeliveryType.Delivery ? dto.DeliveryAddress : null,
                 Status = OrderStatus.Pending
             };
+
+            if (order.DeliveryType == DeliveryType.Delivery)
+            {
+                var coordinates = await GeocodeAddressAsync(order.DeliveryAddress);
+                if (coordinates.HasValue)
+                {
+                    order.Latitude = coordinates.Value.Lat;
+                    order.Longitude = coordinates.Value.Lng;
+                }
+                else
+                {
+                    _logger.LogWarning("Could not geocode delivery address during order creation: {Address}", order.DeliveryAddress);
+                }
+            }
 
             decimal totalAmount = 0;
 
@@ -135,6 +156,47 @@ namespace FarmerMarketplace.Api.Services
             await _context.SaveChangesAsync();
 
             return await GetByIdAsync(order.Id, buyerId, nameof(UserRole.Buyer));
+        }
+
+        private async Task<(double Lat, double Lng)?> GeocodeAddressAsync(string? address)
+        {
+            if (string.IsNullOrWhiteSpace(address)) return null;
+
+            var normalized = address.Trim();
+            var postalCode = Regex.Match(normalized, @"\b\d{6}\b").Value;
+            var locality = Regex.Replace(normalized, @"^(flat|floor|house|plot|door|unit)\s+[^,]+,?\s*", string.Empty, RegexOptions.IgnoreCase).Trim();
+            var candidates = new[] { normalized, $"{normalized}, India", locality, $"{locality}, India", string.IsNullOrWhiteSpace(postalCode) ? null : $"{postalCode}, India" }
+                .Where(candidate => !string.IsNullOrWhiteSpace(candidate))
+                .Select(candidate => candidate!)
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+
+            var client = _httpClientFactory.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(10);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("FasalConnect/1.0 route-planner");
+
+            foreach (var candidate in candidates)
+            {
+                try
+                {
+                    var url = $"https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=in&q={Uri.EscapeDataString(candidate)}";
+                    using var response = await client.GetAsync(url);
+                    if (!response.IsSuccessStatusCode) continue;
+                    using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+                    var result = document.RootElement.EnumerateArray().FirstOrDefault();
+                    if (result.ValueKind == JsonValueKind.Undefined) continue;
+                    var lat = result.TryGetProperty("lat", out var latProperty) ? latProperty.GetString() : null;
+                    var lng = result.TryGetProperty("lon", out var lngProperty) ? lngProperty.GetString() : null;
+                    if (double.TryParse(lat, NumberStyles.Float, CultureInfo.InvariantCulture, out var latitude)
+                        && double.TryParse(lng, NumberStyles.Float, CultureInfo.InvariantCulture, out var longitude))
+                        return (latitude, longitude);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug(ex, "Geocoding candidate failed: {Address}", candidate);
+                }
+            }
+
+            return null;
         }
 
         public async Task<OrderResponseDto> GetByIdAsync(Guid id, Guid requestingUserId, string? role)

@@ -45,6 +45,7 @@ builder.Services.AddSwaggerGen(options =>
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHttpClient();
 
 // Security helpers
 builder.Services.AddSingleton<PasswordHasher>();
@@ -58,6 +59,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFpoService, FpoService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IRouteService, RouteService>();
 // TODO: register IOrderService, IForecastService,
 // IRouteService, IPaymentService, IWhatsAppService here as they're built
 

@@ -12,6 +12,8 @@ namespace FarmerMarketplace.Api.Interfaces
 
         Task<UserResponseDto> GetUserByIdAsync(Guid id);
 
+        Task<UserResponseDto> CreateUserAsync(CreateAdminUserDto dto);
+
         Task<UserResponseDto> SuspendUserAsync(Guid id, SuspendUserDto dto);
 
         Task<AdminOrderListResponseDto> GetOrdersAsync(string? status, DateTime? dateFrom, DateTime? dateTo, int page, int pageSize);

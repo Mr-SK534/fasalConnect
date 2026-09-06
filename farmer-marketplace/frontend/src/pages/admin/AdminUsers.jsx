@@ -3,6 +3,7 @@ import { toast } from "react-hot-toast";
 import {
   getAdminUserById,
   getAdminUsers,
+  createAdminUser,
   suspendUser,
 } from "../../services/adminService";
 
@@ -44,6 +45,29 @@ export default function AdminUsers() {
   const [detail, setDetail] = useState(null);
   const [suspendTarget, setSuspendTarget] = useState(null);
   const [reason, setReason] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
+  const [createForm, setCreateForm] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    password: "",
+    role: "Farmer",
+    preferredLanguage: "en",
+    village: "",
+    district: "",
+    state: "",
+    pincode: "",
+    primaryCrops: "",
+    bankAccountNumber: "",
+    bankIfsc: "",
+    accountHolderName: "",
+    upiId: "",
+    businessName: "",
+    gstNumber: "",
+    deliveryAddress: "",
+  });
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -98,13 +122,59 @@ export default function AdminUsers() {
       );
     }
   };
+  const createUser = async (event) => {
+    event.preventDefault();
+    setCreating(true);
+    setCreateError("");
+    try {
+      await createAdminUser({
+        ...createForm,
+        email: createForm.email || undefined,
+        village: createForm.village || undefined,
+        district: createForm.district || undefined,
+        state: createForm.state || undefined,
+        pincode: createForm.pincode || undefined,
+        primaryCrops: createForm.primaryCrops || undefined,
+        businessName: createForm.businessName || undefined,
+        deliveryAddress: createForm.deliveryAddress || undefined,
+      });
+      setShowCreate(false);
+      setCreateForm({
+        ...createForm,
+        name: "",
+        phone: "",
+        email: "",
+        password: "",
+      });
+      toast.success("User account created");
+      await load();
+    } catch (requestError) {
+      setCreateError(
+        requestError.response?.data?.message || "Could not create user.",
+      );
+    } finally {
+      setCreating(false);
+    }
+  };
   return (
     <div className="mx-auto max-w-7xl space-y-5">
       <header>
         <p className="text-xs font-bold uppercase tracking-wider text-green-700">
           Platform control
         </p>
-        <h2 className="text-3xl font-black text-[#163820]">All Users</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-3xl font-black text-[#163820]">All Users</h2>
+          <button
+            type="button"
+            onClick={() => {
+              setCreateError("");
+              setShowCreate(true);
+            }}
+            className="rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-700"
+          >
+            + Add User
+          </button>
+        </div>
       </header>
       <div className="flex flex-col gap-3 sm:flex-row">
         <input
@@ -329,6 +399,114 @@ export default function AdminUsers() {
               </button>
               <button className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white">
                 Confirm Suspend
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+      {showCreate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <form
+            onSubmit={createUser}
+            className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold">Create User Account</h3>
+              <button type="button" onClick={() => setShowCreate(false)}>
+                ×
+              </button>
+            </div>
+            {createError && (
+              <p className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                {createError}
+              </p>
+            )}
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {[
+                ["name", "Full name", true],
+                ["phone", "Phone", true],
+                ["email", "Email", false],
+                ["password", "Password", true],
+                ["village", "Village", false],
+                ["district", "District", false],
+                ["state", "State", false],
+                ["pincode", "Pincode", false],
+                ["primaryCrops", "Primary crops", false],
+                ["bankAccountNumber", "Bank account number", false],
+                ["bankIfsc", "IFSC", false],
+                ["accountHolderName", "Account holder", false],
+                ["upiId", "UPI ID", false],
+                ["businessName", "Business name", false],
+                ["gstNumber", "GST number", false],
+              ].map(([name, label, required]) => (
+                <label
+                  key={name}
+                  className="text-sm font-medium text-slate-700"
+                >
+                  {label}
+                  <input
+                    required={required}
+                    minLength={name === "password" ? 6 : undefined}
+                    type={
+                      name === "password"
+                        ? "password"
+                        : name === "email"
+                          ? "email"
+                          : "text"
+                    }
+                    value={createForm[name]}
+                    onChange={(event) =>
+                      setCreateForm({
+                        ...createForm,
+                        [name]: event.target.value,
+                      })
+                    }
+                    className="mt-1 w-full rounded-lg border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-400"
+                  />
+                </label>
+              ))}
+              <label className="text-sm font-medium text-slate-700">
+                Role
+                <select
+                  value={createForm.role}
+                  onChange={(event) =>
+                    setCreateForm({ ...createForm, role: event.target.value })
+                  }
+                  className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3"
+                >
+                  <option>Farmer</option>
+                  <option>Buyer</option>
+                  <option>FpoAdmin</option>
+                </select>
+              </label>
+              <label className="text-sm font-medium text-slate-700 sm:col-span-2">
+                Delivery address
+                <textarea
+                  value={createForm.deliveryAddress}
+                  onChange={(event) =>
+                    setCreateForm({
+                      ...createForm,
+                      deliveryAddress: event.target.value,
+                    })
+                  }
+                  rows="2"
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-400"
+                />
+              </label>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCreate(false)}
+                className="rounded-lg border px-4 py-2"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={creating}
+                className="rounded-lg bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700 disabled:opacity-60"
+              >
+                {creating ? "Creating..." : "Create User"}
               </button>
             </div>
           </form>

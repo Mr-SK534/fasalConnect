@@ -42,6 +42,14 @@ namespace FarmerMarketplace.Api.Controllers
         [Authorize(Roles = "PlatformAdmin")]
         public async Task<ActionResult<UserResponseDto>> GetUser(Guid id) => Ok(await _adminService.GetUserByIdAsync(id));
 
+        [HttpPost("users")]
+        [Authorize(Roles = "PlatformAdmin")]
+        public async Task<ActionResult<UserResponseDto>> CreateUser([FromBody] CreateAdminUserDto dto)
+        {
+            var result = await _adminService.CreateUserAsync(dto);
+            return StatusCode(StatusCodes.Status201Created, result);
+        }
+
         [HttpPut("users/{id}/suspend")]
         [Authorize(Roles = "PlatformAdmin")]
         public async Task<ActionResult<UserResponseDto>> SuspendUser(Guid id, [FromBody] SuspendUserDto dto) => Ok(await _adminService.SuspendUserAsync(id, dto));

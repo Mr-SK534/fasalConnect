@@ -35,5 +35,17 @@ namespace FarmerMarketplace.Api.Models
         public decimal DistanceFromPreviousKm { get; set; }
 
         public DateTime EstimatedArrival { get; set; }
+
+        [MaxLength(20)]
+        public string StopType { get; set; } = "Delivery";
+
+        [MaxLength(300)]
+        public string? Address { get; set; }
+
+        [MaxLength(100)]
+        public string? FarmerName { get; set; }
+
+        public DateTime PickupDate { get; set; }
+        public DateTime DeliveryDate { get; set; }
     }
 }

@@ -6,6 +6,8 @@ export const getAdminUsers = (params) =>
   api.get("/admin/users", { params }).then((response) => response.data);
 export const getAdminUserById = (id) =>
   api.get(`/admin/users/${id}`).then((response) => response.data);
+export const createAdminUser = (payload) =>
+  api.post("/admin/users", payload).then((response) => response.data);
 export const suspendUser = (id, suspended, reason) =>
   api
     .put(`/admin/users/${id}/suspend`, { suspended, reason })
