@@ -1,4 +1,70 @@
 {
+  "nav": {
+    "signIn": "Sign in",
+    "getStarted": "Get started"
+  },
+  "home": {
+    "badgeNoMiddlemen": "No Middlemen",
+    "liveListing": "Live Listing",
+    "sampleCrop": "Grade A Tomatoes",
+    "sampleAvailable": "420 kg batch available",
+    "buyBatch": "Buy Batch",
+    "badgeTagline": "Built for Bharat's Agricultural Future",
+    "heroTitlePart1": "Fresh produce.",
+    "heroTitlePart2": "Fair price.",
+    "heroTitlePart3": "Zero agents.",
+    "heroDescription": "FasalConnect links farmers directly with enterprise buyers and regional markets across India—eliminating extra margins and ensuring transparent transactions.",
+    "btnStartSelling": "Start Selling Today",
+    "btnFindProduce": "Find Fresh Produce",
+    "trustRazorpay": "Razorpay Secured",
+    "trustLanguages": "4 Languages",
+    "trustWhatsApp": "WhatsApp Support",
+    "stats": {
+      "income": "Income vs Traditional Mandi",
+      "fees": "Hidden Fees or Commissions",
+      "delivery": "Farm to Door Delivery",
+      "payment": "Direct Payment Assurance"
+    },
+    "featuresHeading": "Built for Modern Agritech",
+    "featuresSubheading": "Engineered specifically to solve aggregation, pricing transparency, and regional logistics challenges across India.",
+    "features": {
+      "sellPrice": {
+        "title": "Sell at your price, not theirs",
+        "body": "List your produce directly. No mandi agent, no commission layer. Buyers see your real price — you keep what you earn.",
+        "statLabel": "avg. farmer income gain"
+      },
+      "bulkOrders": {
+        "title": "Bulk orders, without the chaos",
+        "body": "A restaurant needs 200 kg of tomatoes. One farmer has 80 kg. Our aggregator quietly pools nearby FPO members and fulfils the order — you just confirm and get paid.",
+        "statLabel": "list → order → paid"
+      },
+      "cheaperDelivery": {
+        "title": "Routes that make delivery cheaper",
+        "body": "Our optimizer plans the shortest path across all active pickups in your zone. Less fuel, faster delivery, fresher produce at the buyer's door.",
+        "statLabel": "farm to buyer"
+      },
+      "demandForecast": {
+        "title": "Know what to grow next season",
+        "body": "Our demand forecast reads last season's orders and tells you which crops are trending in your region — before you plant, not after.",
+        "statLabel": "crop demand forecast"
+      }
+    },
+    "howItWorksHeading": "How FasalConnect Works",
+    "roleFarmer": "For Farmer / FPO",
+    "farmerStep1": "Register & verify profile",
+    "farmerStep2": "List produce directly with custom pricing",
+    "farmerStep3": "Fulfill pooled orders and receive same-day payout",
+    "roleBuyer": "For Buyer",
+    "buyerStep1": "Browse direct farm listings nearby",
+    "buyerStep2": "Order directly with zero agent markups",
+    "buyerStep3": "Track regional delivery in real-time",
+    "ctaHeading": "Ready to Take Direct Control?",
+    "ctaSubheading": "Join thousands of independent farmers, FPOs, and business buyers streamlining agri-trade today.",
+    "btnRegister": "Register Free"
+  },
+  "footer": {
+    "whatsApp": "WhatsApp Support"
+  },
   "login": {
     "heading": "Welcome back",
     "subtitle": "Sign in to your FasalConnect account",
