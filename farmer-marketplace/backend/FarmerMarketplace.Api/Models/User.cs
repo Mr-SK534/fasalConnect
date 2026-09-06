@@ -24,7 +24,7 @@ namespace FarmerMarketplace.Api.Models
 
     
         [MaxLength(150)]
-        public string Email { get; set; } = string.Empty;
+        public string? Email { get; set; } = string.Empty;
 
         [Required]
         public string PasswordHash { get; set; } = string.Empty;
