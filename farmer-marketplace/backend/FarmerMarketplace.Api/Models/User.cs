@@ -93,6 +93,11 @@ namespace FarmerMarketplace.Api.Models
 
         public bool IsProfileComplete { get; set; } = false;
 
+        public bool Suspended { get; set; } = false;
+
+        [MaxLength(500)]
+        public string? SuspensionReason { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }

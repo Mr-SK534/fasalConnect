@@ -71,8 +71,18 @@ const navigationByRole = {
   ],
   [ROLES.PLATFORM_ADMIN]: [
     {
-      section: "MAIN",
-      items: [{ label: "Dashboard", to: "/admin/dashboard", icon: FiGrid }],
+      section: "PLATFORM",
+      items: [
+        { label: "Dashboard", to: "/admin/dashboard", icon: FiGrid },
+        { label: "Users", to: "/admin/users", icon: FiUsers },
+        { label: "Orders", to: "/admin/orders", icon: FiCheckSquare },
+        { label: "Payment Splits", to: "/admin/splits", icon: FiBox },
+        {
+          label: "Route Optimization",
+          to: "/admin/routes",
+          icon: FiTrendingUp,
+        },
+      ],
     },
     {
       section: "ACCOUNT",

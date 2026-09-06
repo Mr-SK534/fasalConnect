@@ -87,6 +87,9 @@ namespace FarmerMarketplace.Api.Services
             if (user == null || !_passwordHasher.VerifyPassword(dto.Password, user.PasswordHash))
                 throw new UnauthorizedAccessException("Invalid credentials.");
 
+            if (user.Suspended)
+                throw new UnauthorizedAccessException("This account is suspended.");
+
             var (token, _, _) = _jwtService.GenerateToken(user);
 
             return new AuthResponseDto

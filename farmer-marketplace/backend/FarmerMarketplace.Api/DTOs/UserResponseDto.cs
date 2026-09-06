@@ -18,6 +18,8 @@ namespace FarmerMarketplace.Api.DTOs
         // v2: required on every user object per contract
         public bool IsProfileComplete { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool Suspended { get; set; }
+        public string? SuspensionReason { get; set; }
 
         public string? Village { get; set; }
         public string? District { get; set; }

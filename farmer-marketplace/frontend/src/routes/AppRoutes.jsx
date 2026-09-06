@@ -34,6 +34,10 @@ import FPOOrders from "../pages/fpo-admin/FPOOrders";
 
 // Platform Admin pages
 import RouteDashboard from "../pages/admin/RouteDashboard";
+import AdminDashboard from "../pages/admin/AdminDashboard";
+import AdminUsers from "../pages/admin/AdminUsers";
+import AdminOrders from "../pages/admin/AdminOrders";
+import PaymentSplits from "../pages/admin/PaymentSplits";
 import ProfilePage from "../pages/profile/ProfilePage";
 
 import { useAuth } from "../hooks/useAuth";
@@ -143,7 +147,11 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route path="dashboard" element={<RouteDashboard />} />
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="users" element={<AdminUsers />} />
+        <Route path="orders" element={<AdminOrders />} />
+        <Route path="splits" element={<PaymentSplits />} />
+        <Route path="routes" element={<RouteDashboard />} />
       </Route>
       {/* ---------- Fallback ---------- */}
       <Route path="*" element={<Home />} />
