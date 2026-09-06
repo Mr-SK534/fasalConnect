@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FarmerMarketplace.Api.Services
 {
-    public class AdminService:IAdminService
+    public class AdminService : IAdminService
     {
         private readonly AppDbContext _context;
 
@@ -35,29 +35,49 @@ namespace FarmerMarketplace.Api.Services
             return users.Select(MapToResponseDto).ToList();
         }
 
+
+        // backend/FarmerMarketplace.Api/Services/AdminService.cs — updated GetSummaryAsync
+
         public async Task<AdminSummaryDto> GetSummaryAsync(Guid requestingUserId, string? role)
         {
-            IQueryable<User> query = _context.Users.AsNoTracking();
+            IQueryable<User> userQuery = _context.Users.AsNoTracking();
+            IQueryable<Product> productQuery = _context.Products.AsNoTracking();
+            IQueryable<Order> orderQuery = _context.Orders.AsNoTracking();
 
             if (role == nameof(UserRole.FpoAdmin))
             {
-                query = query.Where(u => u.FpoId == requestingUserId);
+                // Scope everything to farmers linked under this FPO
+                userQuery = userQuery.Where(u => u.FpoId == requestingUserId);
+
+                var linkedFarmerIds = await _context.Users
+                    .Where(u => u.FpoId == requestingUserId && u.Role == UserRole.Farmer)
+                    .Select(u => u.Id)
+                    .ToListAsync();
+
+                productQuery = productQuery.Where(p => linkedFarmerIds.Contains(p.FarmerId));
+
+                orderQuery = orderQuery.Where(o =>
+                    _context.OrderItems.Any(i => i.OrderId == o.Id && linkedFarmerIds.Contains(i.FarmerId)));
             }
 
-            var totalFarmers = await query.CountAsync(u => u.Role == UserRole.Farmer);
-            var totalBuyers = await query.CountAsync(u => u.Role == UserRole.Buyer);
+            var totalFarmers = await userQuery.CountAsync(u => u.Role == UserRole.Farmer);
+            var totalBuyers = await userQuery.CountAsync(u => u.Role == UserRole.Buyer);
             var totalFpoAdmins = role == nameof(UserRole.FpoAdmin)
-                ? 0 // an FpoAdmin scoped to their own farmers has no other FpoAdmins to count
+                ? 0
                 : await _context.Users.AsNoTracking().CountAsync(u => u.Role == UserRole.FpoAdmin);
+
+            var totalProducts = await productQuery.CountAsync(p => p.IsActive);
+            var totalOrders = await orderQuery.CountAsync();
+            var pendingOrders = await orderQuery.CountAsync(o => o.Status == OrderStatus.Pending);
 
             return new AdminSummaryDto
             {
                 TotalFarmers = totalFarmers,
                 TotalBuyers = totalBuyers,
                 TotalFpoAdmins = totalFpoAdmins,
-                TotalProducts = 0,   // TODO: populate once ProductService exists
-                TotalOrders = 0,     // TODO: populate once OrderService exists
-                PendingOrders = 0    // TODO: populate once OrderService exists
+                TotalProducts = totalProducts,
+                TotalOrders = totalOrders,
+                PendingOrders = pendingOrders
             };
         }
 
