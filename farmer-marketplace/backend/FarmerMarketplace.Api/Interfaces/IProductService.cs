@@ -18,5 +18,7 @@ namespace FarmerMarketplace.Api.Interfaces
         Task<ProductResponseDto> UpdateAsync(Guid id, Guid requestingUserId, string? role, ProductDto dto);
 
         Task DeleteAsync(Guid id, Guid requestingUserId, string? role);
+
+        Task<(byte[] Data, string ContentType)> GetImageAsync(Guid id);
     }
 }

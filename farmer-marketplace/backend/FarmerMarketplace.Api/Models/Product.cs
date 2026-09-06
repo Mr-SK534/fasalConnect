@@ -39,11 +39,13 @@ namespace FarmerMarketplace.Api.Models
         public string? Description { get; set; }
 
         [MaxLength(500)]
-        public string? ImageUrl { get; set; }
+        public byte[]? ImageData { get; set; }
 
         // Ownership — the farmer (or FpoAdmin listing on behalf of a linked farmer) who created this
         [Required]
         public Guid FarmerId { get; set; }
+        [MaxLength(50)]
+        public string? ImageContentType { get; set; }
 
         [ForeignKey(nameof(FarmerId))]
         public User? Farmer { get; set; }

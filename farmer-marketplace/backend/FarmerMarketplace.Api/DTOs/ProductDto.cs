@@ -32,5 +32,11 @@ namespace FarmerMarketplace.Api.DTOs
         public string? Description { get; set; }
         public string? ImageUrl { get; set; }
         public string? Region { get; set; }
+
+        [Required]
+        public string ImageBase64 { get; set; } = string.Empty;
+
+        [Required]
+        public string ImageContentType { get; set; } = string.Empty;
     }
 }

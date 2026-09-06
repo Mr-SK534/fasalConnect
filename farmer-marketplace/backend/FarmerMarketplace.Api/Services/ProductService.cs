@@ -88,7 +88,8 @@ namespace FarmerMarketplace.Api.Services
                 Category = dto.Category,
                 HarvestDate = dto.HarvestDate,
                 Description = dto.Description,
-                ImageUrl = dto.ImageUrl,
+                ImageData = Convert.FromBase64String(dto.ImageBase64),
+                ImageContentType = dto.ImageContentType,
                 Region = dto.Region,
                 FarmerId = farmerId
             };
@@ -130,7 +131,8 @@ namespace FarmerMarketplace.Api.Services
                 product.Category = dto.Category;
                 product.HarvestDate = dto.HarvestDate;
                 product.Description = dto.Description;
-                product.ImageUrl = dto.ImageUrl;
+                product.ImageData = Convert.FromBase64String(dto.ImageBase64);
+                product.ImageContentType = dto.ImageContentType;
                 product.Region = dto.Region;
                 product.UpdatedAt = DateTime.UtcNow;
 
@@ -174,7 +176,7 @@ namespace FarmerMarketplace.Api.Services
                 Category = product.Category,
                 HarvestDate = product.HarvestDate,
                 Description = product.Description,
-                ImageUrl = product.ImageUrl,
+                ImageUrl = $"/api/products/{product.Id}/image",
                 Region = product.Region,
                 IsActive = product.IsActive,
                 CreatedAt = product.CreatedAt,
@@ -182,6 +184,16 @@ namespace FarmerMarketplace.Api.Services
                 FarmerName = product.Farmer?.Name ?? string.Empty,
                 FarmerLocation = product.Farmer?.Location
             };
+        }
+
+
+               public async Task<(byte[] Data, string ContentType)> GetImageAsync(Guid id)
+        {
+                var product = await _context.Products.FindAsync(id);
+                if (product?.ImageData == null)
+                throw new KeyNotFoundException("Image not found.");
+
+                return (product.ImageData, product.ImageContentType ?? "image/jpeg");
         }
     }
 }
