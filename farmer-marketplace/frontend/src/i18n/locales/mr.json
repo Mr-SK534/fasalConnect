@@ -1,7 +1,31 @@
 {
+  "header": {
+    "tagline": "आमच्या शेतातून एका उज्ज्वल उद्याकडे"
+  },
   "nav": {
     "signIn": "साइन इन करा",
     "getStarted": "शुरू करा"
+  },
+  "hero": {
+    "connecting": "जोडत आहे",
+    "farmers": "शेतकऱ्यांना",
+    "to": "एका चांगल्या",
+    "betterTomorrow": "उद्याशी",
+    "subheading": "ताजी उत्पादने, वाजवी भाव आणि अधिक मजबूत शेतकरी समुदायांसाठी एक आधुनिक मार्केटप्लेस."
+  },
+  "features": {
+    "freshProduce": "ताजी उत्पादने",
+    "directBuyers": "थेट खरेदीदार",
+    "betterPrices": "उत्तम भाव",
+    "strongerCommunities": "मजबूत समुदाय"
+  },
+  "cta": {
+    "shopProducts": "ताजी उत्पादने खरेदी करा",
+    "joinFarmer": "शेतकरी म्हणून सामील व्हा"
+  },
+  "footer": {
+    "motto": "हिरवळीच्या उद्यासाठी एकत्र",
+    "whatsApp": "व्हॉट्सॲप सपोर्ट"
   },
   "home": {
     "badgeNoMiddlemen": "मध्यस्थ नाही",
@@ -61,9 +85,6 @@
     "ctaHeading": "थेट नियंत्रण घेण्यास तयार आहात?",
     "ctaSubheading": "आजच हजारो स्वतंत्र शेतकरी, FPO आणि खरेदीदारांमध्ये सामील व्हा.",
     "btnRegister": "मोफत नोंदणी करा"
-  },
-  "footer": {
-    "whatsApp": "व्हॉट्सॲप सपोर्ट"
   },
   "login": {
     "heading": "परत स्वागत आहे",
@@ -131,7 +152,7 @@
     "deliveryAddress": "डिलिव्हरी पत्ता",
     "deliveryAddressPlaceholder": "संपूर्ण डिलिव्हरी पत्ता",
     "gstNumber": "जीएसटी क्रमांक (ऐच्छिक)",
-    "gstNumberPlaceholder": "जीএসटी नोंदणी क्रमांक",
+    "gstNumberPlaceholder": "जीएसटी नोंदणी क्रमांक",
     "preferredLanguage": "पसंतीची भाषा",
     "saveButton": "प्रोफाइल जतन करा",
     "saving": "जतन करत आहे..."

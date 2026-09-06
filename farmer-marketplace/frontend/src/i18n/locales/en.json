@@ -1,7 +1,31 @@
 {
+  "header": {
+    "tagline": "From Our Fields to a Brighter Tomorrow"
+  },
   "nav": {
     "signIn": "Sign in",
     "getStarted": "Get started"
+  },
+  "hero": {
+    "connecting": "Connecting",
+    "farmers": "Farmers",
+    "to": "to",
+    "betterTomorrow": "a Better Tomorrow",
+    "subheading": "A modern marketplace for fresh produce, fair prices, and stronger farming communities."
+  },
+  "features": {
+    "freshProduce": "Fresh Produce",
+    "directBuyers": "Direct Buyers",
+    "betterPrices": "Better Prices",
+    "strongerCommunities": "Stronger Communities"
+  },
+  "cta": {
+    "shopProducts": "Shop Fresh Products",
+    "joinFarmer": "Join as a Farmer"
+  },
+  "footer": {
+    "motto": "Together for a Greener Tomorrow",
+    "whatsApp": "WhatsApp Support"
   },
   "home": {
     "badgeNoMiddlemen": "No Middlemen",
@@ -61,9 +85,6 @@
     "ctaHeading": "Ready to Take Direct Control?",
     "ctaSubheading": "Join thousands of independent farmers, FPOs, and business buyers streamlining agri-trade today.",
     "btnRegister": "Register Free"
-  },
-  "footer": {
-    "whatsApp": "WhatsApp Support"
   },
   "login": {
     "heading": "Welcome back",

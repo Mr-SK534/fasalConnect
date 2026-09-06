@@ -38,3 +38,24 @@ select,
 textarea {
   font: inherit;
 }
+
+@keyframes moveClouds {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(115vw);
+  }
+}
+
+.animate-cloud-slow {
+  animation: moveClouds 45s linear infinite;
+}
+
+.animate-cloud-mid {
+  animation: moveClouds 32s linear infinite;
+}
+
+.animate-cloud-fast {
+  animation: moveClouds 24s linear infinite;
+}
