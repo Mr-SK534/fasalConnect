@@ -28,6 +28,18 @@ namespace FarmerMarketplace.Api.Controllers
             return Ok(result);
         }
 
+        [HttpGet("{id}/profile")]
+        [Authorize]
+        public async Task<ActionResult<UserResponseDto>> GetProfile(Guid id)
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                               ?? User.FindFirstValue("sub");
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var requestingUserId))
+                return Unauthorized();
+
+            return Ok(await _userService.GetProfileAsync(id, requestingUserId));
+        }
+
         // PUT /api/users/{id}
         [HttpPut("{id}")]
         [Authorize]

@@ -4,6 +4,7 @@ using FarmerMarketplace.Api.Data;
 using FarmerMarketplace.Api.DTOs;
 using FarmerMarketplace.Api.Interfaces;
 using FarmerMarketplace.Api.Models;
+using FarmerMarketplace.Api.Security;
 using Microsoft.EntityFrameworkCore;
 
 namespace FarmerMarketplace.Api.Services
@@ -11,10 +12,12 @@ namespace FarmerMarketplace.Api.Services
     public class FpoService: IFpoService
     {
         private readonly AppDbContext _context;
+        private readonly PasswordHasher _passwordHasher;
 
-        public FpoService(AppDbContext context)
+        public FpoService(AppDbContext context, PasswordHasher passwordHasher)
         {
             _context = context;
+            _passwordHasher = passwordHasher;
         }
 
         public async Task<List<UserResponseDto>> GetLinkedFarmersAsync(Guid fpoId, Guid requestingUserId, string? role)
@@ -57,6 +60,58 @@ namespace FarmerMarketplace.Api.Services
             await _context.SaveChangesAsync();
 
             return MapToResponseDto(farmer);
+        }
+
+        public async Task<UserResponseDto> CreateFarmerAsync(Guid fpoId, Guid requestingUserId, CreateFpoFarmerDto dto)
+        {
+            await EnsureFpoAccess(fpoId, requestingUserId, nameof(UserRole.FpoAdmin));
+
+            var phone = dto.Phone.Trim();
+            var email = string.IsNullOrWhiteSpace(dto.Email) ? null : dto.Email.Trim().ToLowerInvariant();
+
+            if (await _context.Users.AnyAsync(u => u.Phone == phone))
+                throw new InvalidOperationException("Phone is already registered.");
+
+            if (email != null && await _context.Users.AnyAsync(u => u.Email != null && u.Email.ToLower() == email))
+                throw new InvalidOperationException("Email is already registered.");
+
+            var farmer = new User
+            {
+                Name = dto.Name.Trim(),
+                Phone = phone,
+                Email = email,
+                PasswordHash = _passwordHasher.HashPassword(dto.Password),
+                Role = UserRole.Farmer,
+                FpoId = fpoId,
+                Village = dto.Village,
+                District = dto.District,
+                State = dto.State,
+                IsProfileComplete = false,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.Users.Add(farmer);
+            await _context.SaveChangesAsync();
+            return MapToResponseDto(farmer);
+        }
+
+        public async Task<FpoEarningsDto> GetEarningsAsync(Guid fpoId, Guid requestingUserId, string? role)
+        {
+            await EnsureFpoAccess(fpoId, requestingUserId, role);
+
+            var paidItems = await _context.OrderItems
+                .AsNoTracking()
+                .Include(item => item.Farmer)
+                .Where(item => item.Farmer != null && item.Farmer.FpoId == fpoId
+                    && _context.Payments.Any(payment => payment.OrderId == item.OrderId && payment.Status == PaymentStatus.Paid))
+                .ToListAsync();
+
+            return new FpoEarningsDto
+            {
+                TotalEarnings = paidItems.Sum(item => item.SubTotal),
+                PaidOrders = paidItems.Select(item => item.OrderId).Distinct().Count(),
+                LinkedFarmers = await _context.Users.CountAsync(user => user.FpoId == fpoId && user.Role == UserRole.Farmer)
+            };
         }
 
         public async Task UnlinkFarmerAsync(Guid fpoId, Guid farmerId, Guid requestingUserId)
@@ -106,6 +161,17 @@ namespace FarmerMarketplace.Api.Services
                 FpoId = user.FpoId,
                 IsProfileComplete = user.IsProfileComplete,
                 CreatedAt = user.CreatedAt
+                ,Village = user.Village
+                ,District = user.District
+                ,State = user.State
+                ,PrimaryCrops = user.PrimaryCrops
+                ,BankAccountNumber = user.BankAccountNumber
+                ,BankIfsc = user.BankIfsc
+                ,AccountHolderName = user.AccountHolderName
+                ,UpiId = user.UpiId
+                ,BusinessName = user.BusinessName
+                ,GstNumber = user.GstNumber
+                ,DeliveryAddress = user.DeliveryAddress
             };
         }
     }

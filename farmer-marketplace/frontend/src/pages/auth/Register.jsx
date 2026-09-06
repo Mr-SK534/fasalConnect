@@ -142,20 +142,20 @@ export default function Register() {
             <label className="block font-bold text-white mb-1 drop-shadow-xs">
               {t("register.password")}
             </label>
-            <div className="relative">
+            <div className="flex items-center w-full bg-white/80 backdrop-blur-xs border border-white/40 rounded-xl focus-within:ring-2 focus-within:ring-green-400/50 shadow-xs overflow-hidden">
               <input
                 type={showPassword ? "text" : "password"}
                 required
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3.5 py-2 pr-10 text-sm font-medium text-slate-900 bg-white/80 backdrop-blur-xs border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400/50 shadow-xs placeholder:text-slate-400"
+                className="w-full pl-3.5 pr-2 py-2 text-sm font-medium text-slate-900 bg-transparent border-none focus:outline-none placeholder:text-slate-400"
                 placeholder={t("register.passwordPlaceholder")}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-700 hover:text-slate-900 focus:outline-none p-1"
+                className="px-3 py-1 text-slate-700 hover:text-slate-900 focus:outline-none shrink-0 bg-transparent border-none min-w-0"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -165,7 +165,7 @@ export default function Register() {
                     viewBox="0 0 24 24"
                     strokeWidth={2}
                     stroke="currentColor"
-                    className="w-5 h-5"
+                    className="w-5 h-5 block"
                   >
                     <path
                       strokeLinecap="round"
@@ -180,7 +180,7 @@ export default function Register() {
                     viewBox="0 0 24 24"
                     strokeWidth={2}
                     stroke="currentColor"
-                    className="w-5 h-5"
+                    className="w-5 h-5 block"
                   >
                     <path
                       strokeLinecap="round"

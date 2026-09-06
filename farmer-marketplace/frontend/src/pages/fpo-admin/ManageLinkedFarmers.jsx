@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../services/api";
 import { useAuth } from "../../hooks/useAuth";
+import { toast } from "react-hot-toast";
 
 const getApiError = (error, fallback) => {
   const data = error.response?.data;
@@ -17,6 +18,17 @@ export default function ManageLinkedFarmers() {
   const [farmerEmail, setFarmerEmail] = useState("");
   const [actionError, setActionError] = useState("");
   const [mutating, setMutating] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    password: "",
+    village: "",
+    district: "",
+    state: "",
+  });
+  const [createError, setCreateError] = useState("");
 
   useEffect(() => {
     if (!user?.id) return;
@@ -69,6 +81,34 @@ export default function ManageLinkedFarmers() {
     }
   };
 
+  const createFarmer = async (event) => {
+    event.preventDefault();
+    setCreateError("");
+    setMutating(true);
+    try {
+      await api.post(`/fpo/${user.id}/farmers/create`, {
+        ...createForm,
+        email: createForm.email || undefined,
+      });
+      setCreateForm({
+        name: "",
+        phone: "",
+        email: "",
+        password: "",
+        village: "",
+        district: "",
+        state: "",
+      });
+      setShowCreateModal(false);
+      await refreshFarmers();
+      toast.success("Farmer account created");
+    } catch (err) {
+      setCreateError(getApiError(err, "Could not create farmer account."));
+    } finally {
+      setMutating(false);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-6xl space-y-5 text-sm">
       {/* Header Section */}
@@ -82,6 +122,16 @@ export default function ManageLinkedFarmers() {
         <p className="mt-1 text-xs text-slate-500">
           Farmers connected to your producer organisation.
         </p>
+        <button
+          type="button"
+          onClick={() => {
+            setCreateError("");
+            setShowCreateModal(true);
+          }}
+          className="mt-4 rounded-lg bg-green-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-green-700"
+        >
+          + Add Farmer
+        </button>
       </div>
 
       <form
@@ -112,6 +162,86 @@ export default function ManageLinkedFarmers() {
         <p className="rounded-xl bg-red-50 p-3.5 text-xs font-semibold text-red-700 ring-1 ring-red-200">
           {actionError}
         </p>
+      )}
+
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+          <form
+            onSubmit={createFarmer}
+            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold text-slate-900">
+                Create Farmer Account
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="text-2xl text-slate-400"
+              >
+                ×
+              </button>
+            </div>
+            {createError && (
+              <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                {createError}
+              </p>
+            )}
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              {[
+                ["name", "Full name", true],
+                ["phone", "Phone", true],
+                ["email", "Email", false],
+                ["password", "Password", true],
+                ["village", "Village", false],
+                ["district", "District", false],
+                ["state", "State", false],
+              ].map(([name, label, required]) => (
+                <label
+                  key={name}
+                  className="text-sm font-medium text-slate-700"
+                >
+                  {label}
+                  <input
+                    required={required}
+                    minLength={name === "password" ? 6 : undefined}
+                    type={
+                      name === "password"
+                        ? "password"
+                        : name === "email"
+                          ? "email"
+                          : "text"
+                    }
+                    value={createForm[name]}
+                    onChange={(event) =>
+                      setCreateForm({
+                        ...createForm,
+                        [name]: event.target.value,
+                      })
+                    }
+                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-400"
+                  />
+                </label>
+              ))}
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-semibold text-slate-600"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={mutating}
+                className="rounded-lg bg-green-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-60"
+              >
+                {mutating ? "Creating..." : "Create Farmer"}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
 
       {/* Farmers Data Table Card */}

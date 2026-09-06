@@ -4,6 +4,7 @@ namespace FarmerMarketplace.Api.DTOs
 {
     public class ProfileSetupDto
     {
+        public string? PreferredLanguage { get; set; }
         public string? Village { get; set; }
         public string? District { get; set; }
         public string? State { get; set; }

@@ -16,6 +16,27 @@ namespace FarmerMarketplace.Api.Services
             _context = context;
         }
 
+        public async Task<UserResponseDto> GetProfileAsync(Guid id, Guid requestingUserId)
+        {
+            if (id != requestingUserId)
+                throw new UnauthorizedAccessException("You can only view your own profile.");
+
+            var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+            if (user == null)
+                throw new KeyNotFoundException("User not found.");
+
+            return new UserResponseDto
+            {
+                Id = user.Id, Name = user.Name, Email = user.Email, Phone = user.Phone,
+                Role = user.Role, Location = user.Location, PreferredLanguage = user.PreferredLanguage,
+                FpoId = user.FpoId, IsProfileComplete = user.IsProfileComplete, CreatedAt = user.CreatedAt,
+                Village = user.Village, District = user.District, State = user.State, Pincode = user.Pincode,
+                PrimaryCrops = user.PrimaryCrops, BankAccountNumber = user.BankAccountNumber,
+                BankIfsc = user.BankIfsc, AccountHolderName = user.AccountHolderName, UpiId = user.UpiId,
+                BusinessName = user.BusinessName, GstNumber = user.GstNumber, DeliveryAddress = user.DeliveryAddress
+            };
+        }
+
         public async Task<UserResponseDto> UpdateProfileAsync(Guid id, Guid requestingUserId, ProfileSetupDto dto)
         {
             if (id != requestingUserId)
@@ -32,6 +53,7 @@ namespace FarmerMarketplace.Api.Services
             user.Latitude = dto.Latitude;
             user.Longitude = dto.Longitude;
             user.Region = dto.Region;
+            user.PreferredLanguage = string.IsNullOrWhiteSpace(dto.PreferredLanguage) ? user.PreferredLanguage : dto.PreferredLanguage;
             user.PrimaryCrops = dto.PrimaryCrops;
             user.BankAccountNumber = dto.BankAccountNumber;
             user.BankIfsc = dto.BankIfsc;
@@ -54,7 +76,21 @@ namespace FarmerMarketplace.Api.Services
                 Phone = user.Phone,
                 Location = user.Location,
                 PreferredLanguage = user.PreferredLanguage,
-                FpoId = user.FpoId
+                FpoId = user.FpoId,
+                IsProfileComplete = user.IsProfileComplete,
+                CreatedAt = user.CreatedAt,
+                Village = user.Village,
+                District = user.District,
+                State = user.State,
+                Pincode = user.Pincode,
+                PrimaryCrops = user.PrimaryCrops,
+                BankAccountNumber = user.BankAccountNumber,
+                BankIfsc = user.BankIfsc,
+                AccountHolderName = user.AccountHolderName,
+                UpiId = user.UpiId,
+                BusinessName = user.BusinessName,
+                GstNumber = user.GstNumber,
+                DeliveryAddress = user.DeliveryAddress
             };
         }
 
@@ -113,7 +149,21 @@ public async Task<UserResponseDto> UpdateBasicProfileAsync(Guid id, Guid request
         Phone = user.Phone,
         Location = user.Location,
         PreferredLanguage = user.PreferredLanguage,
-        FpoId = user.FpoId
+        FpoId = user.FpoId,
+        IsProfileComplete = user.IsProfileComplete,
+        CreatedAt = user.CreatedAt,
+        Village = user.Village,
+        District = user.District,
+        State = user.State,
+        Pincode = user.Pincode,
+        PrimaryCrops = user.PrimaryCrops,
+        BankAccountNumber = user.BankAccountNumber,
+        BankIfsc = user.BankIfsc,
+        AccountHolderName = user.AccountHolderName,
+        UpiId = user.UpiId,
+        BusinessName = user.BusinessName,
+        GstNumber = user.GstNumber,
+        DeliveryAddress = user.DeliveryAddress
     };
 }
     }

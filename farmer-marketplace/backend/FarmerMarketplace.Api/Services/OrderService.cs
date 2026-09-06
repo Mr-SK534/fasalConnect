@@ -39,12 +39,21 @@ namespace FarmerMarketplace.Api.Services
 
             foreach (var itemDto in dto.Items)
             {
-                var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == itemDto.ProductId);
+                var product = await _context.Products
+                    .Include(p => p.Farmer)
+                    .FirstOrDefaultAsync(p => p.Id == itemDto.ProductId);
 
-                if (product == null || !product.IsActive)
-                    throw new KeyNotFoundException($"Product {itemDto.ProductId} not found or is no longer listed.");
+                if (product == null)
+                    throw new KeyNotFoundException("Product is no longer available.");
+
+                if (!product.IsActive)
+                    throw new KeyNotFoundException($"Product '{product.CropName}' is no longer available.");
+
+                if (product.Quantity <= 0)
+                    throw new InvalidOperationException($"Product '{product.CropName}' is out of stock.");
 
                 var remaining = itemDto.Quantity;
+                var originalProductQuantity = product.Quantity;
 
                 // Try to fulfill from the requested farmer's own stock first
                 var fromThisFarmer = Math.Min(remaining, product.Quantity);
@@ -73,12 +82,13 @@ namespace FarmerMarketplace.Api.Services
                 {
                     if (!dto.IsBulkOrder)
                         throw new InvalidOperationException(
-                            $"Insufficient stock for '{product.CropName}'. Only {product.Quantity + fromThisFarmer} available.");
+                            $"Insufficient stock. This farmer has {product.Quantity + fromThisFarmer} {product.Unit}. Enable bulk order to source from multiple farmers.");
 
                     // Order Aggregator: split the remainder across other farmers
                     // listing the same crop, largest stock first
                     var otherSuppliers = await _context.Products
-                        .Where(p => p.IsActive
+                        .Include(p => p.Farmer)
+                        .Where(p => p.IsActive && p.Quantity > 0
                                     && p.Id != product.Id
                                     && p.FarmerId != product.FarmerId
                                     && p.CropName.ToLower() == product.CropName.ToLower())
@@ -110,8 +120,12 @@ namespace FarmerMarketplace.Api.Services
                     }
 
                     if (remaining > 0)
+                    {
+                        var totalAvailable = originalProductQuantity + otherSuppliers.Sum(supplier => supplier.Quantity);
+                        var farmerCount = otherSuppliers.Select(supplier => supplier.FarmerId).Append(product.FarmerId).Distinct().Count();
                         throw new InvalidOperationException(
-                            $"Insufficient stock across all farmers for '{product.CropName}'. Short by {remaining}.");
+                            $"Insufficient stock. Total available: {totalAvailable} {product.Unit} across {farmerCount} farmers");
+                    }
                 }
             }
 
@@ -161,8 +175,10 @@ namespace FarmerMarketplace.Api.Services
         public async Task<List<OrderResponseDto>> GetByFarmerIdAsync(Guid farmerId, Guid requestingUserId, string? role)
         {
             var isPlatformAdmin = role == nameof(UserRole.PlatformAdmin);
+            var isFpoAdmin = role == nameof(UserRole.FpoAdmin)
+                && await _context.Users.AnyAsync(user => user.Id == farmerId && user.FpoId == requestingUserId && user.Role == UserRole.Farmer);
 
-            if (farmerId != requestingUserId && !isPlatformAdmin)
+            if (farmerId != requestingUserId && !isPlatformAdmin && !isFpoAdmin)
                 throw new UnauthorizedAccessException("You can only view your own orders.");
 
             var orderIds = await _context.OrderItems
@@ -192,9 +208,30 @@ namespace FarmerMarketplace.Api.Services
 
             var isInvolvedFarmer = order.Items.Any(i => i.FarmerId == requestingUserId);
             var isPlatformAdmin = role == nameof(UserRole.PlatformAdmin);
+            var isFpoAdmin = false;
 
-            if (!isInvolvedFarmer && !isPlatformAdmin)
+            if (role == nameof(UserRole.FpoAdmin))
+            {
+                var farmerIds = order.Items.Select(item => item.FarmerId).Distinct().ToList();
+                isFpoAdmin = await _context.Users.AnyAsync(user => user.Id == requestingUserId && user.Role == UserRole.FpoAdmin)
+                    && await _context.Users.AnyAsync(user => farmerIds.Contains(user.Id) && user.FpoId == requestingUserId);
+            }
+
+            if (!isInvolvedFarmer && !isPlatformAdmin && !isFpoAdmin)
                 throw new UnauthorizedAccessException("Only a farmer fulfilling this order or an admin can update its status.");
+
+            var validTransition = (order.Status, dto.Status) switch
+            {
+                (OrderStatus.Pending, OrderStatus.Confirmed) => true,
+                (OrderStatus.Pending, OrderStatus.Cancelled) => true,
+                (OrderStatus.Confirmed, OrderStatus.InTransit) => true,
+                (OrderStatus.Confirmed, OrderStatus.Cancelled) => true,
+                (OrderStatus.InTransit, OrderStatus.Delivered) => true,
+                _ => false
+            };
+
+            if (!validTransition)
+                throw new InvalidOperationException($"Cannot change order status from {order.Status} to {dto.Status}.");
 
             order.Status = dto.Status;
             order.UpdatedAt = DateTime.UtcNow;
@@ -239,6 +276,7 @@ namespace FarmerMarketplace.Api.Services
                 Id = order.Id,
                 BuyerId = order.BuyerId,
                 BuyerName = order.Buyer?.Name ?? string.Empty,
+                BuyerPhone = order.Buyer?.Phone,
                 IsBulkOrder = order.IsBulkOrder,
                 DeliveryType = order.DeliveryType,
                 DeliveryAddress = order.DeliveryAddress,

@@ -16,11 +16,13 @@ namespace FarmerMarketplace.Api.Services
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
+        private readonly ILogger<PaymentService> _logger;
 
-        public PaymentService(AppDbContext context, IConfiguration config)
+        public PaymentService(AppDbContext context, IConfiguration config, ILogger<PaymentService> logger)
         {
             _context = context;
             _config = config;
+            _logger = logger;
         }
 
         public async Task<CreatePaymentOrderResponseDto> CreateOrderAsync(Guid buyerId, CreatePaymentOrderDto dto)
@@ -28,13 +30,13 @@ namespace FarmerMarketplace.Api.Services
             var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == dto.OrderId);
 
             if (order == null)
-                throw new KeyNotFoundException("Order not found.");
+                throw new KeyNotFoundException("Order not found");
 
             if (order.BuyerId != buyerId)
-                throw new UnauthorizedAccessException("You can only pay for your own orders.");
+                throw new UnauthorizedAccessException("This order does not belong to you");
 
             if (order.Status != OrderStatus.Pending)
-                throw new InvalidOperationException("This order is not awaiting payment.");
+                throw new InvalidOperationException("Order is not in Pending status");
 
             // Always use the server-recorded total — never trust dto.Amount directly.
             var amount = order.TotalAmount;
@@ -42,36 +44,49 @@ namespace FarmerMarketplace.Api.Services
 
             var keyId = _config["Razorpay:KeyId"];
             var keySecret = _config["Razorpay:KeySecret"];
-            var client = new RazorpayClient(keyId, keySecret);
-
-            var options = new Dictionary<string, object>
+            if (string.IsNullOrWhiteSpace(keyId) || string.IsNullOrWhiteSpace(keySecret))
             {
-                { "amount", amountInPaise },
-                { "currency", "INR" },
-                { "receipt", order.Id.ToString() }
-            };
+                _logger.LogError("Razorpay configuration is missing. KeyId configured: {HasKeyId}, KeySecret configured: {HasKeySecret}", !string.IsNullOrWhiteSpace(keyId), !string.IsNullOrWhiteSpace(keySecret));
+                throw new InvalidOperationException("Razorpay configuration is missing.");
+            }
 
-            Razorpay.Api.Order rzpOrder = client.Order.Create(options);
-            var razorpayOrderId = rzpOrder["id"].ToString()!;
-
-                       var payment = new FarmerMarketplace.Api.Models.Payment
+            try
             {
-                     OrderId = order.Id,
-                     RazorpayOrderId = razorpayOrderId,
-                     Amount = amount,
-                     Currency = "INR",
-                     Status = PaymentStatus.Created
-            };
+                var client = new RazorpayClient(keyId, keySecret);
+                var options = new Dictionary<string, object>
+                {
+                    { "amount", amountInPaise },
+                    { "currency", "INR" },
+                    { "receipt", order.Id.ToString() }
+                };
 
-            _context.Payments.Add(payment);
-            await _context.SaveChangesAsync();
+                Razorpay.Api.Order rzpOrder = client.Order.Create(options);
+                var razorpayOrderId = rzpOrder["id"].ToString()!;
 
-            return new CreatePaymentOrderResponseDto
+                var payment = new FarmerMarketplace.Api.Models.Payment
+                {
+                    OrderId = order.Id,
+                    RazorpayOrderId = razorpayOrderId,
+                    Amount = amount,
+                    Currency = "INR",
+                    Status = PaymentStatus.Created
+                };
+
+                _context.Payments.Add(payment);
+                await _context.SaveChangesAsync();
+
+                return new CreatePaymentOrderResponseDto
+                {
+                    RazorpayOrderId = razorpayOrderId,
+                    Amount = amount,
+                    Currency = "INR"
+                };
+            }
+            catch (Exception ex)
             {
-                RazorpayOrderId = razorpayOrderId,
-                Amount = amount,
-                Currency = "INR"
-            };
+                _logger.LogError(ex, "Razorpay order creation failed for internal order {OrderId}: {Message}", order.Id, ex.Message);
+                throw new InvalidOperationException($"Razorpay order creation failed: {ex.Message}", ex);
+            }
         }
 
         public async Task HandleWebhookAsync(string rawBody, string? signatureHeader)

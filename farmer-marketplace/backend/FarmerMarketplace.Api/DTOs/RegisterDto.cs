@@ -11,9 +11,8 @@ namespace FarmerMarketplace.Api.DTOs
         [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
 
-        [Required]
         [EmailAddress]
-        public string Email { get; set; } = string.Empty;
+        public string? Email { get; set; }
 
         [Required]
         [MinLength(6)]

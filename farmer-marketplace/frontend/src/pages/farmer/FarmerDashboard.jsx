@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
+import { toast } from "react-hot-toast";
 import { useAuth } from "../../hooks/useAuth";
 import api from "../../services/api";
 
@@ -7,6 +8,7 @@ export default function FarmerDashboard() {
   const { user } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -21,6 +23,26 @@ export default function FarmerDashboard() {
     };
     if (user?.id) loadProducts();
   }, [user?.id]);
+
+  const removeProduct = async (product) => {
+    if (!window.confirm(`Remove ${product.cropName} from your listings?`))
+      return;
+
+    setDeletingId(product.id);
+    try {
+      await api.delete(`/products/${product.id}`);
+      setProducts((currentProducts) =>
+        currentProducts.filter((item) => item.id !== product.id),
+      );
+      toast.success("Product removed");
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Could not remove this product.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const activeProducts = products.filter(
     (product) => product.isActive !== false,
@@ -120,9 +142,19 @@ export default function FarmerDashboard() {
                     )}
                   </div>
                 </div>
-                <p className="text-base font-extrabold text-[#1b5e20]">
-                  ₹{Number(product.price || 0).toLocaleString("en-IN")}
-                </p>
+                <div className="flex items-center gap-3">
+                  <p className="text-base font-extrabold text-[#1b5e20]">
+                    ₹{Number(product.price || 0).toLocaleString("en-IN")}
+                  </p>
+                  <button
+                    type="button"
+                    disabled={deletingId === product.id}
+                    onClick={() => removeProduct(product)}
+                    className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-60"
+                  >
+                    {deletingId === product.id ? "Removing..." : "Remove"}
+                  </button>
+                </div>
               </div>
             ))}
           </div>

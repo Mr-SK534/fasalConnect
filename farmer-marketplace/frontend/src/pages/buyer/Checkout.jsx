@@ -1,102 +1,267 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+import { useCart } from "../../hooks/useCart";
+import { placeOrder } from "../../services/orderService";
+import { createRazorpayOrder } from "../../services/paymentService";
+import api from "../../services/api";
 
 const formatCurrency = (value) =>
-	new Intl.NumberFormat("en-IN", {
-		style: "currency",
-		currency: "INR",
-		maximumFractionDigits: 0,
-	}).format(value);
-
-const readCart = () => {
-	try {
-		return JSON.parse(localStorage.getItem("cart") || "[]");
-	} catch {
-		return [];
-	}
-};
+  new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(
+    value,
+  );
 
 export default function Checkout() {
-	const [items] = useState(readCart);
-	const [paymentMethod, setPaymentMethod] = useState("cod");
-	const [placed, setPlaced] = useState(false);
-	const [form, setForm] = useState({
-		name: "",
-		phone: "",
-		address: "",
-		city: "",
-		state: "",
-		pincode: "",
-	});
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { cartItems, cartTotal, clearCart } = useCart();
+  const [isBulkOrder, setIsBulkOrder] = useState(false);
+  const [deliveryType, setDeliveryType] = useState("Delivery");
+  const [deliveryAddress, setDeliveryAddress] = useState(
+    user?.deliveryAddress || "",
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const requiresBulk = cartItems.some(
+    (item) => item.requiresBulk || item.quantity > item.maxQuantity,
+  );
 
-	const subtotal = useMemo(
-		() =>
-			items.reduce(
-				(total, item) =>
-					total + Number(item.price || item.amount || 0) * Number(item.quantity || 1),
-				0,
-			),
-		[items],
-	);
-	const delivery = subtotal > 0 && subtotal < 500 ? 40 : 0;
-	const total = subtotal + delivery;
+  useEffect(() => {
+    // Keep bulk mode synchronized with current cart availability.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (requiresBulk) setIsBulkOrder(true);
+  }, [requiresBulk]);
 
-	const update = (event) =>
-		setForm({ ...form, [event.target.name]: event.target.value });
+  const submit = async (event) => {
+    event.preventDefault();
+    if (!cartItems.length) return;
+    setError("");
+    setIsSubmitting(true);
 
-	const submit = (event) => {
-		event.preventDefault();
-		setPlaced(true);
-		localStorage.removeItem("cart");
-	};
+    try {
+      console.log("[Checkout] validating aggregate stock");
+      const aggregateEntries = await Promise.all(
+        [...new Set(cartItems.map((item) => item.cropName))].map(
+          async (cropName) => {
+            const response = await api.get(
+              `/products/aggregate/${encodeURIComponent(cropName)}`,
+            );
+            return [cropName, response.data];
+          },
+        ),
+      );
+      const aggregates = Object.fromEntries(aggregateEntries);
+      const unavailable = cartItems.find(
+        (item) =>
+          Number(aggregates[item.cropName]?.totalAvailableQuantity || 0) <
+          item.quantity,
+      );
+      if (unavailable) {
+        throw new Error(
+          `Stock changed for ${unavailable.cropName}. Only ${aggregates[unavailable.cropName]?.totalAvailableQuantity || 0} ${unavailable.unit} is available.`,
+        );
+      }
+      if (requiresBulk && !isBulkOrder) {
+        throw new Error(
+          "Some items require bulk sourcing. Please enable bulk order or reduce quantity.",
+        );
+      }
+      console.log("[Checkout] placing internal order");
+      const order = await placeOrder({
+        items: cartItems.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+        isBulkOrder,
+        deliveryType,
+        ...(deliveryType === "Delivery" ? { deliveryAddress } : {}),
+      });
+      console.log("[Checkout] internal order created", order.id);
+      console.log("[Checkout] creating Razorpay order");
+      const razorpayOrder = await createRazorpayOrder(
+        order.id,
+        order.totalAmount,
+      );
+      console.log(
+        "[Checkout] Razorpay order created",
+        razorpayOrder.razorpayOrderId,
+      );
 
-	if (placed) {
-		return (
-			<main className="mx-auto max-w-3xl px-4 py-16 text-center">
-				<div className="rounded-2xl bg-green-50 p-10">
-					<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-600 text-3xl text-white">✓</div>
-					<h1 className="text-3xl font-bold text-gray-900">Order placed successfully!</h1>
-					<p className="mt-2 text-gray-600">Thank you for supporting local farmers.</p>
-					<a href="/buyer" className="mt-6 inline-block rounded-lg bg-green-600 px-6 py-3 font-medium text-white hover:bg-green-700">Continue shopping</a>
-				</div>
-			</main>
-		);
-	}
+      if (!window.Razorpay) {
+        throw new Error(
+          "Razorpay checkout is unavailable. Please refresh and try again.",
+        );
+      }
 
-	return (
-		<main className="mx-auto max-w-6xl px-4 py-8">
-			<h1 className="mb-8 text-3xl font-bold text-gray-900">Checkout</h1>
-			{items.length === 0 ? (
-				<div className="rounded-xl border bg-white p-10 text-center text-gray-600">Your cart is empty.</div>
-			) : (
-				<form onSubmit={submit} className="grid gap-8 lg:grid-cols-[1fr_380px]">
-					<section className="space-y-6">
-						<div className="rounded-xl border bg-white p-6 shadow-sm">
-							<h2 className="mb-5 text-xl font-semibold">Delivery details</h2>
-							<div className="grid gap-4 sm:grid-cols-2">
-								{[['name', 'Full name'], ['phone', 'Phone number'], ['city', 'City'], ['state', 'State'], ['pincode', 'PIN code']].map(([name, label]) => (
-									<label key={name} className={name === 'name' || name === 'phone' ? '' : ''}>
-										<span className="mb-1 block text-sm font-medium text-gray-700">{label}</span>
-										<input required name={name} value={form[name]} onChange={update} className="w-full rounded-lg border px-3 py-2 outline-none focus:border-green-600" />
-									</label>
-								))}
-								<label className="sm:col-span-2"><span className="mb-1 block text-sm font-medium text-gray-700">Address</span><textarea required name="address" value={form.address} onChange={update} rows="3" className="w-full rounded-lg border px-3 py-2 outline-none focus:border-green-600" /></label>
-							</div>
-						</div>
-						<div className="rounded-xl border bg-white p-6 shadow-sm">
-							<h2 className="mb-4 text-xl font-semibold">Payment method</h2>
-							{[["cod", "Cash on delivery"], ["online", "Online payment"]].map(([value, label]) => (
-								<label key={value} className="mb-3 flex cursor-pointer items-center gap-3 rounded-lg border p-3"><input type="radio" name="payment" value={value} checked={paymentMethod === value} onChange={(e) => setPaymentMethod(e.target.value)} />{label}</label>
-							))}
-						</div>
-					</section>
-					<aside className="h-fit rounded-xl border bg-white p-6 shadow-sm">
-						<h2 className="mb-4 text-xl font-semibold">Order summary</h2>
-						<div className="space-y-3 border-b pb-4">{items.map((item, index) => <div key={item._id || item.id || index} className="flex justify-between gap-3 text-sm"><span>{item.name || item.title} × {item.quantity || 1}</span><span>{formatCurrency(Number(item.price || item.amount || 0) * Number(item.quantity || 1))}</span></div>)}</div>
-						<div className="mt-4 space-y-2 text-sm"><div className="flex justify-between"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div><div className="flex justify-between"><span>Delivery</span><span>{delivery ? formatCurrency(delivery) : "FREE"}</span></div><div className="mt-3 flex justify-between border-t pt-3 text-lg font-bold"><span>Total</span><span>{formatCurrency(total)}</span></div></div>
-						<button type="submit" className="mt-6 w-full rounded-lg bg-green-600 px-4 py-3 font-semibold text-white hover:bg-green-700">Place order</button>
-					</aside>
-				</form>
-			)}
-		</main>
-	);
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: Number(razorpayOrder.amount) * 100,
+        currency: razorpayOrder.currency,
+        order_id: razorpayOrder.razorpayOrderId,
+        name: "FasalConnect",
+        description: "Fresh produce order",
+        handler: () => {
+          console.log("[Checkout] payment succeeded");
+          clearCart();
+          window.dispatchEvent(new Event("products:refresh"));
+          navigate("/buyer/orders");
+        },
+        prefill: {
+          name: user?.name || "",
+          contact: user?.phone || "",
+        },
+        theme: { color: "#16a34a" },
+        modal: { ondismiss: () => setIsSubmitting(false) },
+      };
+
+      new window.Razorpay(options).open();
+    } catch (requestError) {
+      console.error("[Checkout] payment flow failed", requestError);
+      const backendMessage =
+        requestError.response?.data?.message ||
+        requestError.message ||
+        "Unknown error";
+      setError(
+        requestError.config?.url?.includes("/payments/")
+          ? `Failed to initiate payment: ${backendMessage}`
+          : requestError.config?.url?.includes("/orders")
+            ? `Failed to place order: ${backendMessage}`
+            : backendMessage,
+      );
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!cartItems.length) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-16 text-center">
+        <div className="rounded-2xl bg-green-50 p-10">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Your cart is empty
+          </h1>
+          <p className="mt-2 text-gray-600">
+            Add products before starting checkout.
+          </p>
+          <Link
+            to="/buyer/browse"
+            className="mt-6 inline-block rounded-lg bg-green-600 px-6 py-3 font-medium text-white hover:bg-green-700"
+          >
+            Browse Products
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="mx-auto max-w-6xl px-4 py-8">
+      <h1 className="mb-8 text-3xl font-bold text-gray-900">Checkout</h1>
+      {error && (
+        <p className="mb-6 rounded-lg bg-red-50 p-4 text-sm font-medium text-red-700">
+          {error}
+        </p>
+      )}
+      <form onSubmit={submit} className="grid gap-8 lg:grid-cols-[1fr_380px]">
+        <section className="space-y-6">
+          <div className="rounded-xl border bg-white p-6 shadow-sm">
+            <h2 className="mb-5 text-xl font-semibold">Order preferences</h2>
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-3">
+              <input
+                type="checkbox"
+                checked={isBulkOrder}
+                onChange={(event) => setIsBulkOrder(event.target.checked)}
+                className="mt-1 accent-green-600"
+              />
+              <span>
+                <strong className="block">This is a bulk order</strong>
+                <span className="text-sm text-gray-500">
+                  We'll automatically source from multiple farmers if one
+                  farmer's stock is insufficient
+                </span>
+                <span
+                  className="ml-2 text-xs text-slate-400"
+                  title="Bulk order automatically combines stock from multiple farmers to fulfill your quantity"
+                >
+                  ⓘ
+                </span>
+              </span>
+            </label>
+            {requiresBulk && !isBulkOrder && (
+              <p className="mt-2 rounded bg-amber-50 px-2 py-1 text-xs font-medium text-amber-600">
+                Some items require bulk sourcing. Please enable bulk order or
+                reduce quantity.
+              </p>
+            )}
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {["Delivery", "Pickup"].map((type) => (
+                <label
+                  key={type}
+                  className="flex cursor-pointer items-center gap-3 rounded-lg border p-3"
+                >
+                  <input
+                    type="radio"
+                    name="deliveryType"
+                    value={type}
+                    checked={deliveryType === type}
+                    onChange={(event) => setDeliveryType(event.target.value)}
+                    className="accent-green-600"
+                  />
+                  {type}
+                </label>
+              ))}
+            </div>
+            {deliveryType === "Delivery" && (
+              <label className="mt-5 block text-sm font-medium text-gray-700">
+                Delivery address
+                <textarea
+                  required
+                  value={deliveryAddress}
+                  onChange={(event) => setDeliveryAddress(event.target.value)}
+                  rows="4"
+                  className="mt-1 w-full rounded-lg border px-3 py-2 outline-none focus:border-green-600"
+                  placeholder="Enter the address for delivery"
+                />
+              </label>
+            )}
+          </div>
+        </section>
+
+        <aside className="h-fit rounded-xl border bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-xl font-semibold">Order summary</h2>
+          <div className="space-y-3 border-b pb-4">
+            {cartItems.map((item) => (
+              <div
+                key={item.productId}
+                className="flex justify-between gap-3 text-sm"
+              >
+                <span>
+                  {item.cropName} × {item.quantity}
+                  {item.requiresBulk && (
+                    <small className="ml-2 text-purple-700">
+                      - sourced from {item.farmerCount || 2} farmers
+                    </small>
+                  )}
+                </span>
+                <span>{formatCurrency(item.price * item.quantity)}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 flex justify-between border-t pt-3 text-lg font-bold">
+            <span>Total</span>
+            <span className="text-green-700">{formatCurrency(cartTotal)}</span>
+          </div>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isSubmitting && (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            )}
+            {isSubmitting ? "Starting payment..." : "Pay securely"}
+          </button>
+        </aside>
+      </form>
+    </main>
+  );
 }

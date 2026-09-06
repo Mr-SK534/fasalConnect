@@ -29,9 +29,12 @@ import MyOrders from "../pages/buyer/MyOrders";
 // FPO Admin pages
 import FPODashboard from "../pages/fpo-admin/FPODashboard";
 import ManageLinkedFarmers from "../pages/fpo-admin/ManageLinkedFarmers";
+import FPOProducts from "../pages/fpo-admin/FPOProducts";
+import FPOOrders from "../pages/fpo-admin/FPOOrders";
 
 // Platform Admin pages
 import RouteDashboard from "../pages/admin/RouteDashboard";
+import ProfilePage from "../pages/profile/ProfilePage";
 
 import { useAuth } from "../hooks/useAuth";
 
@@ -59,10 +62,9 @@ export default function AppRoutes() {
     <Routes>
       {/* ---------- Public routes ---------- */}
       // REPLACE with this
-      <Route path="/" element={<Home />} /> 
+      <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-
       {/* ---------- Profile setup ---------- */}
       {/* Protected (must be logged in) but NOT gated by isProfileComplete */}
       <Route
@@ -73,7 +75,16 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<ProfilePage />} />
+      </Route>
       {/* ---------- Farmer routes ---------- */}
       <Route
         path="/farmer"
@@ -89,7 +100,6 @@ export default function AppRoutes() {
         <Route path="list-product" element={<ListProduct />} />
         <Route path="orders" element={<FarmerOrders />} />
       </Route>
-
       {/* ---------- Buyer routes ---------- */}
       <Route
         path="/buyer"
@@ -106,7 +116,6 @@ export default function AppRoutes() {
         <Route path="checkout" element={<Checkout />} />
         <Route path="orders" element={<MyOrders />} />
       </Route>
-
       {/* ---------- FPO Admin routes ---------- */}
       <Route
         path="/fpo-admin"
@@ -119,9 +128,10 @@ export default function AppRoutes() {
         }
       >
         <Route path="dashboard" element={<FPODashboard />} />
+        <Route path="products" element={<FPOProducts />} />
+        <Route path="orders" element={<FPOOrders />} />
         <Route path="farmers" element={<ManageLinkedFarmers />} />
       </Route>
-
       {/* ---------- Platform Admin routes ---------- */}
       <Route
         path="/admin"
@@ -135,7 +145,6 @@ export default function AppRoutes() {
       >
         <Route path="dashboard" element={<RouteDashboard />} />
       </Route>
-
       {/* ---------- Fallback ---------- */}
       <Route path="*" element={<Home />} />
     </Routes>

@@ -76,12 +76,13 @@ namespace FarmerMarketplace.Api.Services
 
         public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
         {
-            var isEmail = dto.EmailOrPhone.Contains('@');
+            var loginValue = dto.EmailOrPhone.Trim();
+            var isEmail = loginValue.Contains('@');
 
             var user = isEmail
                 ? await _context.Users.FirstOrDefaultAsync(u =>
-                    u.Email != null && u.Email.ToLower() == dto.EmailOrPhone.ToLower())
-                : await _context.Users.FirstOrDefaultAsync(u => u.Phone == dto.EmailOrPhone);
+                    u.Email != null && u.Email.ToLower() == loginValue.ToLower())
+                : await _context.Users.FirstOrDefaultAsync(u => u.Phone == loginValue);
 
             if (user == null || !_passwordHasher.VerifyPassword(dto.Password, user.PasswordHash))
                 throw new UnauthorizedAccessException("Invalid credentials.");

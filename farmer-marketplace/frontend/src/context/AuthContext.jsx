@@ -65,7 +65,11 @@ export function AuthProvider({ children }) {
       setUser(data.user);
       return data.user;
     } catch (err) {
+      const validationMessage = err.response?.data?.errors
+        ? Object.values(err.response.data.errors).flat().join(" ")
+        : null;
       const message =
+        validationMessage ||
         err.response?.data?.message ||
         err.response?.data?.error?.message ||
         "Registration failed. Please try again.";

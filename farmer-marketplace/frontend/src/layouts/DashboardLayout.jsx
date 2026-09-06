@@ -1,16 +1,18 @@
-import { 
-  FiBox, 
-  FiCalendar, 
-  FiCheckSquare, 
-  FiGrid, 
-  FiLogOut, 
-  FiSettings, 
-  FiTrendingUp, 
-  FiUser, 
-  FiUsers 
+import {
+  FiBox,
+  FiCalendar,
+  FiCheckSquare,
+  FiGrid,
+  FiLogOut,
+  FiSettings,
+  FiShoppingCart,
+  FiTrendingUp,
+  FiUser,
+  FiUsers,
 } from "react-icons/fi";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { useCart } from "../hooks/useCart";
 import { ROLES } from "../utils/roles";
 
 const navigationByRole = {
@@ -33,7 +35,7 @@ const navigationByRole = {
     {
       section: "ACCOUNT",
       items: [
-        { label: "Profile", to: "/farmer/profile", icon: FiUser },
+        { label: "Profile", to: "/profile", icon: FiUser },
         { label: "Settings", to: "/farmer/settings", icon: FiSettings },
       ],
     },
@@ -47,22 +49,34 @@ const navigationByRole = {
         { label: "My Orders", to: "/buyer/orders", icon: FiCheckSquare },
       ],
     },
+    {
+      section: "ACCOUNT",
+      items: [{ label: "Profile", to: "/profile", icon: FiUser }],
+    },
   ],
   [ROLES.FPO_ADMIN]: [
     {
       section: "MAIN",
       items: [
         { label: "Dashboard", to: "/fpo-admin/dashboard", icon: FiGrid },
+        { label: "My Products", to: "/fpo-admin/products", icon: FiBox },
+        { label: "Orders", to: "/fpo-admin/orders", icon: FiCheckSquare },
         { label: "Linked Farmers", to: "/fpo-admin/farmers", icon: FiUsers },
       ],
+    },
+    {
+      section: "ACCOUNT",
+      items: [{ label: "Profile", to: "/profile", icon: FiUser }],
     },
   ],
   [ROLES.PLATFORM_ADMIN]: [
     {
       section: "MAIN",
-      items: [
-        { label: "Dashboard", to: "/admin/dashboard", icon: FiGrid },
-      ],
+      items: [{ label: "Dashboard", to: "/admin/dashboard", icon: FiGrid }],
+    },
+    {
+      section: "ACCOUNT",
+      items: [{ label: "Profile", to: "/profile", icon: FiUser }],
     },
   ],
 };
@@ -78,7 +92,8 @@ function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  
+  const { cartCount } = useCart();
+
   const sections = navigationByRole[user?.role] || [];
   const allItems = sections.flatMap((s) => s.items);
   const dashboardPath = allItems[0]?.to || "/login";
@@ -100,7 +115,9 @@ function DashboardLayout() {
             className="flex items-center gap-2 text-xl font-extrabold tracking-tight"
           >
             <span className="text-2xl">🌱</span>
-            <span>Fasal<span className="text-[#f5d77f]">Connect</span></span>
+            <span>
+              Fasal<span className="text-[#f5d77f]">Connect</span>
+            </span>
           </NavLink>
         </div>
 
@@ -111,7 +128,10 @@ function DashboardLayout() {
               <p className="mb-2 px-3 text-[11px] font-extrabold uppercase tracking-wider text-[#a3e2a7]">
                 {sec.section}
               </p>
-              <nav className="space-y-1" aria-label={`Sidebar section ${sec.section}`}>
+              <nav
+                className="space-y-1"
+                aria-label={`Sidebar section ${sec.section}`}
+              >
                 {sec.items.map(({ label, to, icon: Icon }) => (
                   <NavLink
                     key={to}
@@ -161,17 +181,33 @@ function DashboardLayout() {
             </div>
 
             {/* Profile Bar */}
-            <div className="flex items-center gap-3 bg-white/80 border border-[#e5d8b6] px-3.5 py-1.5 rounded-xl shadow-xs">
-              <div className="hidden text-right sm:block">
-                <p className="text-sm font-bold text-slate-900 leading-tight">
-                  {user?.name || "Farmer Name"}
-                </p>
-                <p className="text-[11px] font-semibold uppercase text-slate-500 tracking-wider">
-                  {roleLabels[user?.role] || "Verified Member"}
-                </p>
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#d2e8bf] text-base font-black text-[#174d35] ring-2 ring-[#a8d488]">
-                {(user?.name || "F").charAt(0).toUpperCase()}
+            <div className="flex items-center gap-3">
+              {user?.role === ROLES.BUYER && (
+                <NavLink
+                  to="/buyer/cart"
+                  aria-label={`Cart with ${cartCount} items`}
+                  className="relative rounded-xl border border-[#e5d8b6] bg-white/80 p-2.5 text-[#2e7d32] shadow-xs"
+                >
+                  <FiShoppingCart size={19} />
+                  {cartCount > 0 && (
+                    <span className="absolute -right-2 -top-2 min-w-5 rounded-full bg-[#2e7d32] px-1.5 py-0.5 text-center text-[10px] font-bold text-white">
+                      {cartCount}
+                    </span>
+                  )}
+                </NavLink>
+              )}
+              <div className="flex items-center gap-3 bg-white/80 border border-[#e5d8b6] px-3.5 py-1.5 rounded-xl shadow-xs">
+                <div className="hidden text-right sm:block">
+                  <p className="text-sm font-bold text-slate-900 leading-tight">
+                    {user?.name || "Farmer Name"}
+                  </p>
+                  <p className="text-[11px] font-semibold uppercase text-slate-500 tracking-wider">
+                    {roleLabels[user?.role] || "Verified Member"}
+                  </p>
+                </div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#d2e8bf] text-base font-black text-[#174d35] ring-2 ring-[#a8d488]">
+                  {(user?.name || "F").charAt(0).toUpperCase()}
+                </div>
               </div>
             </div>
           </div>

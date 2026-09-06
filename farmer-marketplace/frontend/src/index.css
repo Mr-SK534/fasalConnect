@@ -39,6 +39,112 @@ textarea {
   font: inherit;
 }
 
+/* ==========================================================================
+   Global 3D Tactile Button Base Rules
+   ========================================================================== */
+button,
+.btn-3d {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+              box-shadow 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+              filter 160ms ease;
+}
+
+/* Base interactive motion */
+button:not(:disabled),
+.btn-3d:not(.disabled) {
+  transform: translateY(0);
+}
+
+button:not(:disabled):hover,
+.btn-3d:not(.disabled):hover {
+  transform: translateY(-2px);
+  filter: brightness(1.03);
+}
+
+button:not(:disabled):active,
+.btn-3d:not(.disabled):active {
+  transform: translateY(3px) !important;
+  filter: brightness(0.98);
+}
+
+button:disabled,
+.btn-3d.disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+button:focus-visible,
+.btn-3d:focus-visible {
+  outline: 3px solid rgba(245, 215, 127, 0.95);
+  outline-offset: 3px;
+}
+
+/* ==========================================================================
+   Reusable 3D Utility Classes
+   ========================================================================== */
+
+/* Emerald (Primary CTA) */
+.btn-3d-emerald {
+  background-color: #059669;
+  color: #ffffff;
+  border: 2px solid #047857;
+  box-shadow: 0 4px 0 0 #047857;
+}
+.btn-3d-emerald:hover:not(:disabled) {
+  box-shadow: 0 6px 0 0 #047857;
+}
+.btn-3d-emerald:active:not(:disabled) {
+  box-shadow: 0 1px 0 0 #047857;
+}
+
+/* White / Light Card Style */
+.btn-3d-white {
+  background-color: rgba(255, 255, 255, 0.95);
+  color: #111827;
+  border: 2px solid #a7f3d0;
+  box-shadow: 0 4px 0 0 #a7f3d0;
+}
+.btn-3d-white:hover:not(:disabled) {
+  box-shadow: 0 6px 0 0 #a7f3d0;
+}
+.btn-3d-white:active:not(:disabled) {
+  box-shadow: 0 1px 0 0 #a7f3d0;
+}
+
+/* Neutral Outline (Secondary Action) */
+.btn-3d-outline {
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #374151;
+  border: 2px solid #e5e7eb;
+  box-shadow: 0 4px 0 0 #d1d5db;
+}
+.btn-3d-outline:hover:not(:disabled) {
+  box-shadow: 0 6px 0 0 #d1d5db;
+}
+.btn-3d-outline:active:not(:disabled) {
+  box-shadow: 0 1px 0 0 #d1d5db;
+}
+
+/* Red / Danger Action */
+.btn-3d-danger {
+  background-color: #dc2626;
+  color: #ffffff;
+  border: 2px solid #b91c1c;
+  box-shadow: 0 4px 0 0 #991b1b;
+}
+.btn-3d-danger:hover:not(:disabled) {
+  box-shadow: 0 6px 0 0 #991b1b;
+}
+.btn-3d-danger:active:not(:disabled) {
+  box-shadow: 0 1px 0 0 #991b1b;
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
 @keyframes moveClouds {
   0% {
     transform: translateX(0);

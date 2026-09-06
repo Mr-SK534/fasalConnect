@@ -10,6 +10,7 @@ namespace FarmerMarketplace.Api.DTOs
         public Guid Id { get; set; }
         public Guid BuyerId { get; set; }
         public string BuyerName { get; set; } = string.Empty;
+        public string? BuyerPhone { get; set; }
         public bool IsBulkOrder { get; set; }
         public DeliveryType DeliveryType { get; set; }
         public string? DeliveryAddress { get; set; }

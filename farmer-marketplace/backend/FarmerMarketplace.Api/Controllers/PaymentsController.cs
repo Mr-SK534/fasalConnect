@@ -13,10 +13,12 @@ namespace FarmerMarketplace.Api.Controllers
     public class PaymentsController : ControllerBase
     {
         private readonly IPaymentService _paymentService;
+        private readonly ILogger<PaymentsController> _logger;
 
-        public PaymentsController(IPaymentService paymentService)
+        public PaymentsController(IPaymentService paymentService, ILogger<PaymentsController> logger)
         {
             _paymentService = paymentService;
+            _logger = logger;
         }
 
         // POST /api/payments/create-order
@@ -27,8 +29,31 @@ namespace FarmerMarketplace.Api.Controllers
             var userId = GetUserId();
             if (userId == null) return Unauthorized();
 
-            var result = await _paymentService.CreateOrderAsync(userId.Value, dto);
-            return StatusCode(201, result);
+            try
+            {
+                var result = await _paymentService.CreateOrderAsync(userId.Value, dto);
+                return StatusCode(201, result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                _logger.LogError(ex, "Payment order creation failed: {Message}", ex.Message);
+                return NotFound(new { statusCode = 404, message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogError(ex, "Payment authorization failed: {Message}", ex.Message);
+                return StatusCode(403, new { statusCode = 403, message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogError(ex, "Payment order conflict: {Message}", ex.Message);
+                return Conflict(new { statusCode = 409, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Payment order creation failed unexpectedly: {Message}", ex.Message);
+                return StatusCode(500, new { statusCode = 500, message = ex.Message });
+            }
         }
 
         // POST /api/payments/webhook
@@ -51,8 +76,9 @@ namespace FarmerMarketplace.Api.Controllers
             {
                 await _paymentService.HandleWebhookAsync(rawBody, signature);
             }
-            catch (UnauthorizedAccessException)
+            catch (UnauthorizedAccessException ex)
             {
+                _logger.LogError(ex, "Razorpay webhook rejected: {Message}", ex.Message);
                 // Invalid signature — still return 200 so Razorpay doesn't retry
                 // a request that will never validate, but log server-side.
                 return Ok();

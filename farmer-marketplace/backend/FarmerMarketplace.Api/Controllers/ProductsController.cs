@@ -28,6 +28,14 @@ namespace FarmerMarketplace.Api.Controllers
             return Ok(result);
         }
 
+        // GET /api/products/aggregate/{cropName}
+        [HttpGet("aggregate/{cropName}")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ProductAggregateResponseDto>> GetAggregate(string cropName)
+        {
+            return Ok(await _productService.GetAggregateAsync(cropName));
+        }
+
         // GET /api/products/{id}
         [HttpGet("{id}")]
         [AllowAnonymous]
@@ -49,9 +57,14 @@ namespace FarmerMarketplace.Api.Controllers
         // GET /api/products/farmer/{farmerId}
         [HttpGet("farmer/{farmerId}")]
         [Authorize]
-        public async Task<ActionResult<List<ProductResponseDto>>> GetByFarmerId(Guid farmerId)
+        public async Task<ActionResult<List<ProductResponseDto>>> GetByFarmerId(Guid farmerId, [FromQuery] bool includeInactive = false)
         {
-            var result = await _productService.GetByFarmerIdAsync(farmerId);
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            Guid? requestingUserId = Guid.TryParse(userIdClaim, out var parsedUserId) ? parsedUserId : null;
+            var role = User.FindFirstValue(ClaimTypes.Role);
+            includeInactive = includeInactive ||
+                (requestingUserId == farmerId && (role == "Farmer" || role == "FpoAdmin"));
+            var result = await _productService.GetByFarmerIdAsync(farmerId, requestingUserId, role, includeInactive);
             return Ok(result);
         }
 

@@ -48,6 +48,41 @@ namespace FarmerMarketplace.Api.Services
             return products.Select(MapToResponseDto).ToList();
         }
 
+        public async Task<ProductAggregateResponseDto> GetAggregateAsync(string cropName)
+        {
+            var products = await _context.Products
+                .AsNoTracking()
+                .Include(product => product.Farmer)
+                .Where(product => product.IsActive && product.Quantity > 0 && product.CropName.ToLower() == cropName.ToLower())
+                .OrderByDescending(product => product.Quantity)
+                .ToListAsync();
+
+            var first = products.FirstOrDefault();
+            if (first == null)
+            {
+                return new ProductAggregateResponseDto { CropName = cropName };
+            }
+
+            return new ProductAggregateResponseDto
+            {
+                CropName = cropName,
+                TotalAvailableQuantity = products.Sum(product => product.Quantity),
+                Unit = first.Unit.ToString(),
+                AveragePrice = products.Average(product => product.Price),
+                MinPrice = products.Min(product => product.Price),
+                MaxPrice = products.Max(product => product.Price),
+                FarmerCount = products.Select(product => product.FarmerId).Distinct().Count(),
+                Farmers = products.Select(product => new ProductAggregateFarmerDto
+                {
+                    FarmerId = product.FarmerId,
+                    FarmerName = product.Farmer?.Name ?? string.Empty,
+                    FarmerLocation = product.Farmer?.Location ?? product.Region,
+                    AvailableQuantity = product.Quantity,
+                    Price = product.Price
+                }).ToList()
+            };
+        }
+
         public async Task<ProductResponseDto> GetByIdAsync(Guid id)
         {
             var product = await _context.Products
@@ -61,12 +96,21 @@ namespace FarmerMarketplace.Api.Services
             return MapToResponseDto(product);
         }
 
-        public async Task<List<ProductResponseDto>> GetByFarmerIdAsync(Guid farmerId)
+        public async Task<List<ProductResponseDto>> GetByFarmerIdAsync(Guid farmerId, Guid? requestingUserId = null, string? role = null, bool includeInactive = false)
         {
+            if (includeInactive)
+            {
+                var canViewInactive = role == nameof(UserRole.PlatformAdmin)
+                    || (requestingUserId == farmerId && (role == nameof(UserRole.Farmer) || role == nameof(UserRole.FpoAdmin)))
+                    || (role == nameof(UserRole.FpoAdmin) && await _context.Users.AnyAsync(user => user.Id == farmerId && user.FpoId == requestingUserId && user.Role == UserRole.Farmer));
+                if (!canViewInactive)
+                    throw new UnauthorizedAccessException("You do not have permission to view inactive products.");
+            }
+
             var products = await _context.Products
                 .AsNoTracking()
                 .Include(p => p.Farmer)
-                .Where(p => p.FarmerId == farmerId)
+                .Where(p => p.FarmerId == farmerId && (includeInactive || p.IsActive))
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
@@ -160,7 +204,8 @@ namespace FarmerMarketplace.Api.Services
              if (!isOwner && !isPlatformAdmin && !isFpoAdminOfThisFarmer)
                throw new UnauthorizedAccessException("You do not have permission to delete this product.");
 
-            _context.Products.Remove(product);
+            product.IsActive = false;
+            product.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
         }
 
