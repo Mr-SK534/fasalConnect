@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
@@ -21,7 +21,6 @@ const initialForm = {
   harvestDate: "",
   description: "",
   region: "",
-  imageUrl: "",
 };
 
 export default function ListProduct() {
@@ -30,29 +29,62 @@ export default function ListProduct() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [imagePreview, setImagePreview] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview) URL.revokeObjectURL(imagePreview);
+    };
+  }, [imagePreview]);
 
   const update = (event) =>
     setForm({ ...form, [event.target.name]: event.target.value });
 
   const selectImage = (event) => {
     const file = event.target.files?.[0];
-    if (file) setImagePreview(URL.createObjectURL(file));
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Choose an image smaller than 5 MB.");
+      return;
+    }
+    setError("");
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
   };
 
   const submit = async (event) => {
     event.preventDefault();
     setError("");
+    if (!imageFile) {
+      setError("Add a crop picture before publishing the product.");
+      return;
+    }
     setSaving(true);
     try {
+      const imageData = new FormData();
+      imageData.append("file", imageFile);
+      const uploadResponse = await api.post("/upload/product-image", imageData);
+
       await api.post("/products", {
         ...form,
         price: Number(form.price),
         quantity: Number(form.quantity),
         harvestDate: new Date(form.harvestDate).toISOString(),
+        imageBase64: uploadResponse.data.imageBase64,
+        imageContentType: uploadResponse.data.contentType,
       });
       navigate("/farmer/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || "Could not list this product.");
+      const responseData = err.response?.data;
+      const validationMessage = responseData?.errors
+        ? Object.values(responseData.errors).flat().join(" ")
+        : null;
+      setError(
+        validationMessage ||
+          responseData?.message ||
+          responseData?.title ||
+          "Could not list this product.",
+      );
     } finally {
       setSaving(false);
     }
@@ -188,42 +220,39 @@ export default function ListProduct() {
           />
         </label>
 
-        <div className="grid gap-4 sm:grid-cols-[1fr_160px]">
-          <label className="block text-xs font-bold text-slate-800">
-            Crop Picture URL
-            <input
-              type="url"
-              name="imageUrl"
-              value={form.imageUrl}
-              onChange={update}
-              className="mt-1.5 w-full rounded-xl border border-[#d2c5a2] px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/20"
-              placeholder="https://example.com/tomatoes.jpg"
-            />
-            <span className="mt-1.5 block text-[11px] font-normal text-slate-500">
-              Use an image URL to save the picture with this listing.
-            </span>
-          </label>
-
-          <label className="flex h-28 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-[#d2c5a2] bg-[#fdfbf3] text-center text-xs font-semibold text-[#406836] transition hover:border-[#2e7d32]">
-            {imagePreview ? (
-              <img
-                src={imagePreview}
-                alt="Selected crop preview"
-                className="h-28 w-full object-cover"
+        <div>
+          <p className="text-xs font-bold text-slate-800">Crop Picture</p>
+          <div className="mt-1.5 grid gap-4 sm:grid-cols-[1fr_160px]">
+            <div className="rounded-xl border border-[#d2c5a2] bg-[#fdfbf3] p-3 text-xs text-slate-600">
+              Upload a JPG, PNG, or WEBP image up to 5 MB. A picture is required
+              for every listing.
+              {imageFile && (
+                <p className="mt-2 font-semibold text-[#406836]">
+                  Selected: {imageFile.name}
+                </p>
+              )}
+            </div>
+            <label className="flex h-28 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-[#d2c5a2] bg-[#fdfbf3] text-center text-xs font-semibold text-[#406836] transition hover:border-[#2e7d32]">
+              {imagePreview ? (
+                <img
+                  src={imagePreview}
+                  alt="Selected crop preview"
+                  className="h-28 w-full object-cover"
+                />
+              ) : (
+                <>
+                  <span className="text-2xl">🌾</span>
+                  <span className="mt-1 px-2">Preview photo</span>
+                </>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={selectImage}
+                className="sr-only"
               />
-            ) : (
-              <>
-                <span className="text-2xl">🌾</span>
-                <span className="mt-1 px-2">Preview photo</span>
-              </>
-            )}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={selectImage}
-              className="sr-only"
-            />
-          </label>
+            </label>
+          </div>
         </div>
 
         <button

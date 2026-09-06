@@ -37,6 +37,15 @@ namespace FarmerMarketplace.Api.Controllers
             return Ok(result);
         }
 
+        // GET /api/products/{id}/image
+        [HttpGet("{id}/image")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetImage(Guid id)
+        {
+            var image = await _productService.GetImageAsync(id);
+            return File(image.Data, image.ContentType);
+        }
+
         // GET /api/products/farmer/{farmerId}
         [HttpGet("farmer/{farmerId}")]
         [Authorize]
