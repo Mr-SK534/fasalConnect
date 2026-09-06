@@ -44,7 +44,25 @@ namespace FarmerMarketplace.Api.Data
                  .HasOne(o => o.Buyer)
                  .WithMany()
                  .HasForeignKey(o => o.BuyerId)
-                 .OnDelete(DeleteBehavior.Restrict); 
+                 .OnDelete(DeleteBehavior.Restrict);
+
+                 modelBuilder.Entity<Payment>()
+                .HasOne(p => p.Order)
+                 .WithMany()
+                .HasForeignKey(p => p.OrderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+                    modelBuilder.Entity<PaymentSplit>()
+                 .HasOne(s => s.Payment)
+                 .WithMany(p => p.Splits)
+                 .HasForeignKey(s => s.PaymentId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                 modelBuilder.Entity<PaymentSplit>()
+                .HasOne(s => s.Farmer)
+                .WithMany()
+                .HasForeignKey(s => s.FarmerId)
+                .OnDelete(DeleteBehavior.Restrict); 
         }   
 
         public DbSet<Product> Products { get; set; }    
@@ -54,6 +72,9 @@ namespace FarmerMarketplace.Api.Data
 
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
+
+        public DbSet<Payment> Payments { get; set; }
+        public DbSet<PaymentSplit> PaymentSplits { get; set; }
 
                                         
     }
