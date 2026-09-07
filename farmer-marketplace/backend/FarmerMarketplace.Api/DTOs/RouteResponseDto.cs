@@ -14,5 +14,7 @@ namespace FarmerMarketplace.Api.DTOs
         public DeliveryRouteStatus Status { get; set; }
         public Dictionary<int, List<RouteStop>> StopsByVehicle { get; set; } = new();
         public List<Guid> SkippedOrderIds { get; set; } = new();
+        public bool HasUrgentStops { get; set; }
+        public string? WarningMessage { get; set; }
     }
 }

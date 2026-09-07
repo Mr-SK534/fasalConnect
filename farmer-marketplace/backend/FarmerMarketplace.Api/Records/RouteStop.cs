@@ -10,6 +10,10 @@ namespace FarmerMarketplace.Api.Records
         double Lat,
         double Lng,
         Guid OrderId,
-        double QuantityAtStop
+        double QuantityAtStop,
+        DateTime EstimatedArrival = default,
+        string PerishabilityTier = "Low",
+        DateTime DeliveryDeadline = default,
+        bool IsUrgent = false
     );
 }

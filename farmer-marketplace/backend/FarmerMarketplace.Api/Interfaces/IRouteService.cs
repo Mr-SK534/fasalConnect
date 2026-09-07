@@ -7,8 +7,9 @@ namespace FarmerMarketplace.Api.Interfaces
 {
     public interface IRouteService
     {
-        Task<DeliveryRoute> OptimizeAsync(List<Guid> orderIds, double depotLat, double depotLng);
+        Task<DeliveryRoute> OptimizeAsync(List<Guid> orderIds, double depotLat, double depotLng, string batchWindow = "manual");
         Task<DeliveryRoute> GetRouteByIdAsync(Guid routeId);
+        Task<List<DeliveryRoute>> GetAllRoutesAsync();
         Task<List<PendingOrderDto>> GetPendingOrdersAsync();
     }
 }

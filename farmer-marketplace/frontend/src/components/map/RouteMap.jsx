@@ -29,9 +29,11 @@ const DEFAULT_VEHICLE_COLORS = [
   "#059669", // Vehicle 8: Emerald
 ];
 
-const makeIcon = (label, color) =>
+const makeIcon = (label, color, isUrgent = false) =>
   L.divIcon({
-    html: `<div style="background:${color};color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;border:2px solid white;box-shadow:0 3px 8px rgba(0,0,0,0.35);">${label}</div>`,
+    html: `<div style="background:${isUrgent ? "#dc2626" : color};color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;border:2px solid white;box-shadow:0 3px 8px rgba(0,0,0,0.35);${
+      isUrgent ? "animation: redPulse 1.5s infinite; outline: 3px solid #ef4444;" : ""
+    }">${label}</div>`,
     className: "",
     iconSize: [32, 32],
     iconAnchor: [16, 16],
@@ -39,8 +41,8 @@ const makeIcon = (label, color) =>
   });
 
 const ICON_DEPOT = makeIcon("HUB", "#2563eb");
-const ICON_PICKUP = (seq) => makeIcon(`P${seq}`, "#ea580c"); // Orange for pickup
-const ICON_DELIVERY = (seq) => makeIcon(`D${seq}`, "#16a34a"); // Green for delivery
+const ICON_PICKUP = (seq, isUrgent) => makeIcon(`P${seq}`, "#ea580c", isUrgent);
+const ICON_DELIVERY = (seq, isUrgent) => makeIcon(`D${seq}`, "#16a34a", isUrgent);
 
 function MapBoundsFitter({ depot, stops }) {
   const map = useMap();
@@ -66,9 +68,8 @@ export default function RouteMap({
   stops = [],
   depot = { lat: 19.0760, lng: 72.8777 },
   vehicleColors = DEFAULT_VEHICLE_COLORS,
-  className = "h-[450px] w-full rounded-xl overflow-hidden shadow-md border border-slate-200",
+  className = "h-[450px] w-full rounded-xl overflow-hidden shadow-md border border-slate-200 relative",
 }) {
-  // Group stops by vehicle number
   const stopsByVehicle = useMemo(() => {
     const map = {};
     stops.forEach((s) => {
@@ -76,14 +77,12 @@ export default function RouteMap({
       if (!map[vNum]) map[vNum] = [];
       map[vNum].push(s);
     });
-    // Sort sequence per vehicle
     Object.keys(map).forEach((v) => {
       map[v].sort((a, b) => (a.sequence || a.Sequence) - (b.sequence || b.Sequence));
     });
     return map;
   }, [stops]);
 
-  // Construct polyline coordinate arrays per vehicle (Depot -> Stops in order -> Depot)
   const polylines = useMemo(() => {
     return Object.entries(stopsByVehicle).map(([vehicleNumStr, vehicleStops]) => {
       const vIndex = parseInt(vehicleNumStr, 10) - 1;
@@ -105,6 +104,13 @@ export default function RouteMap({
 
   return (
     <div className={className}>
+      <style>{`
+        @keyframes redPulse {
+          0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8); }
+          70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+      `}</style>
       <MapContainer
         center={[depot.lat, depot.lng]}
         zoom={11}
@@ -138,9 +144,11 @@ export default function RouteMap({
           const label = stop.label || stop.Label || "";
           const qty = stop.quantityAtStop || stop.QuantityAtStop || 0;
           const vNum = stop.vehicleNumber || stop.VehicleNumber || 1;
+          const isUrgent = stop.isUrgent || stop.IsUrgent || false;
+          const tier = stop.perishabilityTier || stop.PerishabilityTier || "Low";
 
           const isPickup = type === "pickup";
-          const icon = isPickup ? ICON_PICKUP(seq) : ICON_DELIVERY(seq);
+          const icon = isPickup ? ICON_PICKUP(seq, isUrgent) : ICON_DELIVERY(seq, isUrgent);
 
           return (
             <Marker key={`${vNum}-${seq}-${idx}`} position={[lat, lng]} icon={icon}>
@@ -154,8 +162,13 @@ export default function RouteMap({
                   </div>
                   <p className="text-slate-600 font-medium">{label}</p>
                   <p className="text-slate-500">
-                    Cumulative Vehicle Load: <span className="font-bold text-slate-800">{qty} kg</span>
+                    Load: <span className="font-bold text-slate-800">{qty} kg</span> &bull; Perishability: <span className="font-bold">{tier}</span>
                   </p>
+                  {isUrgent && (
+                    <p className="text-red-600 font-bold text-[11px]">
+                      ⚠️ ETA exceeds freshness window!
+                    </p>
+                  )}
                 </div>
               </Popup>
             </Marker>

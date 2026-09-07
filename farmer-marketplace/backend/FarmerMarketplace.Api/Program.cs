@@ -61,6 +61,8 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IRouteService, RouteService>();
 builder.Services.AddScoped<RouteService>();
+builder.Services.AddSingleton<RouteBatchingService>();
+builder.Services.AddHostedService(provider => provider.GetRequiredService<RouteBatchingService>());
 // TODO: register IForecastService, IWhatsAppService here as they're built
 
 // JWT Authentication

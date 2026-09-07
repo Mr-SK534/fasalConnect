@@ -2,7 +2,13 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { toast } from "react-hot-toast";
-import { getPendingOrders, optimizeRoute } from "../../services/routeService";
+import {
+  getPendingOrders,
+  optimizeRoute,
+  getAllRoutes,
+  getRoute,
+  runBatchWindow,
+} from "../../services/routeService";
 import RouteMap from "../../components/map/RouteMap";
 
 export default function RouteDashboard() {
@@ -11,19 +17,24 @@ export default function RouteDashboard() {
   const [loadingPending, setLoadingPending] = useState(true);
   const [optimizing, setOptimizing] = useState(false);
 
+  // Route History state
+  const [routesHistory, setRoutesHistory] = useState([]);
+  const [selectedRouteId, setSelectedRouteId] = useState("");
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [runningBatchWindow, setRunningBatchWindow] = useState(false);
+
   // Depot Location state (Default: Mumbai 19.0760, 72.8777)
   const [depot, setDepot] = useState({ lat: 19.0760, lng: 72.8777 });
 
   // Optimization Result state
   const [routeResult, setRouteResult] = useState(null);
 
-  // Fetch pending orders on mount
+  // Fetch pending orders
   const fetchPending = useCallback(async () => {
     setLoadingPending(true);
     try {
       const data = await getPendingOrders();
       setPendingOrders(data || []);
-      // By default select all pending orders
       setSelectedOrderIds(new Set((data || []).map((o) => o.orderId || o.OrderId)));
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to load pending orders.");
@@ -32,9 +43,54 @@ export default function RouteDashboard() {
     }
   }, []);
 
+  // Fetch routes history
+  const fetchHistory = useCallback(async () => {
+    setLoadingHistory(true);
+    try {
+      const data = await getAllRoutes();
+      setRoutesHistory(data || []);
+    } catch (err) {
+      toast.error("Failed to load routes history.");
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchPending();
-  }, [fetchPending]);
+    fetchHistory();
+  }, [fetchPending, fetchHistory]);
+
+  // Load specific route details when selecting from history
+  const handleSelectRouteHistory = async (routeId) => {
+    if (!routeId) {
+      setSelectedRouteId("");
+      return;
+    }
+    setSelectedRouteId(routeId);
+    try {
+      const routeData = await getRoute(routeId);
+      setRouteResult(routeData);
+      toast.success(`Loaded saved route: ${routeId.slice(0, 8)}...`);
+    } catch (err) {
+      toast.error("Failed to load selected route details.");
+    }
+  };
+
+  // Run manual batch window trigger
+  const handleRunBatchWindow = async (windowName) => {
+    setRunningBatchWindow(true);
+    try {
+      const res = await runBatchWindow(windowName);
+      toast.success(res.message || `Batch window '${windowName}' executed!`);
+      await fetchPending();
+      await fetchHistory();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to run batch window.");
+    } finally {
+      setRunningBatchWindow(false);
+    }
+  };
 
   // Handle individual order checkbox toggle
   const toggleOrder = (orderId) => {
@@ -90,8 +146,9 @@ export default function RouteDashboard() {
       setRouteResult(result);
       toast.success(`Route optimized! ${result.vehicleCount} vehicle(s) dispatched.`);
       
-      // Refresh pending orders list
+      // Refresh pending orders and history
       fetchPending();
+      fetchHistory();
     } catch (err) {
       toast.error(err.response?.data?.message || err.response?.data || "Optimization failed.");
     } finally {
@@ -105,6 +162,44 @@ export default function RouteDashboard() {
     return Object.values(routeResult.stopsByVehicle).flat();
   }, [routeResult]);
 
+  const urgentStopsCount = useMemo(() => {
+    return flattenedStops.filter((s) => s.isUrgent || s.IsUrgent).length;
+  }, [flattenedStops]);
+
+  const getPerishabilityBadge = (tier) => {
+    if (!tier) return null;
+    const t = String(tier).toLowerCase();
+    if (t === "critical")
+      return (
+        <span className="bg-red-100 text-red-700 border border-red-200 text-[10px] font-extrabold px-1.5 py-0.5 rounded">
+          🔴 CRITICAL
+        </span>
+      );
+    if (t === "high")
+      return (
+        <span className="bg-orange-100 text-orange-700 border border-orange-200 text-[10px] font-extrabold px-1.5 py-0.5 rounded">
+          🟠 HIGH
+        </span>
+      );
+    if (t === "medium")
+      return (
+        <span className="bg-yellow-100 text-yellow-800 border border-yellow-200 text-[10px] font-extrabold px-1.5 py-0.5 rounded">
+          🟡 MEDIUM
+        </span>
+      );
+    return null;
+  };
+
+  const formatEta = (etaStr) => {
+    if (!etaStr) return "";
+    try {
+      const d = new Date(etaStr);
+      return d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+    } catch {
+      return "";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-10 font-sans text-slate-800">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -113,27 +208,121 @@ export default function RouteDashboard() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
           <div>
             <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Route Optimization & Fleet Dispatch
+              Route Optimization & Automated Dispatch
             </h1>
             <p className="text-sm text-slate-500 mt-1">
-              Consolidate confirmed buyer orders into minimum required vehicles using pure Haversine VRP.
+              Automated 2-batch optimization at <strong>8:00 AM</strong> & <strong>2:00 PM (14:00)</strong> daily with Haversine VRP math & perishability urgency.
             </p>
           </div>
           
-          <button
-            onClick={fetchPending}
-            disabled={loadingPending}
-            className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition shadow-sm self-start md:self-auto"
-          >
-            Refresh Pending Orders
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={fetchPending}
+              disabled={loadingPending}
+              className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition shadow-sm"
+            >
+              Refresh Orders
+            </button>
+            <button
+              onClick={fetchHistory}
+              disabled={loadingHistory}
+              className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition shadow-sm"
+            >
+              Refresh History
+            </button>
+          </div>
         </div>
+
+        {/* Automated Schedule & Batch Trigger Banner */}
+        <div className="bg-emerald-900 text-white rounded-2xl p-5 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-800 flex items-center justify-center text-xl font-bold text-emerald-300">
+              ⏰
+            </div>
+            <div>
+              <p className="text-xs text-emerald-300 font-bold uppercase tracking-wider">
+                Automated Batch Schedule
+              </p>
+              <h3 className="text-sm font-extrabold text-white">
+                Daily Batches: 8:00 AM &bull; 2:00 PM (14:00)
+              </h3>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <button
+              onClick={() => handleRunBatchWindow("morning")}
+              disabled={runningBatchWindow}
+              className="flex-1 md:flex-none px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white transition shadow"
+            >
+              Trigger 8 AM Batch
+            </button>
+            <button
+              onClick={() => handleRunBatchWindow("afternoon")}
+              disabled={runningBatchWindow}
+              className="flex-1 md:flex-none px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white transition shadow"
+            >
+              Trigger 2 PM Batch
+            </button>
+          </div>
+        </div>
+
+        {/* Top Warning Banner for Urgent Stops */}
+        {(routeResult?.hasUrgentStops || routeResult?.HasUrgentStops || urgentStopsCount > 0) && (
+          <div className="bg-red-50 border border-red-300 text-red-900 p-4 rounded-2xl flex items-center gap-3 text-xs font-bold shadow-sm">
+            <span className="text-xl">⚠️</span>
+            <div>
+              <p className="font-extrabold text-sm">Spoilage Risk Warning</p>
+              <p className="font-medium text-red-700 mt-0.5">
+                {routeResult?.warningMessage ||
+                  routeResult?.WarningMessage ||
+                  `Warning: ${urgentStopsCount} stops may receive spoiled produce at current ETA. Consider adding more vehicles or reducing batch size.`}
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* Left Column: Config & Pending Orders (5 cols) */}
+          {/* Left Column: Route History + Config & Pending Orders (5 cols) */}
           <div className="lg:col-span-5 space-y-6">
             
+            {/* Saved Route History Lookup Card */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-purple-600"></span>
+                  Saved Route History ({routesHistory.length})
+                </h2>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">
+                  Select Optimized Route by ID
+                </label>
+                <select
+                  value={selectedRouteId}
+                  onChange={(e) => handleSelectRouteHistory(e.target.value)}
+                  className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white font-mono"
+                >
+                  <option value="">-- Choose a Route ID to inspect --</option>
+                  {routesHistory.map((r) => {
+                    const id = r.id || r.Id;
+                    const date = new Date(r.createdAt || r.CreatedAt).toLocaleDateString("en-IN");
+                    const window = r.batchWindow || r.BatchWindow || "manual";
+                    const vCount = r.vehicleCount || r.VehicleCount;
+                    const dist = r.totalDistanceKm || r.TotalDistanceKm;
+
+                    return (
+                      <option key={id} value={id}>
+                        {String(id).slice(0, 8)}... &bull; {window} &bull; {date} &bull; {vCount} V &bull; {dist}km
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            </div>
+
             {/* Depot Config Card */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
               <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
@@ -216,7 +405,7 @@ export default function RouteDashboard() {
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => {}} // handled by div click
+                          onChange={() => {}}
                           className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                         />
                         <div className="flex-1 text-xs space-y-1">
@@ -312,10 +501,10 @@ export default function RouteDashboard() {
                   </div>
                   <div className="bg-white rounded-xl p-4 border border-slate-200 text-center shadow-sm">
                     <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                      Orders Covered
+                      Route ID
                     </span>
-                    <p className="text-xl font-black text-emerald-600 mt-1">
-                      {selectedOrderIds.size - (routeResult.skippedOrderIds?.length || 0)}
+                    <p className="text-xs font-black text-purple-600 font-mono mt-2 truncate">
+                      {routeResult.id || routeResult.Id}
                     </p>
                   </div>
                 </div>
@@ -356,34 +545,58 @@ export default function RouteDashboard() {
                             const qty = stop.quantityAtStop || stop.QuantityAtStop || 0;
                             const isPickup = type === "pickup";
 
+                            const isUrgent = stop.isUrgent || stop.IsUrgent || false;
+                            const tier = stop.perishabilityTier || stop.PerishabilityTier;
+                            const etaStr = stop.estimatedArrival || stop.EstimatedArrival;
+                            const formattedEta = formatEta(etaStr);
+
                             return (
                               <div
                                 key={idx}
-                                className="flex items-center justify-between p-3 rounded-xl border border-slate-100 text-xs bg-white hover:bg-slate-50"
+                                className={`p-3 rounded-xl border text-xs transition space-y-1 ${
+                                  isUrgent
+                                    ? "bg-red-50/90 border-red-300"
+                                    : "bg-white border-slate-100 hover:bg-slate-50"
+                                }`}
                               >
-                                <div className="flex items-center gap-3">
-                                  <span
-                                    className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-white text-[10px] ${
-                                      isPickup ? "bg-orange-500" : "bg-emerald-600"
-                                    }`}
-                                  >
-                                    #{seq}
-                                  </span>
-                                  <div>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
                                     <span
-                                      className={`font-bold uppercase tracking-wider text-[10px] mr-2 ${
+                                      className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-white text-[10px] ${
+                                        isPickup ? "bg-orange-500" : "bg-emerald-600"
+                                      }`}
+                                    >
+                                      #{seq}
+                                    </span>
+                                    <span
+                                      className={`font-bold uppercase tracking-wider text-[10px] ${
                                         isPickup ? "text-orange-600" : "text-emerald-600"
                                       }`}
                                     >
                                       {isPickup ? "PICKUP" : "DELIVERY"}
                                     </span>
-                                    <span className="font-semibold text-slate-800">{label}</span>
+                                    {getPerishabilityBadge(tier)}
+                                  </div>
+
+                                  <div className="text-right font-medium text-slate-600">
+                                    Load: <span className="font-bold text-slate-900">{qty} kg</span>
+                                    {formattedEta && (
+                                      <span className="ml-3 font-semibold text-slate-700">
+                                        ETA: {formattedEta}
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
 
-                                <div className="text-right font-medium text-slate-600">
-                                  Load: <span className="font-bold text-slate-900">{qty} kg</span>
+                                <div className="pl-8 text-slate-800 font-medium">
+                                  {label}
                                 </div>
+
+                                {isUrgent && (
+                                  <div className="pl-8 text-[11px] font-bold text-red-600">
+                                    ⚠️ ETA exceeds freshness window
+                                  </div>
+                                )}
                               </div>
                             );
                           })}
@@ -403,7 +616,7 @@ export default function RouteDashboard() {
                   Ready to Optimize Routes
                 </h3>
                 <p className="text-xs text-slate-500 max-w-md mx-auto">
-                  Select pending orders on the left, verify your central depot coordinates, and click "Optimize Route" to dispatch the fleet using Haversine VRP math.
+                  Select pending orders on the left, choose a saved Route ID from History, or click "Optimize Route" to dispatch the fleet.
                 </p>
               </div>
             )}

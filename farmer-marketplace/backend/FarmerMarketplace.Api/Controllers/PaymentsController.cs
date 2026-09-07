@@ -23,7 +23,7 @@ namespace FarmerMarketplace.Api.Controllers
 
         // POST /api/payments/create-order
         [HttpPost("create-order")]
-        [Authorize(Roles = "Buyer")]
+        [Authorize]
         public async Task<ActionResult<CreatePaymentOrderResponseDto>> CreateOrder([FromBody] CreatePaymentOrderDto dto)
         {
             var userId = GetUserId();
