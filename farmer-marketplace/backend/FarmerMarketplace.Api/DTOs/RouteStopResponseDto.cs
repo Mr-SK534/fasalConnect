@@ -16,13 +16,4 @@ namespace FarmerMarketplace.Api.DTOs
         public DateTime PickupDate { get; set; }
         public DateTime DeliveryDate { get; set; }
     }
-
-    public class RouteResponseDto
-    {
-        public Guid RouteId { get; set; }
-        public double DeliveryHubLat { get; set; }
-        public double DeliveryHubLng { get; set; }
-        public List<RouteStopResponseDto> Stops { get; set; } = new();
-        public DateTime CreatedAt { get; set; }
-    }
 }

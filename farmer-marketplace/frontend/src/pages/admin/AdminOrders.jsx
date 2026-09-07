@@ -29,10 +29,26 @@ const metaOf = (data, page, size, count) => ({
     data?.totalPages ||
     Math.max(1, Math.ceil((data?.totalCount ?? count) / size)),
 });
-const summary = (order) =>
-  order.items
-    ?.map((item) => `${item.cropName} ${item.quantity}${item.unit || ""}`)
-    .join(", ") || "-";
+const getCropNames = (order) => {
+  if (!order.items || order.items.length === 0) return "-";
+  return Array.from(
+    new Set(order.items.map((item) => item.cropName || item.product?.cropName))
+  )
+    .filter(Boolean)
+    .join(", ");
+};
+
+const getQuantitySummary = (order) => {
+  if (!order.items || order.items.length === 0) return "-";
+  const byUnit = {};
+  order.items.forEach((item) => {
+    const unit = item.unit || item.product?.unit || "kg";
+    byUnit[unit] = (byUnit[unit] || 0) + item.quantity;
+  });
+  return Object.entries(byUnit)
+    .map(([unit, qty]) => `${qty} ${unit}`)
+    .join(", ");
+};
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
@@ -144,6 +160,7 @@ export default function AdminOrders() {
                 "Order",
                 "Buyer",
                 "Items",
+                "Qty",
                 "Total",
                 "Type",
                 "Status",
@@ -159,7 +176,7 @@ export default function AdminOrders() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="8" className="p-8 text-center">
+                <td colSpan="9" className="p-8 text-center">
                   Loading orders...
                 </td>
               </tr>
@@ -179,7 +196,12 @@ export default function AdminOrders() {
                       {order.buyerPhone || "—"}
                     </span>
                   </td>
-                  <td className="max-w-xs p-3">{summary(order)}</td>
+                  <td className="max-w-xs p-3 font-medium text-slate-800">
+                    {getCropNames(order)}
+                  </td>
+                  <td className="p-3 font-semibold text-slate-700">
+                    {getQuantitySummary(order)}
+                  </td>
                   <td className="p-3">
                     ₹{Number(order.totalAmount || 0).toLocaleString("en-IN")}
                     {order.isBulkOrder && (

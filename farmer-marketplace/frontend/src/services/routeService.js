@@ -1,15 +1,14 @@
+// frontend/src/services/routeService.js
+
 import api from "./api";
 
-export const optimizeRoute = (orderIds, deliveryHubLocation) =>
+export const optimizeRoute = (orderIds, depotLat, depotLng) =>
   api
-    .post("/routes/optimize", { orderIds, deliveryHubLocation })
-    .then((response) => response.data);
+    .post("/routes/optimize", { orderIds, depotLat, depotLng })
+    .then((res) => res.data);
 
 export const getRoute = (routeId) =>
-  api.get(`/routes/${routeId}`).then((response) => response.data);
+  api.get(`/routes/${routeId}`).then((res) => res.data);
 
-export const getBatchStatus = () =>
-  api.get("/routes/batch-status").then((response) => response.data);
-
-export const runBatch = () =>
-  api.post("/routes/batch/run").then((response) => response.data);
+export const getPendingOrders = () =>
+  api.get("/routes/pending").then((res) => res.data);

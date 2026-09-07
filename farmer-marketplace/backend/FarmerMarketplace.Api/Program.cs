@@ -60,10 +60,7 @@ builder.Services.AddScoped<IFpoService, FpoService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IRouteService, RouteService>();
-// Register concrete type so RouteBatchingService can resolve it via IServiceScopeFactory
 builder.Services.AddScoped<RouteService>();
-// Background batch scheduler (runs at 8 AM and 2 PM IST daily)
-builder.Services.AddHostedService<RouteBatchingService>();
 // TODO: register IForecastService, IWhatsAppService here as they're built
 
 // JWT Authentication

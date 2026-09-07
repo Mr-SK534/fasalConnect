@@ -1,602 +1,417 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  MapContainer,
-  Marker,
-  Polyline,
-  Popup,
-  TileLayer,
-  useMap,
-} from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+// frontend/src/pages/admin/RouteDashboard.jsx
+
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { toast } from "react-hot-toast";
-import { getAdminOrders } from "../../services/adminService";
-import {
-  getBatchStatus,
-  getRoute,
-  optimizeRoute,
-  runBatch,
-} from "../../services/routeService";
-import { useAuth } from "../../hooks/useAuth";
-
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-const DEFAULT_HUB = { lat: 20.5937, lng: 78.9629 }; // geographic centre of India
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-const unwrap = (data) =>
-  Array.isArray(data) ? data : data?.items || data?.orders || [];
-
-const formatDate = (value) =>
-  value
-    ? new Date(value).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-    : "-";
-
-const formatDateTime = (value) =>
-  value
-    ? new Date(value).toLocaleString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      })
-    : "-";
-
-const shortId = (id) => String(id).slice(0, 8);
-
-// ── Leaflet custom DivIcons ───────────────────────────────────────────────────
-
-const makeIcon = (label, color) =>
-  L.divIcon({
-    html: `<div style="background:${color};color:white;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.35)">${label}</div>`,
-    className: "",
-    iconSize: [30, 30],
-    iconAnchor: [15, 15],
-    popupAnchor: [0, -15],
-  });
-
-const ICON_HUB      = makeIcon("HUB", "#2563eb");
-const ICON_PICKUP   = (seq) => makeIcon(`P${seq}`, "#16a34a");
-const ICON_DELIVERY = (seq) => makeIcon(`D${seq}`, "#ea580c");
-
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-function MapViewport({ hub, focusedStop, stops }) {
-  const map = useMap();
-  useEffect(() => {
-    if (focusedStop) {
-      map.setView([focusedStop.latitude, focusedStop.longitude], 14);
-    } else if (stops && stops.length > 0) {
-      const bounds = L.latLngBounds([
-        [hub.lat, hub.lng],
-        ...stops.map((s) => [s.latitude, s.longitude]),
-      ]);
-      map.fitBounds(bounds, { padding: [40, 40] });
-    } else {
-      map.setView([hub.lat, hub.lng], 10);
-    }
-  }, [focusedStop, hub, stops, map]);
-  return null;
-}
-
-function BatchStatusCard({ onRunBatch }) {
-  const [status, setStatus] = useState(null);
-  const [running, setRunning] = useState(false);
-
-  const load = useCallback(async () => {
-    try {
-      const data = await getBatchStatus();
-      setStatus(data);
-    } catch {
-      // silently ignore — batch status is informational only
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-    const interval = setInterval(load, 60_000); // refresh every minute
-    return () => clearInterval(interval);
-  }, [load]);
-
-  const handleRunBatch = async () => {
-    if (
-      !window.confirm(
-        "This will optimize all unrouted confirmed orders. Continue?",
-      )
-    )
-      return;
-    setRunning(true);
-    try {
-      const result = await runBatch();
-      toast.success(
-        `Batch complete — ${result.ordersRouted} orders, ${result.routesCreated} routes`,
-      );
-      await load();
-      onRunBatch?.();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Batch run failed.");
-    } finally {
-      setRunning(false);
-    }
-  };
-
-  return (
-    <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 p-4">
-      <p className="text-xs font-bold uppercase tracking-wider text-blue-700">
-        Auto-batch scheduler
-      </p>
-      {status ? (
-        <>
-          <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-600">
-            <div>
-              <span className="font-semibold text-slate-700">Next batch</span>
-              <br />
-              {formatDateTime(status.nextBatchTime)}
-            </div>
-            <div>
-              <span className="font-semibold text-slate-700">Last batch</span>
-              <br />
-              {status.lastBatchTime
-                ? `${formatDateTime(status.lastBatchTime)} — ${status.lastBatchOrderCount} orders`
-                : "Never run"}
-            </div>
-          </div>
-          <p className="mt-2 text-xs text-slate-500">
-            <span className="font-semibold text-orange-600">
-              {status.unroutedConfirmedOrderCount}
-            </span>{" "}
-            unrouted confirmed orders waiting
-          </p>
-        </>
-      ) : (
-        <p className="mt-1 text-xs text-slate-400">Loading batch status…</p>
-      )}
-      <button
-        type="button"
-        disabled={running}
-        onClick={handleRunBatch}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-60"
-      >
-        {running && (
-          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-        )}
-        {running ? "Running batch…" : "Run Batch Now"}
-      </button>
-    </div>
-  );
-}
-
-// ── Main component ────────────────────────────────────────────────────────────
+import { getPendingOrders, optimizeRoute } from "../../services/routeService";
+import RouteMap from "../../components/map/RouteMap";
 
 export default function RouteDashboard() {
-  const { user } = useAuth();
-  const profileHub =
-    user?.latitude && user?.longitude
-      ? { lat: user.latitude, lng: user.longitude }
-      : DEFAULT_HUB;
-  const [hub, setHub] = useState(profileHub);
-  const [orders, setOrders] = useState([]);
-  const [selectedIds, setSelectedIds] = useState([]);
-  const [routes, setRoutes] = useState([]);
-  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [pendingOrders, setPendingOrders] = useState([]);
+  const [selectedOrderIds, setSelectedOrderIds] = useState(new Set());
+  const [loadingPending, setLoadingPending] = useState(true);
   const [optimizing, setOptimizing] = useState(false);
-  const [error, setError] = useState("");
-  const [pastRouteId, setPastRouteId] = useState("");
-  const [focusedStop, setFocusedStop] = useState(null);
-  const [roadGeometries, setRoadGeometries] = useState({});
 
-  // Sync hub when user profile coordinates arrive from session restore
-  useEffect(() => {
-    if (user?.latitude && user?.longitude)
-      setHub({ lat: user.latitude, lng: user.longitude });
-  }, [user?.latitude, user?.longitude]);
+  // Depot Location state (Default: Mumbai 19.0760, 72.8777)
+  const [depot, setDepot] = useState({ lat: 19.0760, lng: 72.8777 });
 
-  const loadOrders = useCallback(async () => {
-    setLoadingOrders(true);
+  // Optimization Result state
+  const [routeResult, setRouteResult] = useState(null);
+
+  // Fetch pending orders on mount
+  const fetchPending = useCallback(async () => {
+    setLoadingPending(true);
     try {
-      const data = await getAdminOrders({ status: "Confirmed", page: 1, pageSize: 100 });
-      setOrders(unwrap(data).filter((o) => o.deliveryType === "Delivery"));
+      const data = await getPendingOrders();
+      setPendingOrders(data || []);
+      // By default select all pending orders
+      setSelectedOrderIds(new Set((data || []).map((o) => o.orderId || o.OrderId)));
     } catch (err) {
-      setError(err.response?.data?.message || "Could not load confirmed delivery orders.");
+      toast.error(err.response?.data?.message || "Failed to load pending orders.");
     } finally {
-      setLoadingOrders(false);
+      setLoadingPending(false);
     }
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadOrders();
-  }, [loadOrders]);
+    fetchPending();
+  }, [fetchPending]);
 
-  const orderById = useMemo(
-    () => new Map(orders.map((o) => [String(o.id), o])),
-    [orders],
-  );
-
-  const straightRoutePoints = useCallback(
-    (rt) =>
-      rt
-        ? [
-            [rt.deliveryHubLat, rt.deliveryHubLng],
-            ...rt.stops.map((s) => [s.latitude, s.longitude]),
-            [rt.deliveryHubLat, rt.deliveryHubLng],
-          ]
-        : [],
-    [],
-  );
-
-  const loadRoadGeometries = async (nextRoutes) => {
-    const newGeoms = { ...roadGeometries };
-    await Promise.all(
-      nextRoutes.map(async (rt) => {
-        const points = straightRoutePoints(rt);
-        try {
-          const coords = points.map(([lat, lng]) => `${lng},${lat}`).join(";");
-          const response = await fetch(
-            `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=false`,
-          );
-          if (!response.ok) throw new Error("OSRM route request failed");
-          const data = await response.json();
-          const geometry = data.routes?.[0]?.geometry?.coordinates || [];
-          newGeoms[rt.routeId] = geometry.map(([lng, lat]) => [lat, lng]);
-        } catch {
-          newGeoms[rt.routeId] = points;
-        }
-      })
-    );
-    setRoadGeometries(newGeoms);
+  // Handle individual order checkbox toggle
+  const toggleOrder = (orderId) => {
+    setSelectedOrderIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(orderId)) {
+        next.delete(orderId);
+      } else {
+        next.add(orderId);
+      }
+      return next;
+    });
   };
 
-  const toggleOrder = (id) =>
-    setSelectedIds((cur) =>
-      cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id],
-    );
+  // Select / Deselect All
+  const toggleSelectAll = () => {
+    if (selectedOrderIds.size === pendingOrders.length) {
+      setSelectedOrderIds(new Set());
+    } else {
+      setSelectedOrderIds(new Set(pendingOrders.map((o) => o.orderId || o.OrderId)));
+    }
+  };
 
-  const useMyLocation = () =>
-    navigator.geolocation?.getCurrentPosition(
-      ({ coords }) => setHub({ lat: coords.latitude, lng: coords.longitude }),
-      () => setError("Location access was denied."),
-    );
+  // Live total quantity of selected orders (in kg)
+  const selectedTotalKg = useMemo(() => {
+    return pendingOrders
+      .filter((o) => selectedOrderIds.has(o.orderId || o.OrderId))
+      .reduce((sum, o) => sum + (o.quantity || o.Quantity || 0), 0);
+  }, [pendingOrders, selectedOrderIds]);
 
-  const optimize = async () => {
-    setError("");
+  // Live vehicle count preview: Math.ceil(selectedTotalKg / 2000)
+  const vehiclePreviewCount = useMemo(() => {
+    if (selectedTotalKg <= 0) return 0;
+    return Math.ceil(selectedTotalKg / 2000);
+  }, [selectedTotalKg]);
+
+  // Trigger Route Optimization
+  const handleOptimize = async () => {
+    if (selectedOrderIds.size === 0) {
+      toast.error("Please select at least one order to optimize.");
+      return;
+    }
+
+    if (!depot.lat || !depot.lng) {
+      toast.error("Please provide valid depot latitude and longitude.");
+      return;
+    }
+
     setOptimizing(true);
     try {
-      const results = await optimizeRoute(selectedIds, hub);
-      const routesArray = Array.isArray(results) ? results : [results];
-      setRoutes(routesArray);
-      setFocusedStop(null);
-      await loadRoadGeometries(routesArray);
-      toast.success(`Optimized ${routesArray.length} route(s)`);
+      const orderIdList = Array.from(selectedOrderIds);
+      const result = await optimizeRoute(orderIdList, parseFloat(depot.lat), parseFloat(depot.lng));
+      setRouteResult(result);
+      toast.success(`Route optimized! ${result.vehicleCount} vehicle(s) dispatched.`);
+      
+      // Refresh pending orders list
+      fetchPending();
     } catch (err) {
-      setError(err.response?.data?.message || "Could not optimize route.");
+      toast.error(err.response?.data?.message || err.response?.data || "Optimization failed.");
     } finally {
       setOptimizing(false);
     }
   };
 
-  const loadPastRoute = async (event) => {
-    event.preventDefault();
-    setError("");
-    try {
-      const result = await getRoute(pastRouteId.trim());
-      setRoutes([result]);
-      setHub({ lat: result.deliveryHubLat, lng: result.deliveryHubLng });
-      setFocusedStop(null);
-      await loadRoadGeometries([result]);
-    } catch (err) {
-      setError(err.response?.data?.message || "Route not found");
-    }
-  };
-
-  const copyRouteId = async (id) => {
-    await navigator.clipboard.writeText(id);
-    toast.success("Route ID copied");
-  };
-
-  // All stops across all routes for map bounds
-  const allStops = useMemo(() => routes.flatMap((r) => r.stops), [routes]);
+  // Flatten all stops from routeResult.stopsByVehicle for the map
+  const flattenedStops = useMemo(() => {
+    if (!routeResult || !routeResult.stopsByVehicle) return [];
+    return Object.values(routeResult.stopsByVehicle).flat();
+  }, [routeResult]);
 
   return (
-    <div className="-m-6 flex h-[calc(100vh-80px)] min-h-[620px] flex-col bg-white lg:flex-row">
-      {/* ── Left sidebar ── */}
-      <aside className="w-full overflow-y-auto border-r border-gray-200 bg-white p-5 lg:w-[420px] lg:flex-shrink-0">
-        <header className="mb-5">
-          <p className="text-xs font-bold uppercase tracking-wider text-green-700">
-            Platform logistics
-          </p>
-          <h2 className="mt-1 text-2xl font-black text-[#163820]">
-            Route Optimization
-          </h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Plan efficient delivery routes for confirmed orders.
-          </p>
-        </header>
-
-        {/* Batch status */}
-        <BatchStatusCard onRunBatch={loadOrders} />
-
-        {/* Hub location */}
-        <section className="mb-5">
-          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
-            Delivery Hub Location
-          </h3>
-          <div className="grid grid-cols-2 gap-2">
-            <label className="text-xs font-medium text-slate-600">
-              Latitude
-              <input
-                type="number"
-                step="any"
-                value={hub.lat}
-                onChange={(e) => setHub({ ...hub, lat: Number(e.target.value) })}
-                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2"
-              />
-            </label>
-            <label className="text-xs font-medium text-slate-600">
-              Longitude
-              <input
-                type="number"
-                step="any"
-                value={hub.lng}
-                onChange={(e) => setHub({ ...hub, lng: Number(e.target.value) })}
-                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2"
-              />
-            </label>
-          </div>
-          <button
-            type="button"
-            onClick={useMyLocation}
-            className="mt-2 rounded-lg border border-green-200 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-50"
-          >
-            Use my location
-          </button>
-        </section>
-
-        {/* Order selector */}
-        <section className="mb-5">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-              Select Orders to Route
-            </h3>
-            <span className="text-xs font-semibold text-green-700">
-              {selectedIds.length} selected
-            </span>
-          </div>
-          <div className="mb-3 flex gap-2">
-            <button
-              type="button"
-              onClick={() => setSelectedIds(orders.map((o) => o.id))}
-              className="text-xs font-semibold text-green-700"
-            >
-              Select All
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedIds([])}
-              className="text-xs font-semibold text-slate-500"
-            >
-              Deselect All
-            </button>
-          </div>
-          {loadingOrders ? (
-            <p className="text-sm text-slate-500">Loading orders…</p>
-          ) : orders.length ? (
-            orders.map((order) => (
-              <label
-                key={order.id}
-                className={`mb-2 flex items-start gap-3 rounded-lg border p-3 ${
-                  selectedIds.includes(order.id)
-                    ? "border-green-200 bg-green-50"
-                    : "border-gray-100 hover:bg-gray-50"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedIds.includes(order.id)}
-                  onChange={() => toggleOrder(order.id)}
-                  className="mt-1 accent-green-600"
-                />
-                <span className="min-w-0 text-sm">
-                  <strong className="block">
-                    #{shortId(order.id)} · {order.buyerName}
-                  </strong>
-                  <span className="block truncate text-xs text-slate-500">
-                    {order.deliveryAddress || "No address"}
-                  </span>
-                  <span className="text-xs font-semibold text-slate-700">
-                    ₹{Number(order.totalAmount || 0).toLocaleString("en-IN")}
-                  </span>
-                </span>
-              </label>
-            ))
-          ) : (
-            <p className="rounded-lg bg-gray-50 p-3 text-xs text-slate-500">
-              No confirmed delivery orders available. Orders must be Confirmed
-              status and Delivery type to be routed.
+    <div className="min-h-screen bg-slate-50 p-6 md:p-10 font-sans text-slate-800">
+      <div className="max-w-7xl mx-auto space-y-8">
+        
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Route Optimization & Fleet Dispatch
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              Consolidate confirmed buyer orders into minimum required vehicles using pure Haversine VRP.
             </p>
-          )}
-        </section>
+          </div>
+          
+          <button
+            onClick={fetchPending}
+            disabled={loadingPending}
+            className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition shadow-sm self-start md:self-auto"
+          >
+            Refresh Pending Orders
+          </button>
+        </div>
 
-        {error && (
-          <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-            {error}
-          </p>
-        )}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* Left Column: Config & Pending Orders (5 cols) */}
+          <div className="lg:col-span-5 space-y-6">
+            
+            {/* Depot Config Card */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-blue-600"></span>
+                Central Depot / Hub Location
+              </h2>
 
-        <button
-          type="button"
-          disabled={!selectedIds.length || optimizing}
-          onClick={optimize}
-          className="w-full rounded-lg bg-green-600 py-3 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
-        >
-          {optimizing ? "Optimizing route…" : "Optimize Route"}
-        </button>
-
-        {/* Route stops list */}
-        {routes.length > 0 && (
-          <section className="mt-6 flex flex-col gap-6">
-            {routes.map((rt, i) => (
-              <div key={rt.routeId}>
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-                    Vehicle {i + 1} ({rt.stops.length} stops)
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => copyRouteId(rt.routeId)}
-                    className="text-xs font-semibold text-green-700"
-                  >
-                    Copy Route ID
-                  </button>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                    Depot Latitude
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={depot.lat}
+                    onChange={(e) => setDepot({ ...depot, lat: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="19.0760"
+                  />
                 </div>
-                <p className="mt-1 break-all font-mono text-[10px] text-slate-400">
-                  {rt.routeId}
-                </p>
-                <div className="mt-2">
-                  {rt.stops.map((stop) => {
-                    const order = orderById.get(String(stop.orderId));
-                    const isPickup = stop.stopType === "Pickup";
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                    Depot Longitude
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={depot.lng}
+                    onChange={(e) => setDepot({ ...depot, lng: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="72.8777"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Pending Orders Selection Card */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">
+                    Pending Unrouted Orders ({pendingOrders.length})
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Select orders to include in batch
+                  </p>
+                </div>
+                
+                {pendingOrders.length > 0 && (
+                  <button
+                    onClick={toggleSelectAll}
+                    className="text-xs font-bold text-blue-600 hover:text-blue-800"
+                  >
+                    {selectedOrderIds.size === pendingOrders.length ? "Deselect All" : "Select All"}
+                  </button>
+                )}
+              </div>
+
+              {loadingPending ? (
+                <div className="py-8 text-center text-sm text-slate-400">Loading pending orders...</div>
+              ) : pendingOrders.length === 0 ? (
+                <div className="py-8 text-center text-sm text-slate-500 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                  No unrouted confirmed orders found.
+                </div>
+              ) : (
+                <div className="max-h-[350px] overflow-y-auto divide-y divide-slate-100 pr-1">
+                  {pendingOrders.map((order) => {
+                    const id = order.orderId || order.OrderId;
+                    const isSelected = selectedOrderIds.has(id);
+
                     return (
-                      <button
-                        type="button"
-                        key={`${stop.orderId}-${stop.stopSequence}`}
-                        onClick={() => setFocusedStop(stop)}
-                        className="flex w-full items-start gap-3 border-b border-gray-100 p-3 text-left hover:bg-gray-50"
+                      <div
+                        key={id}
+                        onClick={() => toggleOrder(id)}
+                        className={`p-3 rounded-xl flex items-start gap-3 cursor-pointer transition ${
+                          isSelected ? "bg-blue-50/60 border border-blue-200" : "hover:bg-slate-50"
+                        }`}
                       >
-                        <span
-                          className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${
-                            isPickup ? "bg-green-600" : "bg-orange-500"
-                          }`}
-                        >
-                          {stop.stopSequence}
-                        </span>
-                        <span className="min-w-0 text-sm">
-                          <span className="flex items-center gap-1.5">
-                            <span
-                              className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${
-                                isPickup
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-orange-100 text-orange-700"
-                              }`}
-                            >
-                              {isPickup ? "PICKUP" : "DELIVERY"}
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {}} // handled by div click
+                          className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <div className="flex-1 text-xs space-y-1">
+                          <div className="flex items-center justify-between font-bold text-slate-800">
+                            <span>Buyer: {order.buyerName || order.BuyerName}</span>
+                            <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-extrabold">
+                              {order.quantity || order.Quantity} kg
                             </span>
-                            <strong className="block truncate">
-                              {isPickup
-                                ? stop.farmerName || "Farmer"
-                                : stop.address || order?.deliveryAddress || `Stop ${stop.stopSequence}`}
-                            </strong>
-                          </span>
-                          <span className="mt-0.5 block text-xs text-slate-500">
-                            Pickup {formatDate(stop.pickupDate)} · Delivery{" "}
-                            {formatDate(stop.deliveryDate)} · ETA{" "}
-                            {formatDateTime(stop.estimatedArrival)}
-                          </span>
-                        </span>
-                      </button>
+                          </div>
+                          <p className="text-slate-600">
+                            Farmer: <span className="font-semibold">{order.farmerName || order.FarmerName}</span> &bull; Crop: {order.cropName || order.CropName}
+                          </p>
+                          <p className="text-slate-400 text-[11px] truncate">
+                            Address: {order.deliveryAddress || order.DeliveryAddress}
+                          </p>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
+              )}
+
+              {/* Live Vehicle Count Preview & Optimization Trigger */}
+              <div className="pt-4 border-t border-slate-100 space-y-4">
+                <div className="bg-slate-900 text-white rounded-xl p-4 flex items-center justify-between">
+                  <div>
+                    <span className="text-xs text-slate-400 uppercase font-semibold tracking-wider">
+                      Selected Volume
+                    </span>
+                    <p className="text-sm font-extrabold text-slate-200">
+                      Total qty: {selectedTotalKg.toLocaleString()} kg
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs text-slate-400 uppercase font-semibold tracking-wider">
+                      Vehicle Preview
+                    </span>
+                    <p className="text-sm font-extrabold text-amber-400">
+                      {vehiclePreviewCount} vehicle(s) needed
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleOptimize}
+                  disabled={optimizing || selectedOrderIds.size === 0}
+                  className={`w-full py-3.5 px-4 rounded-xl text-sm font-bold text-white shadow-lg transition flex items-center justify-center gap-2 ${
+                    optimizing || selectedOrderIds.size === 0
+                      ? "bg-slate-300 cursor-not-allowed shadow-none"
+                      : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-blue-500/25"
+                  }`}
+                >
+                  {optimizing ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Solving VRP Math...</span>
+                    </>
+                  ) : (
+                    <span>Optimize Route ({selectedOrderIds.size} Orders)</span>
+                  )}
+                </button>
               </div>
-            ))}
-          </section>
-        )}
 
-        {/* Load past route */}
-        <form onSubmit={loadPastRoute} className="mt-6 border-t border-gray-100 pt-5">
-          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
-            Past Routes
-          </h3>
-          <div className="flex gap-2">
-            <input
-              required
-              value={pastRouteId}
-              onChange={(e) => setPastRouteId(e.target.value)}
-              placeholder="Route ID"
-              className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm"
-            />
-            <button className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-white">
-              Load
-            </button>
+            </div>
+
           </div>
-        </form>
-      </aside>
 
-      {/* ── Map panel ── */}
-      <main className="min-h-[420px] flex-1">
-        <MapContainer
-          center={[hub.lat, hub.lng]}
-          zoom={10}
-          className="h-full min-h-[420px] w-full"
-        >
-          <TileLayer
-            attribution="&copy; OpenStreetMap contributors"
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <MapViewport hub={hub} focusedStop={focusedStop} stops={allStops} />
+          {/* Right Column: Map & Route Output (7 cols) */}
+          <div className="lg:col-span-7 space-y-6">
+            
+            {routeResult ? (
+              <>
+                {/* Summary Strip */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-white rounded-xl p-4 border border-slate-200 text-center shadow-sm">
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      Total Distance
+                    </span>
+                    <p className="text-xl font-black text-slate-900 mt-1">
+                      {routeResult.totalDistanceKm || routeResult.TotalDistanceKm} km
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 border border-slate-200 text-center shadow-sm">
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      Vehicles Dispatched
+                    </span>
+                    <p className="text-xl font-black text-blue-600 mt-1">
+                      {routeResult.vehicleCount || routeResult.VehicleCount}
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-xl p-4 border border-slate-200 text-center shadow-sm">
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      Orders Covered
+                    </span>
+                    <p className="text-xl font-black text-emerald-600 mt-1">
+                      {selectedOrderIds.size - (routeResult.skippedOrderIds?.length || 0)}
+                    </p>
+                  </div>
+                </div>
 
-          {/* Delivery Hub marker */}
-          <Marker position={[hub.lat, hub.lng]} icon={ICON_HUB}>
-            <Popup>
-              <strong>Delivery Hub</strong>
-            </Popup>
-          </Marker>
+                {/* Leaflet Map Card */}
+                <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between px-2">
+                    <h3 className="text-sm font-bold text-slate-800">
+                      Optimized Multi-Vehicle Route Map
+                    </h3>
+                    <span className="text-xs text-slate-500 font-medium">
+                      Depot: {depot.lat}, {depot.lng}
+                    </span>
+                  </div>
+                  
+                  <RouteMap depot={depot} stops={flattenedStops} />
+                </div>
 
-          {/* Stop markers — P for pickup (green), D for delivery (orange) */}
-          {allStops.map((stop) => {
-            const order = orderById.get(String(stop.orderId));
-            const isPickup = stop.stopType === "Pickup";
-            const icon = isPickup
-              ? ICON_PICKUP(stop.stopSequence)
-              : ICON_DELIVERY(stop.stopSequence);
-            return (
-              <Marker
-                key={`${stop.orderId}-${stop.stopSequence}`}
-                position={[stop.latitude, stop.longitude]}
-                icon={icon}
-              >
-                <Popup>
-                  <strong>
-                    {isPickup ? "Pickup" : "Delivery"} Stop #{stop.stopSequence}
-                  </strong>
-                  <br />
-                  {isPickup
-                    ? `Farmer: ${stop.farmerName || "—"}`
-                    : stop.address || order?.deliveryAddress || "Route stop"}
-                  <br />
-                  Pickup: {formatDate(stop.pickupDate)}
-                  <br />
-                  Delivery: {formatDate(stop.deliveryDate)}
-                  <br />
-                  ETA: {formatDateTime(stop.estimatedArrival)}
-                  <br />
-                  Order: {shortId(stop.orderId)}
-                </Popup>
-              </Marker>
-            );
-          })}
+                {/* Vehicle Stop Sequence Breakdown */}
+                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-6">
+                  <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">
+                    Stop Sequence per Vehicle
+                  </h3>
 
-          {routes.map((rt, i) => {
-            const colors = ["#16a34a", "#2563eb", "#9333ea", "#ea580c", "#eab308"];
-            const color = colors[i % colors.length];
-            const geom = roadGeometries[rt.routeId] || straightRoutePoints(rt);
-            return (
-              <Polyline
-                key={rt.routeId}
-                positions={geom}
-                pathOptions={{ color, weight: 4 }}
-              />
-            );
-          })}
-        </MapContainer>
-      </main>
+                  {Object.entries(routeResult.stopsByVehicle || routeResult.StopsByVehicle || {}).map(
+                    ([vehicleNum, vehicleStops]) => (
+                      <div key={vehicleNum} className="space-y-3">
+                        <div className="flex items-center justify-between bg-slate-100 px-3 py-2 rounded-lg text-xs font-extrabold text-slate-800">
+                          <span>Vehicle #{vehicleNum}</span>
+                          <span>{vehicleStops.length} Stops</span>
+                        </div>
+
+                        <div className="space-y-2">
+                          {vehicleStops.map((stop, idx) => {
+                            const seq = stop.sequence || stop.Sequence || idx + 1;
+                            const type = (stop.type || stop.Type || "").toLowerCase();
+                            const label = stop.label || stop.Label || "";
+                            const qty = stop.quantityAtStop || stop.QuantityAtStop || 0;
+                            const isPickup = type === "pickup";
+
+                            return (
+                              <div
+                                key={idx}
+                                className="flex items-center justify-between p-3 rounded-xl border border-slate-100 text-xs bg-white hover:bg-slate-50"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <span
+                                    className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-white text-[10px] ${
+                                      isPickup ? "bg-orange-500" : "bg-emerald-600"
+                                    }`}
+                                  >
+                                    #{seq}
+                                  </span>
+                                  <div>
+                                    <span
+                                      className={`font-bold uppercase tracking-wider text-[10px] mr-2 ${
+                                        isPickup ? "text-orange-600" : "text-emerald-600"
+                                      }`}
+                                    >
+                                      {isPickup ? "PICKUP" : "DELIVERY"}
+                                    </span>
+                                    <span className="font-semibold text-slate-800">{label}</span>
+                                  </div>
+                                </div>
+
+                                <div className="text-right font-medium text-slate-600">
+                                  Load: <span className="font-bold text-slate-900">{qty} kg</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+
+              </>
+            ) : (
+              <div className="bg-white rounded-2xl p-12 border border-slate-200 shadow-sm text-center space-y-4">
+                <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+                  VRP
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">
+                  Ready to Optimize Routes
+                </h3>
+                <p className="text-xs text-slate-500 max-w-md mx-auto">
+                  Select pending orders on the left, verify your central depot coordinates, and click "Optimize Route" to dispatch the fleet using Haversine VRP math.
+                </p>
+              </div>
+            )}
+
+          </div>
+
+        </div>
+      </div>
     </div>
   );
 }

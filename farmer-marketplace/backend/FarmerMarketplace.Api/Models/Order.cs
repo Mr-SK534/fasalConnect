@@ -53,5 +53,18 @@ namespace FarmerMarketplace.Api.Models
 
         public double? Latitude { get; set; }
         public double? Longitude { get; set; }
+
+        public Guid? RouteId { get; set; }
+        [ForeignKey(nameof(RouteId))]
+        public DeliveryRoute? Route { get; set; }
+
+        public int? StopSequence { get; set; }
+        public int? VehicleNumber { get; set; }
+        public DateTime? EstimatedArrival { get; set; }
+
+        public double? DeliveryLat { get; set; }
+        public double? DeliveryLng { get; set; }
+        public double? PickupLat { get; set; }
+        public double? PickupLng { get; set; }
     }
 }
