@@ -76,7 +76,7 @@ namespace FarmerMarketplace.Api.Services
                 {
                     FarmerId = product.FarmerId,
                     FarmerName = product.Farmer?.Name ?? string.Empty,
-                    FarmerLocation = product.Farmer?.Location ?? product.Region,
+                    FarmerLocation = product.Farmer?.Address ?? product.Region,
                     AvailableQuantity = product.Quantity,
                     Price = product.Price
                 }).ToList()
@@ -227,7 +227,7 @@ namespace FarmerMarketplace.Api.Services
                 CreatedAt = product.CreatedAt,
                 FarmerId = product.FarmerId,
                 FarmerName = product.Farmer?.Name ?? string.Empty,
-                FarmerLocation = product.Farmer?.Location
+                FarmerLocation = product.Farmer?.Address
             };
         }
 

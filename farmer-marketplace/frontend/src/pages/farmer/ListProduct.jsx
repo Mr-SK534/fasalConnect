@@ -204,7 +204,7 @@ export default function ListProduct() {
             value={form.region}
             onChange={update}
             className="mt-1.5 w-full rounded-xl border border-[#d2c5a2] px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none focus:border-[#2e7d32] focus:ring-2 focus:ring-[#2e7d32]/20"
-            placeholder="Village, district, or market region"
+            placeholder="Address, district, or market region"
           />
         </label>
 

@@ -90,8 +90,9 @@ namespace FarmerMarketplace.Api.Data
 
         public DbSet<FarmerMarketplace.Api.Models.Route> Routes { get; set; }
         public DbSet<FarmerMarketplace.Api.Models.RouteStop> RouteStops { get; set; }
+        public DbSet<BatchRunLog> BatchRunLogs { get; set; }
 
 
 
     }
-}
+}

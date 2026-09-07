@@ -21,10 +21,13 @@ namespace FarmerMarketplace.Api.DTOs
         public UserRole Role { get; set; }
 
         public string PreferredLanguage { get; set; } = "en";
-        public string? Village { get; set; }
+        public string? Address { get; set; }
         public string? District { get; set; }
         public string? State { get; set; }
         public string? Pincode { get; set; }
+        public string? Region { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
         public string? PrimaryCrops { get; set; }
         public string? BankAccountNumber { get; set; }
         public string? BankIfsc { get; set; }

@@ -49,9 +49,6 @@ namespace FarmerMarketplace.Api.Models
         // ---- Profile setup fields ----
 
         [MaxLength(100)]
-        public string? Village { get; set; }
-
-        [MaxLength(100)]
         public string? District { get; set; }
 
         [MaxLength(100)]
@@ -62,6 +59,9 @@ namespace FarmerMarketplace.Api.Models
 
         public double? Latitude { get; set; }
         public double? Longitude { get; set; }
+
+        [MaxLength(200)]
+        public string? Address { get; set; }
 
         [MaxLength(200)]
         public string? Region { get; set; }

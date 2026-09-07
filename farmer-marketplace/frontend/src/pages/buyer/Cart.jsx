@@ -32,55 +32,53 @@ export default function Cart() {
       if (!cartItems.length) return;
       const productsResponse = await api.get("/products");
       const products = productsResponse.data || [];
-      const entries = await Promise.all(
+      const aggregateEntries = await Promise.all(
         [...new Set(cartItems.map((item) => item.cropName))].map(
           async (cropName) => {
             const aggregate = await api.get(
               `/products/aggregate/${encodeURIComponent(cropName)}`,
             );
-            const product = products.find(
-              (item) =>
-                item.id ===
-                cartItems.find((cartItem) => cartItem.cropName === cropName)
-                  ?.productId,
-            );
-            return [
-              cropName,
-              {
-                quantity: Number(product?.quantity || 0),
-                totalAvailableQuantity: Number(
-                  aggregate.data.totalAvailableQuantity || 0,
-                ),
-                farmerCount: Number(aggregate.data.farmerCount || 0),
-              },
-            ];
+            return [cropName, aggregate.data];
           },
         ),
       );
-      const nextAvailability = Object.fromEntries(entries);
+      const aggregates = Object.fromEntries(aggregateEntries);
+
+      const byProductId = Object.fromEntries(
+        cartItems.map((item) => {
+          const product = products.find((p) => p.id === item.productId);
+          const aggregate = aggregates[item.cropName];
+          return [
+            item.productId,
+            {
+              quantity: Number(product?.quantity || 0),
+              totalAvailableQuantity: Number(
+                aggregate?.totalAvailableQuantity || 0,
+              ),
+              farmerCount: Number(aggregate?.farmerCount || 0),
+            },
+          ];
+        }),
+      );
+
       setStockWarnings(
         Object.fromEntries(
           cartItems
             .filter(
               (item) =>
                 Number(
-                  nextAvailability[item.cropName]?.totalAvailableQuantity || 0,
+                  byProductId[item.productId]?.totalAvailableQuantity || 0,
                 ) < item.quantity,
             )
             .map((item) => [
               item.productId,
-              nextAvailability[item.cropName]?.totalAvailableQuantity || 0,
+              byProductId[item.productId]?.totalAvailableQuantity || 0,
             ]),
         ),
       );
-      const byProductId = Object.fromEntries(
-        cartItems.map((item) => [
-          item.productId,
-          nextAvailability[item.cropName],
-        ]),
-      );
+
       updateAvailability(byProductId);
-      if (Object.values(nextAvailability).some((item) => item.quantity < 1))
+      if (Object.values(byProductId).some((item) => item.quantity < 1))
         toast("Some items in your cart are no longer available");
     };
     refreshAvailability().catch((error) =>

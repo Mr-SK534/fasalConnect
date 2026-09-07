@@ -60,8 +60,11 @@ builder.Services.AddScoped<IFpoService, FpoService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IRouteService, RouteService>();
-// TODO: register IOrderService, IForecastService,
-// IRouteService, IPaymentService, IWhatsAppService here as they're built
+// Register concrete type so RouteBatchingService can resolve it via IServiceScopeFactory
+builder.Services.AddScoped<RouteService>();
+// Background batch scheduler (runs at 8 AM and 2 PM IST daily)
+builder.Services.AddHostedService<RouteBatchingService>();
+// TODO: register IForecastService, IWhatsAppService here as they're built
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -81,7 +84,9 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(jwtSettings["Key"]!))
+            Encoding.UTF8.GetBytes(jwtSettings["Key"]!)),
+        RoleClaimType = ClaimTypes.Role,
+        NameClaimType = ClaimTypes.Name
     };
 
     options.Events = new JwtBearerEvents

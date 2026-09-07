@@ -11,11 +11,13 @@ namespace FarmerMarketplace.Api.Services
     {
         private readonly AppDbContext _context;
         private readonly PasswordHasher _passwordHasher;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public AdminService(AppDbContext context, PasswordHasher passwordHasher)
+        public AdminService(AppDbContext context, PasswordHasher passwordHasher, IHttpClientFactory httpClientFactory)
         {
             _context = context;
             _passwordHasher = passwordHasher;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<AdminUserListResponseDto> GetUsersAsync(Guid requestingUserId, string? role, string? userRole, string? search, int page, int pageSize)
@@ -46,7 +48,7 @@ namespace FarmerMarketplace.Api.Services
             if (email != null && await _context.Users.AnyAsync(user => user.Email != null && user.Email.ToLower() == email))
                 throw new InvalidOperationException("An account with this email already exists.");
 
-            var profileComplete = !string.IsNullOrWhiteSpace(dto.Village)
+            var profileComplete = !string.IsNullOrWhiteSpace(dto.Address)
                 || !string.IsNullOrWhiteSpace(dto.District)
                 || !string.IsNullOrWhiteSpace(dto.State)
                 || !string.IsNullOrWhiteSpace(dto.BusinessName)
@@ -58,12 +60,29 @@ namespace FarmerMarketplace.Api.Services
                 Name = dto.Name.Trim(), Phone = phone, Email = email,
                 PasswordHash = _passwordHasher.HashPassword(dto.Password), Role = dto.Role,
                 PreferredLanguage = string.IsNullOrWhiteSpace(dto.PreferredLanguage) ? "en" : dto.PreferredLanguage,
-                Village = dto.Village, District = dto.District, State = dto.State, Pincode = dto.Pincode,
+                Latitude = dto.Latitude, Longitude = dto.Longitude, Region = dto.Region,
+                Address = dto.Address, District = dto.District, State = dto.State, Pincode = dto.Pincode,
                 PrimaryCrops = dto.PrimaryCrops, BankAccountNumber = dto.BankAccountNumber,
                 BankIfsc = dto.BankIfsc, AccountHolderName = dto.AccountHolderName, UpiId = dto.UpiId,
                 BusinessName = dto.BusinessName, GstNumber = dto.GstNumber, DeliveryAddress = dto.DeliveryAddress,
                 IsProfileComplete = profileComplete, UpdatedAt = DateTime.UtcNow
             };
+
+            if (user.Latitude == null || user.Longitude == null)
+            {
+                var addressParts = new[] { user.Address, user.District, user.State, user.Pincode };
+                var fullAddress = string.Join(", ", addressParts.Where(s => !string.IsNullOrWhiteSpace(s)));
+                
+                if (string.IsNullOrWhiteSpace(fullAddress) && !string.IsNullOrWhiteSpace(user.DeliveryAddress))
+                    fullAddress = user.DeliveryAddress;
+
+                var coords = await GeocodeAddressAsync(fullAddress);
+                if (coords.HasValue)
+                {
+                    user.Latitude = coords.Value.Lat;
+                    user.Longitude = coords.Value.Lng;
+                }
+            }
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
@@ -111,12 +130,41 @@ namespace FarmerMarketplace.Api.Services
 
         private static UserResponseDto MapUser(User user) => new()
         {
-            Id = user.Id, Name = user.Name, Email = user.Email, Phone = user.Phone, Role = user.Role, Location = user.Location, PreferredLanguage = user.PreferredLanguage, FpoId = user.FpoId, IsProfileComplete = user.IsProfileComplete, CreatedAt = user.CreatedAt, Suspended = user.Suspended, SuspensionReason = user.SuspensionReason, Village = user.Village, District = user.District, State = user.State, Pincode = user.Pincode, PrimaryCrops = user.PrimaryCrops, BankAccountNumber = user.BankAccountNumber, BankIfsc = user.BankIfsc, AccountHolderName = user.AccountHolderName, BusinessName = user.BusinessName, DeliveryAddress = user.DeliveryAddress, GstNumber = user.GstNumber, UpiId = user.UpiId
+            Id = user.Id, Name = user.Name, Email = user.Email, Phone = user.Phone, Role = user.Role, Location = user.Location, PreferredLanguage = user.PreferredLanguage, FpoId = user.FpoId, IsProfileComplete = user.IsProfileComplete, CreatedAt = user.CreatedAt, Suspended = user.Suspended, SuspensionReason = user.SuspensionReason, Address = user.Address, District = user.District, State = user.State, Pincode = user.Pincode, Region = user.Region, Latitude = user.Latitude, Longitude = user.Longitude, PrimaryCrops = user.PrimaryCrops, BankAccountNumber = user.BankAccountNumber, BankIfsc = user.BankIfsc, AccountHolderName = user.AccountHolderName, BusinessName = user.BusinessName, DeliveryAddress = user.DeliveryAddress, GstNumber = user.GstNumber, UpiId = user.UpiId
         };
 
         private static OrderResponseDto MapOrder(Order order) => new()
         {
             Id = order.Id, BuyerId = order.BuyerId, BuyerName = order.Buyer?.Name ?? string.Empty, BuyerPhone = order.Buyer?.Phone, IsBulkOrder = order.IsBulkOrder, DeliveryType = order.DeliveryType, DeliveryAddress = order.DeliveryAddress, Status = order.Status, TotalAmount = order.TotalAmount, CreatedAt = order.CreatedAt, UpdatedAt = order.UpdatedAt, Items = order.Items.Select(item => new OrderItemResponseDto { Id = item.Id, ProductId = item.ProductId, CropName = item.Product?.CropName ?? string.Empty, FarmerId = item.FarmerId, FarmerName = item.Farmer?.Name ?? string.Empty, Quantity = item.Quantity, PriceAtOrderTime = item.PriceAtOrderTime, SubTotal = item.SubTotal }).ToList()
         };
+
+        private async Task<(double Lat, double Lng)?> GeocodeAddressAsync(string? address)
+        {
+            if (string.IsNullOrWhiteSpace(address)) return null;
+
+            var client = _httpClientFactory.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(10);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("FasalConnect/1.0 admin-setup");
+
+            try
+            {
+                var url = $"https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=in&q={Uri.EscapeDataString(address)}";
+                using var response = await client.GetAsync(url);
+                if (!response.IsSuccessStatusCode) return null;
+                using var document = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+                var result = document.RootElement.EnumerateArray().FirstOrDefault();
+                if (result.ValueKind == System.Text.Json.JsonValueKind.Undefined) return null;
+                var lat = result.TryGetProperty("lat", out var latProperty) ? latProperty.GetString() : null;
+                var lng = result.TryGetProperty("lon", out var lngProperty) ? lngProperty.GetString() : null;
+                if (double.TryParse(lat, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var latitude)
+                    && double.TryParse(lng, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var longitude))
+                    return (latitude, longitude);
+            }
+            catch
+            {
+                // ignore
+            }
+            return null;
+        }
     }
 }

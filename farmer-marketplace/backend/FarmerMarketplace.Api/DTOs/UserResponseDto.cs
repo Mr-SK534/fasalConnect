@@ -21,10 +21,11 @@ namespace FarmerMarketplace.Api.DTOs
         public bool Suspended { get; set; }
         public string? SuspensionReason { get; set; }
 
-        public string? Village { get; set; }
+        public string? Address { get; set; }
         public string? District { get; set; }
         public string? State { get; set; }
         public string? Pincode { get; set; }
+        public string? Region { get; set; }
         public string? PrimaryCrops { get; set; }
         public string? BankAccountNumber { get; set; }
         public string? BankIfsc { get; set; }

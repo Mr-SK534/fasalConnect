@@ -83,9 +83,11 @@ namespace FarmerMarketplace.Api.Services
                 PasswordHash = _passwordHasher.HashPassword(dto.Password),
                 Role = UserRole.Farmer,
                 FpoId = fpoId,
-                Village = dto.Village,
+                Address = dto.Address,
                 District = dto.District,
                 State = dto.State,
+                Latitude = dto.Latitude,
+                Longitude = dto.Longitude,
                 IsProfileComplete = false,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -161,7 +163,7 @@ namespace FarmerMarketplace.Api.Services
                 FpoId = user.FpoId,
                 IsProfileComplete = user.IsProfileComplete,
                 CreatedAt = user.CreatedAt
-                ,Village = user.Village
+                ,Address = user.Address
                 ,District = user.District
                 ,State = user.State
                 ,PrimaryCrops = user.PrimaryCrops

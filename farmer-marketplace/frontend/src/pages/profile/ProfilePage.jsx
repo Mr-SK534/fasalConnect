@@ -34,7 +34,7 @@ export default function ProfilePage() {
     name: "",
     phone: "",
     preferredLanguage: "en",
-    village: "",
+    address: "",
     district: "",
     state: "",
     pincode: "",
@@ -101,17 +101,14 @@ export default function ProfilePage() {
           const response = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.latitude}&lon=${coords.longitude}`,
           );
-          const address = (await response.json()).address || {};
+          const data = await response.json();
+          const address = data.address || {};
+          
           setForm((current) => ({
             ...current,
             latitude: coords.latitude,
             longitude: coords.longitude,
-            village:
-              address.village ||
-              address.town ||
-              address.city ||
-              address.suburb ||
-              "",
+            address: data.display_name || "",
             district:
               address.county ||
               address.district ||
@@ -132,6 +129,40 @@ export default function ProfilePage() {
       },
     );
   };
+
+  useEffect(() => {
+    // Forward geocoding logic based on form fields
+    const { address, district, state, pincode } = form;
+    if (!address && !district && !state && !pincode) return;
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        const queryParts = [address, district, state, pincode].filter(Boolean);
+        const query = queryParts.join(", ");
+        
+        if (query.trim() === "") return;
+
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+            query
+          )}&countrycodes=in&limit=1`
+        );
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+          setForm((current) => ({
+            ...current,
+            latitude: parseFloat(data[0].lat),
+            longitude: parseFloat(data[0].lon),
+          }));
+        }
+      } catch (error) {
+        console.error("Geocoding failed", error);
+      }
+    }, 1500);
+
+    return () => clearTimeout(timeoutId);
+  }, [form.address, form.district, form.state, form.pincode]);
 
   const addCrop = (event) => {
     if (event.key === "Enter" && cropInput.trim()) {
@@ -260,12 +291,13 @@ export default function ProfilePage() {
           </button>
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <label>
-            Village / Town
+          <label className="sm:col-span-2">
+            Address
             <input
-              name="village"
-              value={form.village || ""}
+              name="address"
+              value={form.address || ""}
               onChange={update}
+              placeholder="e.g. MI Road, Jaipur"
               className={inputClass}
             />
           </label>

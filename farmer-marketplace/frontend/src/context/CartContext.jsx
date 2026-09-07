@@ -61,6 +61,7 @@ export function CartProvider({ children }) {
         {
           productId,
           cropName: product.cropName,
+          farmerId: product.farmerId,
           farmerName: product.farmerName,
           farmerLocation: product.farmerLocation,
           price: Number(product.price || 0),

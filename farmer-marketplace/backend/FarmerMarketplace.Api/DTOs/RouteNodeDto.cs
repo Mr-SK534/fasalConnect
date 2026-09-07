@@ -8,5 +8,6 @@ namespace FarmerMarketplace.Api.DTOs
         public double Longitude { get; set; }
         public string? Address { get; set; }
         public string? FarmerName { get; set; }
+        public long Demand { get; set; }
     }
 }

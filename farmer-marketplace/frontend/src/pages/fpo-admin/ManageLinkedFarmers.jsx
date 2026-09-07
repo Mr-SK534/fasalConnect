@@ -24,11 +24,40 @@ export default function ManageLinkedFarmers() {
     phone: "",
     email: "",
     password: "",
-    village: "",
+    address: "",
     district: "",
     state: "",
+    region: "",
+    latitude: "",
+    longitude: "",
   });
   const [createError, setCreateError] = useState("");
+
+  useEffect(() => {
+    if (!showCreateModal) return;
+    const { address, district, state } = createForm;
+    if (!address && !district && !state) return;
+    const timeout = setTimeout(async () => {
+      try {
+        const query = [address, district, state].filter(Boolean).join(", ");
+        if (!query) return;
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
+        );
+        const data = await res.json();
+        if (data && data.length > 0) {
+          setCreateForm((prev) => ({
+            ...prev,
+            latitude: parseFloat(data[0].lat),
+            longitude: parseFloat(data[0].lon),
+          }));
+        }
+      } catch (err) {
+        console.error("Geocoding error", err);
+      }
+    }, 1200);
+    return () => clearTimeout(timeout);
+  }, [createForm.address, createForm.district, createForm.state, showCreateModal]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -88,16 +117,25 @@ export default function ManageLinkedFarmers() {
     try {
       await api.post(`/fpo/${user.id}/farmers/create`, {
         ...createForm,
+        address: createForm.address || undefined,
+        district: createForm.district || undefined,
+        state: createForm.state || undefined,
+        region: createForm.region || undefined,
         email: createForm.email || undefined,
+        latitude: createForm.latitude || undefined,
+        longitude: createForm.longitude || undefined,
       });
       setCreateForm({
         name: "",
         phone: "",
         email: "",
         password: "",
-        village: "",
+        address: "",
         district: "",
         state: "",
+        region: "",
+        latitude: "",
+        longitude: "",
       });
       setShowCreateModal(false);
       await refreshFarmers();
@@ -193,9 +231,10 @@ export default function ManageLinkedFarmers() {
                 ["phone", "Phone", true],
                 ["email", "Email", false],
                 ["password", "Password", true],
-                ["village", "Village", false],
+                ["address", "Address", false],
                 ["district", "District", false],
                 ["state", "State", false],
+                ["region", "Region", false],
               ].map(([name, label, required]) => (
                 <label
                   key={name}

@@ -10,7 +10,7 @@ namespace FarmerMarketplace.Api.DTOs
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public UserRole Role { get; set; }
-        public string? Village { get; set; }
+        public string? Address { get; set; }
         public string? District { get; set; }
         public string? State { get; set; }
         public string? Phone { get; set; }

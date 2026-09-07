@@ -23,10 +23,9 @@ const getMeta = (data, page, pageSize, count) => ({
     data?.totalPages ||
     Math.max(1, Math.ceil((data?.totalCount ?? count) / pageSize)),
 });
-const location = (user) =>
-  [user.village, user.district, user.state].filter(Boolean).join(", ") ||
-  user.location ||
-  "-";
+const addressStr = (user) =>
+  [user.address, user.district, user.state].filter(Boolean).join(", ") ||
+  "No address";
 const mask = (value) => (value ? `****${String(value).slice(-4)}` : "-");
 
 export default function AdminUsers() {
@@ -55,9 +54,10 @@ export default function AdminUsers() {
     password: "",
     role: "Farmer",
     preferredLanguage: "en",
-    village: "",
+    address: "",
     district: "",
     state: "",
+    region: "",
     pincode: "",
     primaryCrops: "",
     bankAccountNumber: "",
@@ -67,7 +67,38 @@ export default function AdminUsers() {
     businessName: "",
     gstNumber: "",
     deliveryAddress: "",
+    latitude: "",
+    longitude: "",
   });
+
+  useEffect(() => {
+    if (!showCreate) return;
+    const { address, district, state, pincode } = createForm;
+    if (!address && !district && !state && !pincode) return;
+    const timeout = setTimeout(async () => {
+      try {
+        const query = [address, district, state, pincode]
+          .filter(Boolean)
+          .join(", ");
+        if (!query) return;
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
+        );
+        const data = await res.json();
+        if (data && data.length > 0) {
+          setCreateForm((prev) => ({
+            ...prev,
+            latitude: parseFloat(data[0].lat),
+            longitude: parseFloat(data[0].lon),
+          }));
+        }
+      } catch (err) {
+        console.error("Geocoding error", err);
+      }
+    }, 1200);
+    return () => clearTimeout(timeout);
+  }, [createForm.address, createForm.district, createForm.state, createForm.pincode, showCreate]);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -130,13 +161,16 @@ export default function AdminUsers() {
       await createAdminUser({
         ...createForm,
         email: createForm.email || undefined,
-        village: createForm.village || undefined,
+        address: createForm.address || undefined,
         district: createForm.district || undefined,
         state: createForm.state || undefined,
+        region: createForm.region || undefined,
         pincode: createForm.pincode || undefined,
         primaryCrops: createForm.primaryCrops || undefined,
         businessName: createForm.businessName || undefined,
         deliveryAddress: createForm.deliveryAddress || undefined,
+        latitude: createForm.latitude || undefined,
+        longitude: createForm.longitude || undefined,
       });
       setShowCreate(false);
       setCreateForm({
@@ -247,7 +281,7 @@ export default function AdminUsers() {
                       {user.role}
                     </span>
                   </td>
-                  <td className="p-3">{location(user)}</td>
+                  <td className="p-3">{addressStr(user)}</td>
                   <td className="p-3">
                     <span
                       className={`rounded-full px-2 py-1 text-xs font-semibold ${user.isProfileComplete ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}
@@ -336,9 +370,10 @@ export default function AdminUsers() {
                 ["Phone", detail.phone],
                 ["Email", detail.email || "—"],
                 ["Role", detail.role],
-                ["Village", detail.village],
+                ["Address", detail.address],
                 ["District", detail.district],
                 ["State", detail.state],
+                ["Region", detail.region],
                 ["Pincode", detail.pincode],
                 ["Language", detail.preferredLanguage],
                 ["Crops", detail.primaryCrops],
@@ -427,9 +462,10 @@ export default function AdminUsers() {
                 ["phone", "Phone", true],
                 ["email", "Email", false],
                 ["password", "Password", true],
-                ["village", "Village", false],
+                ["address", "Address", false],
                 ["district", "District", false],
                 ["state", "State", false],
+                ["region", "Region", false],
                 ["pincode", "Pincode", false],
                 ["primaryCrops", "Primary crops", false],
                 ["bankAccountNumber", "Bank account number", false],

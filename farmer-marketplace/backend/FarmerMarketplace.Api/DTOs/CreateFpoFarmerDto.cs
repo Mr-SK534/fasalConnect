@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace FarmerMarketplace.Api.DTOs
 {
@@ -16,13 +17,15 @@ namespace FarmerMarketplace.Api.DTOs
         [Required, MinLength(6)]
         public string Password { get; set; } = string.Empty;
 
-        [MaxLength(100)]
-        public string? Village { get; set; }
+        [MaxLength(200)]
+        public string? Address { get; set; }
 
         [MaxLength(100)]
         public string? District { get; set; }
 
         [MaxLength(100)]
         public string? State { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
     }
 }

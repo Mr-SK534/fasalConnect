@@ -24,11 +24,16 @@ export function AuthProvider({ children }) {
         setUser(restoredUser);
         setToken(storedToken);
       } catch (err) {
-        // Token invalid/expired — clear it silently
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        setUser(null);
-        setToken(null);
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          // Token invalid/expired — clear it silently
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          setUser(null);
+          setToken(null);
+        } else {
+          console.error("Session restore failed temporarily:", err);
+          // Don't log out if it's a network error or server crash
+        }
       } finally {
         setIsLoading(false);
       }

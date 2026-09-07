@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../hooks/useAuth";
+import { useEffect } from "react";
 import { ROLES, DASHBOARD_PATH_BY_ROLE } from "../../utils/roles";
 import axiosClient from "../../services/api";
 
@@ -50,9 +51,10 @@ export default function ProfileSetup() {
   const { t, i18n } = useTranslation();
 
   // Section A — Location
-  const [village, setVillage] = useState("");
+  const [location, setLocation] = useState("");
   const [district, setDistrict] = useState("");
   const [state, setState] = useState("");
+  const [region, setRegion] = useState("");
   const [pincode, setPincode] = useState("");
   const [latitude, setLatitude] = useState(null);
   const [longitude, setLongitude] = useState(null);
@@ -101,9 +103,7 @@ export default function ProfileSetup() {
           );
           const data = await res.json();
           const addr = data.address || {};
-          setVillage(
-            addr.village || addr.town || addr.city || addr.suburb || "",
-          );
+          setLocation(data.display_name || "");
           setDistrict(
             addr.county || addr.district || addr.state_district || "",
           );
@@ -123,6 +123,30 @@ export default function ProfileSetup() {
       },
     );
   };
+
+  // Forward geocoding when address inputs change
+  useEffect(() => {
+    if (!location && !district && !state && !pincode) return;
+    const timeout = setTimeout(async () => {
+      try {
+        const query = [location, district, state, pincode]
+          .filter(Boolean)
+          .join(", ");
+        if (!query) return;
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
+        );
+        const data = await res.json();
+        if (data && data.length > 0) {
+          setLatitude(parseFloat(data[0].lat));
+          setLongitude(parseFloat(data[0].lon));
+        }
+      } catch (err) {
+        console.error("Geocoding error", err);
+      }
+    }, 1200);
+    return () => clearTimeout(timeout);
+  }, [location, district, state, pincode]);
 
   // Crop tag input
   const handleCropKeyDown = (e) => {
@@ -156,9 +180,10 @@ export default function ProfileSetup() {
         : crops;
 
     const payload = {
-      village,
+      address: location,
       district,
       state,
+      region,
       pincode,
       latitude,
       longitude,
@@ -257,18 +282,17 @@ export default function ProfileSetup() {
             </button>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <div>
-                <label className="block font-bold text-white mb-1 drop-shadow-xs">
-                  {t("profileSetup.village", "Village / Town")} *
-                </label>
+              <label className="sm:col-span-2">
+                <span className="block font-bold text-white mb-1 drop-shadow-xs">Address *</span>
                 <input
                   type="text"
                   required
-                  value={village}
-                  onChange={(e) => setVillage(e.target.value)}
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="e.g. MI Road, Jaipur"
                   className="w-full px-3 py-2 text-sm font-medium text-slate-900 bg-white/80 backdrop-blur-xs border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400/50 shadow-xs"
                 />
-              </div>
+              </label>
               <div>
                 <label className="block font-bold text-white mb-1 drop-shadow-xs">
                   {t("profileSetup.district", "District")} *
@@ -298,6 +322,21 @@ export default function ProfileSetup() {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="block font-bold text-white mb-1 drop-shadow-xs">
+                  {t("profileSetup.region", "Region")}
+                  <span className="font-normal text-white/90 ml-1 text-xs">
+                    (optional)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={region}
+                  onChange={(e) => setRegion(e.target.value)}
+                  placeholder="e.g. North, South"
+                  className="w-full px-3 py-2 text-sm font-medium text-slate-900 bg-white/80 backdrop-blur-xs border border-white/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400/50 shadow-xs"
+                />
               </div>
               <div>
                 <label className="block font-bold text-white mb-1 drop-shadow-xs">

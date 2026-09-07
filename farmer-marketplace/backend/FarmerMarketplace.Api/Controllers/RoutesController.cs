@@ -22,10 +22,10 @@ namespace FarmerMarketplace.Api.Controllers
 
         // POST /api/routes/optimize
         [HttpPost("optimize")]
-        public async Task<ActionResult<RouteResponseDto>> Optimize([FromBody] RouteOptimizeDto dto)
+        public async Task<ActionResult<List<RouteResponseDto>>> Optimize([FromBody] RouteOptimizeDto dto)
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier)
-                               ?? User.FindFirstValue("sub");
+                           ?? User.FindFirstValue("sub");
 
             if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var adminId))
                 return Unauthorized();
@@ -39,6 +39,22 @@ namespace FarmerMarketplace.Api.Controllers
         public async Task<ActionResult<RouteResponseDto>> GetById(Guid routeId)
         {
             var result = await _routeService.GetByIdAsync(routeId);
+            return Ok(result);
+        }
+
+        // GET /api/routes/batch-status
+        [HttpGet("batch-status")]
+        public async Task<ActionResult<BatchStatusDto>> GetBatchStatus()
+        {
+            var result = await _routeService.GetBatchStatusAsync();
+            return Ok(result);
+        }
+
+        // POST /api/routes/batch/run
+        [HttpPost("batch/run")]
+        public async Task<ActionResult<BatchRunResultDto>> RunBatch()
+        {
+            var result = await _routeService.RunBatchNowAsync();
             return Ok(result);
         }
     }

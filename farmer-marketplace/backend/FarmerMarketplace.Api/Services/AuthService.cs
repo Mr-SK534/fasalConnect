@@ -153,7 +153,7 @@ namespace FarmerMarketplace.Api.Services
                 FpoId = user.FpoId,
                 IsProfileComplete = user.IsProfileComplete,
                 CreatedAt = user.CreatedAt,
-                Village = user.Village,
+                Address = user.Address,
                 District = user.District,
                 State = user.State,
                 Pincode = user.Pincode,
@@ -166,7 +166,8 @@ namespace FarmerMarketplace.Api.Services
                 GstNumber = user.GstNumber,
                 DeliveryAddress = user.DeliveryAddress,
                 Latitude = user.Latitude,
-                Longitude = user.Longitude
+                Longitude = user.Longitude,
+                Region = user.Region
             };
         }
     }
