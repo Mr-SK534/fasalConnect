@@ -11,23 +11,28 @@ import "leaflet/dist/leaflet.css";
 import { toast } from "react-hot-toast";
 import { getAdminOrders } from "../../services/adminService";
 import { getRoute, optimizeRoute } from "../../services/routeService";
+import { useAuth } from "../../hooks/useAuth";
 
-const DEFAULT_HUB = { lat: 19.076, lng: 72.8777 };
+const DEFAULT_HUB = { lat: 20.5937, lng: 78.9629 }; // centre of India fallback
 const unwrap = (data) =>
   Array.isArray(data) ? data : data?.items || data?.orders || [];
-const formatTime = (value) =>
-  value
-    ? new Date(value).toLocaleTimeString("en-IN", {
-        hour: "numeric",
-        minute: "2-digit",
-      })
-    : "-";
 const formatDate = (value) =>
   value
     ? new Date(value).toLocaleDateString("en-IN", {
         day: "numeric",
         month: "short",
         year: "numeric",
+      })
+    : "-";
+const formatDateTime = (value) =>
+  value
+    ? new Date(value).toLocaleString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
       })
     : "-";
 const shortId = (id) => String(id).slice(0, 8);
@@ -43,7 +48,13 @@ function MapViewport({ hub, focusedStop }) {
 }
 
 export default function RouteDashboard() {
-  const [hub, setHub] = useState(DEFAULT_HUB);
+  const { user } = useAuth();
+  // Auto-populate hub from logged-in user's profile coordinates if available
+  const profileHub =
+    user?.latitude && user?.longitude
+      ? { lat: user.latitude, lng: user.longitude }
+      : DEFAULT_HUB;
+  const [hub, setHub] = useState(profileHub);
   const [orders, setOrders] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [route, setRoute] = useState(null);
@@ -53,6 +64,13 @@ export default function RouteDashboard() {
   const [pastRouteId, setPastRouteId] = useState("");
   const [focusedStop, setFocusedStop] = useState(null);
   const [roadGeometry, setRoadGeometry] = useState([]);
+
+  // Sync hub when user profile loads (e.g. after session restore)
+  useEffect(() => {
+    if (user?.latitude && user?.longitude) {
+      setHub({ lat: user.latitude, lng: user.longitude });
+    }
+  }, [user?.latitude, user?.longitude]);
 
   const loadOrders = useCallback(async () => {
     setLoadingOrders(true);
@@ -331,7 +349,7 @@ export default function RouteDashboard() {
                       <span className="text-xs text-slate-500">
                         Pickup {formatDate(stop.pickupDate)} · Delivery{" "}
                         {formatDate(stop.deliveryDate)} · ETA{" "}
-                        {formatTime(stop.estimatedArrival)} · Order{" "}
+                        {formatDateTime(stop.estimatedArrival)} · Order{" "}
                         {shortId(stop.orderId)}
                       </span>
                     </span>
@@ -408,7 +426,7 @@ export default function RouteDashboard() {
                   <br />
                   Delivery: {formatDate(stop.deliveryDate)}
                   <br />
-                  ETA: {formatTime(stop.estimatedArrival)}
+                  ETA: {formatDateTime(stop.estimatedArrival)}
                   <br />
                   Order: {shortId(stop.orderId)}
                 </Popup>

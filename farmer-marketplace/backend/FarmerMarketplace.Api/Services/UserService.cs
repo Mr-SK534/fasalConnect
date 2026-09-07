@@ -33,7 +33,8 @@ namespace FarmerMarketplace.Api.Services
                 Village = user.Village, District = user.District, State = user.State, Pincode = user.Pincode,
                 PrimaryCrops = user.PrimaryCrops, BankAccountNumber = user.BankAccountNumber,
                 BankIfsc = user.BankIfsc, AccountHolderName = user.AccountHolderName, UpiId = user.UpiId,
-                BusinessName = user.BusinessName, GstNumber = user.GstNumber, DeliveryAddress = user.DeliveryAddress
+                BusinessName = user.BusinessName, GstNumber = user.GstNumber, DeliveryAddress = user.DeliveryAddress,
+                Latitude = user.Latitude, Longitude = user.Longitude
             };
         }
 
@@ -90,7 +91,9 @@ namespace FarmerMarketplace.Api.Services
                 UpiId = user.UpiId,
                 BusinessName = user.BusinessName,
                 GstNumber = user.GstNumber,
-                DeliveryAddress = user.DeliveryAddress
+                DeliveryAddress = user.DeliveryAddress,
+                Latitude = user.Latitude,
+                Longitude = user.Longitude
             };
         }
 
@@ -163,7 +166,9 @@ public async Task<UserResponseDto> UpdateBasicProfileAsync(Guid id, Guid request
         UpiId = user.UpiId,
         BusinessName = user.BusinessName,
         GstNumber = user.GstNumber,
-        DeliveryAddress = user.DeliveryAddress
+        DeliveryAddress = user.DeliveryAddress,
+        Latitude = user.Latitude,
+        Longitude = user.Longitude
     };
 }
     }

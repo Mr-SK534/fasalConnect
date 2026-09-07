@@ -33,5 +33,7 @@ namespace FarmerMarketplace.Api.DTOs
         public string? BusinessName { get; set; }
         public string? GstNumber { get; set; }
         public string? DeliveryAddress { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
     }
 }

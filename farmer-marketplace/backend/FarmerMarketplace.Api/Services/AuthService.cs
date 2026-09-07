@@ -152,7 +152,21 @@ namespace FarmerMarketplace.Api.Services
                 PreferredLanguage = user.PreferredLanguage,
                 FpoId = user.FpoId,
                 IsProfileComplete = user.IsProfileComplete,
-                CreatedAt = user.CreatedAt
+                CreatedAt = user.CreatedAt,
+                Village = user.Village,
+                District = user.District,
+                State = user.State,
+                Pincode = user.Pincode,
+                PrimaryCrops = user.PrimaryCrops,
+                BankAccountNumber = user.BankAccountNumber,
+                BankIfsc = user.BankIfsc,
+                AccountHolderName = user.AccountHolderName,
+                UpiId = user.UpiId,
+                BusinessName = user.BusinessName,
+                GstNumber = user.GstNumber,
+                DeliveryAddress = user.DeliveryAddress,
+                Latitude = user.Latitude,
+                Longitude = user.Longitude
             };
         }
     }
