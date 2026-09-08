@@ -19,6 +19,7 @@ import ProfileSetup from "../pages/auth/ProfileSetup";
 import FarmerDashboard from "../pages/farmer/FarmerDashboard";
 import ListProduct from "../pages/farmer/ListProduct";
 import FarmerOrders from "../pages/farmer/FarmerOrders";
+import FarmerEarningsDashboard from "../pages/farmer/FarmerEarningsDashboard";
 
 // Buyer pages
 import BrowseProducts from "../pages/buyer/BrowseProducts";
@@ -31,6 +32,7 @@ import FPODashboard from "../pages/fpo-admin/FPODashboard";
 import ManageLinkedFarmers from "../pages/fpo-admin/ManageLinkedFarmers";
 import FPOProducts from "../pages/fpo-admin/FPOProducts";
 import FPOOrders from "../pages/fpo-admin/FPOOrders";
+import FpoEarningsDashboard from "../pages/fpo-admin/FpoEarningsDashboard";
 
 // Platform Admin pages
 import RouteDashboard from "../pages/admin/RouteDashboard";
@@ -38,6 +40,8 @@ import AdminDashboard from "../pages/admin/AdminDashboard";
 import AdminUsers from "../pages/admin/AdminUsers";
 import AdminOrders from "../pages/admin/AdminOrders";
 import PaymentSplits from "../pages/admin/PaymentSplits";
+import AdminConfigDashboard from "../pages/admin/AdminConfigDashboard";
+import SuperAdminRevenueDashboard from "../pages/admin/SuperAdminRevenueDashboard";
 import ProfilePage from "../pages/profile/ProfilePage";
 
 import { useAuth } from "../hooks/useAuth";
@@ -61,11 +65,19 @@ function ProfileCompleteRoute({ children }) {
   return children;
 }
 
+// Guard strictly restricting to SuperAdmin role
+function SuperAdminRoute({ children }) {
+  const { user } = useAuth();
+  if (user?.role !== ROLES.SUPER_ADMIN) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+  return children;
+}
+
 export default function AppRoutes() {
   return (
     <Routes>
       {/* ---------- Public routes ---------- */}
-      // REPLACE with this
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
@@ -103,6 +115,7 @@ export default function AppRoutes() {
         <Route path="dashboard" element={<FarmerDashboard />} />
         <Route path="list-product" element={<ListProduct />} />
         <Route path="orders" element={<FarmerOrders />} />
+        <Route path="earnings" element={<FarmerEarningsDashboard />} />
       </Route>
       {/* ---------- Buyer routes ---------- */}
       <Route
@@ -135,12 +148,13 @@ export default function AppRoutes() {
         <Route path="products" element={<FPOProducts />} />
         <Route path="orders" element={<FPOOrders />} />
         <Route path="farmers" element={<ManageLinkedFarmers />} />
+        <Route path="earnings" element={<FpoEarningsDashboard />} />
       </Route>
-      {/* ---------- Platform Admin routes ---------- */}
+      {/* ---------- Platform Admin & Config Admin routes ---------- */}
       <Route
         path="/admin"
         element={
-          <ProtectedRoute allowedRoles={[ROLES.PLATFORM_ADMIN]}>
+          <ProtectedRoute allowedRoles={[ROLES.PLATFORM_ADMIN, ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.MANAGER]}>
             <ProfileCompleteRoute>
               <DashboardLayout />
             </ProfileCompleteRoute>
@@ -152,6 +166,15 @@ export default function AppRoutes() {
         <Route path="orders" element={<AdminOrders />} />
         <Route path="splits" element={<PaymentSplits />} />
         <Route path="routes" element={<RouteDashboard />} />
+        <Route
+          path="config"
+          element={
+            <SuperAdminRoute>
+              <AdminConfigDashboard />
+            </SuperAdminRoute>
+          }
+        />
+        <Route path="revenue" element={<SuperAdminRevenueDashboard />} />
       </Route>
       {/* ---------- Fallback ---------- */}
       <Route path="*" element={<Home />} />

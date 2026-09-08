@@ -150,14 +150,21 @@ public async Task<UserResponseDto> UpdateBasicProfileAsync(Guid id, Guid request
     if (user == null)
         throw new KeyNotFoundException("User not found.");
 
-    if (!string.IsNullOrWhiteSpace(dto.Name))
-        user.Name = dto.Name;
-
-    if (!string.IsNullOrWhiteSpace(dto.Phone))
-        user.Phone = dto.Phone;
-
-    if (!string.IsNullOrWhiteSpace(dto.PreferredLanguage))
-        user.PreferredLanguage = dto.PreferredLanguage;
+    if (!string.IsNullOrWhiteSpace(dto.Name)) user.Name = dto.Name;
+    if (!string.IsNullOrWhiteSpace(dto.Phone)) user.Phone = dto.Phone;
+    if (!string.IsNullOrWhiteSpace(dto.PreferredLanguage)) user.PreferredLanguage = dto.PreferredLanguage;
+    if (dto.Address != null) user.Address = dto.Address;
+    if (dto.District != null) user.District = dto.District;
+    if (dto.State != null) user.State = dto.State;
+    if (dto.Pincode != null) user.Pincode = dto.Pincode;
+    if (dto.Region != null) user.Region = dto.Region;
+    if (dto.BankAccountNumber != null) user.BankAccountNumber = dto.BankAccountNumber;
+    if (dto.BankIfsc != null) user.BankIfsc = dto.BankIfsc;
+    if (dto.AccountHolderName != null) user.AccountHolderName = dto.AccountHolderName;
+    if (dto.UpiId != null) user.UpiId = dto.UpiId;
+    if (dto.BusinessName != null) user.BusinessName = dto.BusinessName;
+    if (dto.GstNumber != null) user.GstNumber = dto.GstNumber;
+    if (dto.DeliveryAddress != null) user.DeliveryAddress = dto.DeliveryAddress;
 
     user.UpdatedAt = DateTime.UtcNow;
 

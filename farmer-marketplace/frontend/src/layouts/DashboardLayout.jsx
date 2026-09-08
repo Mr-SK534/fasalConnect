@@ -2,6 +2,7 @@ import {
   FiBox,
   FiCalendar,
   FiCheckSquare,
+  FiDollarSign,
   FiGrid,
   FiLogOut,
   FiSettings,
@@ -23,6 +24,7 @@ const navigationByRole = {
         { label: "Dashboard", to: "/farmer/dashboard", icon: FiGrid },
         { label: "My Products", to: "/farmer/list-product", icon: FiBox },
         { label: "Orders", to: "/farmer/orders", icon: FiCheckSquare },
+        { label: "Earnings & Payouts", to: "/farmer/earnings", icon: FiDollarSign },
       ],
     },
     {
@@ -62,6 +64,29 @@ const navigationByRole = {
         { label: "My Products", to: "/fpo-admin/products", icon: FiBox },
         { label: "Orders", to: "/fpo-admin/orders", icon: FiCheckSquare },
         { label: "Linked Farmers", to: "/fpo-admin/farmers", icon: FiUsers },
+        { label: "Network Earnings", to: "/fpo-admin/earnings", icon: FiDollarSign },
+      ],
+    },
+    {
+      section: "ACCOUNT",
+      items: [{ label: "Profile", to: "/profile", icon: FiUser }],
+    },
+  ],
+  [ROLES.SUPER_ADMIN]: [
+    {
+      section: "SUPER ADMIN",
+      items: [
+        { label: "Dashboard", to: "/admin/dashboard", icon: FiGrid },
+        { label: "Platform Config", to: "/admin/config", icon: FiSettings },
+        { label: "Revenue", to: "/admin/revenue", icon: FiDollarSign },
+        { label: "Users", to: "/admin/users", icon: FiUsers },
+        { label: "Orders", to: "/admin/orders", icon: FiCheckSquare },
+        { label: "Payment Splits", to: "/admin/splits", icon: FiBox },
+        {
+          label: "Route Optimization",
+          to: "/admin/routes",
+          icon: FiTrendingUp,
+        },
       ],
     },
     {
@@ -74,6 +99,7 @@ const navigationByRole = {
       section: "PLATFORM",
       items: [
         { label: "Dashboard", to: "/admin/dashboard", icon: FiGrid },
+        { label: "Platform Revenue", to: "/admin/revenue", icon: FiDollarSign },
         { label: "Users", to: "/admin/users", icon: FiUsers },
         { label: "Orders", to: "/admin/orders", icon: FiCheckSquare },
         { label: "Payment Splits", to: "/admin/splits", icon: FiBox },
@@ -91,11 +117,18 @@ const navigationByRole = {
   ],
 };
 
+// Share platform admin navigation across Admin and Manager roles (NO Platform Config or Revenue)
+navigationByRole[ROLES.ADMIN] = navigationByRole[ROLES.PLATFORM_ADMIN];
+navigationByRole[ROLES.MANAGER] = navigationByRole[ROLES.PLATFORM_ADMIN];
+
 const roleLabels = {
   [ROLES.FARMER]: "Farmer",
   [ROLES.BUYER]: "Buyer",
   [ROLES.FPO_ADMIN]: "FPO Admin",
   [ROLES.PLATFORM_ADMIN]: "Platform Admin",
+  [ROLES.SUPER_ADMIN]: "Super Admin",
+  [ROLES.ADMIN]: "Admin",
+  [ROLES.MANAGER]: "Manager",
 };
 
 function DashboardLayout() {

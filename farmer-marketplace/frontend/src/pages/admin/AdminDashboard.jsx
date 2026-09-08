@@ -67,17 +67,28 @@ export default function AdminDashboard() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    Promise.all([getSummary(), getAdminOrders({ page: 1, pageSize: 1000 })])
-      .then(([summaryData, orderData]) => {
-        setSummary(summaryData);
-        setOrders(unwrap(orderData));
-      })
-      .catch((requestError) =>
-        setError(
-          requestError.response?.data?.message ||
-            "Could not load admin dashboard.",
-        ),
-      );
+    const fetchDashboardData = () => {
+      Promise.all([getSummary(), getAdminOrders({ page: 1, pageSize: 1000 })])
+        .then(([summaryData, orderData]) => {
+          setSummary(summaryData);
+          setOrders(unwrap(orderData));
+        })
+        .catch((requestError) =>
+          setError(
+            requestError.response?.data?.message ||
+              "Could not load admin dashboard.",
+          ),
+        );
+    };
+
+    fetchDashboardData();
+    const interval = setInterval(fetchDashboardData, 5000);
+    const handleFocus = () => fetchDashboardData();
+    window.addEventListener("focus", handleFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+    };
   }, []);
 
   const statusData = useMemo(
@@ -121,6 +132,7 @@ export default function AdminDashboard() {
       {error && (
         <p className="rounded-lg bg-red-50 p-4 text-sm text-red-700">{error}</p>
       )}
+
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map(([label, key, color, Icon]) => (
           <article
@@ -235,6 +247,7 @@ export default function AdminDashboard() {
           ["View All Orders", "/admin/orders"],
           ["Payment Splits", "/admin/splits"],
           ["Route Optimization", "/admin/routes"],
+          ["Platform Config (RBAC)", "/admin/config"],
         ].map(([label, path]) => (
           <button
             key={path}

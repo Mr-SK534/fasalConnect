@@ -3,6 +3,7 @@ using System;
 using FarmerMarketplace.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FarmerMarketplace.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260907233959_AddDynamicPlatformConfig")]
+    partial class AddDynamicPlatformConfig
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -510,14 +513,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 1,
                             Category = "pricing",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(536),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 191, DateTimeKind.Utc).AddTicks(8562),
                             Description = "Minimum farmer can set per kg",
                             IsActive = true,
                             Key = "farmer_price_minimum_per_kg",
                             MaxValue = 100m,
                             MinValue = 0m,
                             RequiresRole = "superadmin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(522),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 191, DateTimeKind.Utc).AddTicks(8543),
                             Value = "5.0",
                             ValueType = 0
                         },
@@ -525,14 +528,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 2,
                             Category = "pricing",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4439),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2626),
                             Description = "Maximum farmer can set per kg",
                             IsActive = true,
                             Key = "farmer_price_maximum_per_kg",
                             MaxValue = 1000m,
                             MinValue = 0m,
                             RequiresRole = "superadmin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4430),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2616),
                             Value = "500.0",
                             ValueType = 0
                         },
@@ -540,14 +543,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 3,
                             Category = "fees",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4468),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2684),
                             Description = "Platform commission on farmer price (8%)",
                             IsActive = true,
                             Key = "commission_pct",
                             MaxValue = 1m,
                             MinValue = 0m,
                             RequiresRole = "superadmin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4454),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2669),
                             Value = "0.08",
                             ValueType = 2
                         },
@@ -555,14 +558,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 4,
                             Category = "fees",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4492),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2711),
                             Description = "Payment gateway fee as % of buyer total (2%)",
                             IsActive = true,
                             Key = "payment_gateway_pct",
                             MaxValue = 1m,
                             MinValue = 0m,
                             RequiresRole = "superadmin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4482),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2697),
                             Value = "0.02",
                             ValueType = 2
                         },
@@ -570,14 +573,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 5,
                             Category = "fees",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4515),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2739),
                             Description = "Annual farmer subscription fee in rupees",
                             IsActive = true,
                             Key = "subscription_fee_per_farmer_per_year",
                             MaxValue = 10000m,
                             MinValue = 0m,
                             RequiresRole = "superadmin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4506),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2725),
                             Value = "500.0",
                             ValueType = 0
                         },
@@ -585,14 +588,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 6,
                             Category = "logistics",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4543),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2767),
                             Description = "Cost paid to logistics partner per kg (₹)",
                             IsActive = true,
                             Key = "logistics_partner_payout_per_kg",
                             MaxValue = 50m,
                             MinValue = 0m,
                             RequiresRole = "admin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4529),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2753),
                             Value = "2.0",
                             ValueType = 0
                         },
@@ -600,14 +603,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 7,
                             Category = "logistics",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4571),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2792),
                             Description = "Platform margin on logistics per kg (₹)",
                             IsActive = true,
                             Key = "logistics_platform_margin_per_kg",
                             MaxValue = 50m,
                             MinValue = 0m,
                             RequiresRole = "admin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4562),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2782),
                             Value = "0.5",
                             ValueType = 0
                         },
@@ -615,14 +618,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 8,
                             Category = "logistics",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4624),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2820),
                             Description = "Minimum flat delivery charge regardless of weight",
                             IsActive = true,
                             Key = "min_delivery_charge",
                             MaxValue = 500m,
                             MinValue = 0m,
                             RequiresRole = "admin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4614),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2806),
                             Value = "20.0",
                             ValueType = 0
                         },
@@ -630,14 +633,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 9,
                             Category = "logistics",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4648),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2844),
                             Description = "Max kg capacity per truck/vehicle",
                             IsActive = true,
                             Key = "max_weight_per_vehicle_kg",
                             MaxValue = 10000m,
                             MinValue = 100m,
                             RequiresRole = "admin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4638),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2835),
                             Value = "2000.0",
                             ValueType = 0
                         },
@@ -645,14 +648,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 10,
                             Category = "thresholds",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4720),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2873),
                             Description = "Auto-flag dispute if weight loss exceeds this %",
                             IsActive = true,
                             Key = "weight_loss_threshold_pct",
                             MaxValue = 100m,
                             MinValue = 0m,
                             RequiresRole = "admin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4705),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2859),
                             Value = "5.0",
                             ValueType = 2
                         },
@@ -660,14 +663,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 11,
                             Category = "thresholds",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4744),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2908),
                             Description = "Auto-refund without dispute if loss below this %",
                             IsActive = true,
                             Key = "weight_loss_auto_refund_pct",
                             MaxValue = 100m,
                             MinValue = 0m,
                             RequiresRole = "admin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4730),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2898),
                             Value = "2.0",
                             ValueType = 2
                         },
@@ -675,14 +678,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 12,
                             Category = "thresholds",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4768),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2936),
                             Description = "Hours buyer has to dispute after delivery",
                             IsActive = true,
                             Key = "dispute_resolution_window_hours",
                             MaxValue = 168m,
                             MinValue = 1m,
                             RequiresRole = "admin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4759),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2922),
                             Value = "24",
                             ValueType = 1
                         },
@@ -690,14 +693,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 13,
                             Category = "thresholds",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4793),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2965),
                             Description = "Auto-release farmer payment after this many hours if no dispute",
                             IsActive = true,
                             Key = "auto_release_escrow_after_hours",
                             MaxValue = 168m,
                             MinValue = 1m,
                             RequiresRole = "admin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4783),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2951),
                             Value = "24",
                             ValueType = 1
                         },
@@ -705,14 +708,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 14,
                             Category = "thresholds",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4821),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2989),
                             Description = "Minimum order size in kg",
                             IsActive = true,
                             Key = "min_order_quantity_kg",
                             MaxValue = 1000m,
                             MinValue = 0.1m,
                             RequiresRole = "admin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4807),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2979),
                             Value = "1.0",
                             ValueType = 0
                         },
@@ -720,14 +723,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 15,
                             Category = "thresholds",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4886),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3059),
                             Description = "Maximum order size in kg",
                             IsActive = true,
                             Key = "max_order_quantity_kg",
                             MaxValue = 100000m,
                             MinValue = 1m,
                             RequiresRole = "admin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4872),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3045),
                             Value = "10000.0",
                             ValueType = 0
                         },
@@ -735,14 +738,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 16,
                             Category = "payouts",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4929),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3082),
                             Description = "Run payout batch every N hours",
                             IsActive = true,
                             Key = "payout_batch_frequency_hours",
                             MaxValue = 168m,
                             MinValue = 1m,
                             RequiresRole = "admin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4914),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3073),
                             Value = "24",
                             ValueType = 1
                         },
@@ -750,14 +753,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 17,
                             Category = "payouts",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4952),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3110),
                             Description = "Minimum accumulated amount to trigger payout (₹)",
                             IsActive = true,
                             Key = "minimum_payout_amount_rs",
                             MaxValue = 10000m,
                             MinValue = 0m,
                             RequiresRole = "admin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4943),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3096),
                             Value = "100.0",
                             ValueType = 0
                         },
@@ -765,14 +768,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 18,
                             Category = "payouts",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4976),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3139),
                             Description = "Preferred day for weekly payouts (0=Sunday, 1=Monday, etc)",
                             IsActive = true,
                             Key = "payout_day_of_week",
                             MaxValue = 6m,
                             MinValue = 0m,
                             RequiresRole = "admin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4967),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3125),
                             Value = "1",
                             ValueType = 1
                         },
@@ -780,14 +783,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 19,
                             Category = "costs",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5004),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3163),
                             Description = "Annual platform fixed costs (cloud/ops/marketing)",
                             IsActive = true,
                             Key = "annual_fixed_costs_rs",
                             MaxValue = 10000000m,
                             MinValue = 0m,
                             RequiresRole = "superadmin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4990),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3149),
                             Value = "90000.0",
                             ValueType = 0
                         },
@@ -795,14 +798,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 20,
                             Category = "costs",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5028),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3200),
                             Description = "Target net margin % on platform revenue",
                             IsActive = true,
                             Key = "target_net_margin_pct",
                             MaxValue = 100m,
                             MinValue = 0m,
                             RequiresRole = "superadmin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5018),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3186),
                             Value = "20.0",
                             ValueType = 2
                         },
@@ -810,14 +813,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 21,
                             Category = "crop_pricing",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5052),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3225),
                             Description = "Override commission % for tomatoes",
                             IsActive = true,
                             Key = "tomato_commission_pct",
                             MaxValue = 1m,
                             MinValue = 0m,
                             RequiresRole = "superadmin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5042),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3215),
                             Value = "0.08",
                             ValueType = 2
                         },
@@ -825,14 +828,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 22,
                             Category = "crop_pricing",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5076),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3253),
                             Description = "Override commission % for onions",
                             IsActive = true,
                             Key = "onion_commission_pct",
                             MaxValue = 1m,
                             MinValue = 0m,
                             RequiresRole = "superadmin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5066),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3239),
                             Value = "0.08",
                             ValueType = 2
                         },
@@ -840,14 +843,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 23,
                             Category = "crop_pricing",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5105),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3278),
                             Description = "Override commission % for potatoes",
                             IsActive = true,
                             Key = "potato_commission_pct",
                             MaxValue = 1m,
                             MinValue = 0m,
                             RequiresRole = "superadmin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5090),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3268),
                             Value = "0.08",
                             ValueType = 2
                         },
@@ -855,14 +858,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 24,
                             Category = "seasonal_pricing",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5129),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3306),
                             Description = "Price multiplier for Rabi Glut season",
                             IsActive = true,
                             Key = "s1_rabi_glut_multiplier",
                             MaxValue = 2.0m,
                             MinValue = 0.1m,
                             RequiresRole = "admin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5114),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3292),
                             Value = "1.0",
                             ValueType = 0
                         },
@@ -870,14 +873,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 25,
                             Category = "seasonal_pricing",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5152),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3334),
                             Description = "Price multiplier for Pre-Monsoon season",
                             IsActive = true,
                             Key = "s2_pre_monsoon_multiplier",
                             MaxValue = 2.0m,
                             MinValue = 0.1m,
                             RequiresRole = "admin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5143),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3320),
                             Value = "1.15",
                             ValueType = 0
                         },
@@ -885,14 +888,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 26,
                             Category = "seasonal_pricing",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5180),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3357),
                             Description = "Price multiplier for Monsoon season",
                             IsActive = true,
                             Key = "s3_monsoon_multiplier",
                             MaxValue = 2.0m,
                             MinValue = 0.1m,
                             RequiresRole = "admin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5166),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3344),
                             Value = "1.10",
                             ValueType = 0
                         },
@@ -900,14 +903,14 @@ namespace FarmerMarketplace.Api.Migrations
                         {
                             Id = 27,
                             Category = "seasonal_pricing",
-                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5203),
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3385),
                             Description = "Price multiplier for Kharif season",
                             IsActive = true,
                             Key = "s4_kharif_multiplier",
                             MaxValue = 2.0m,
                             MinValue = 0.1m,
                             RequiresRole = "admin",
-                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5189),
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3371),
                             Value = "1.10",
                             ValueType = 0
                         });
@@ -1418,23 +1421,6 @@ namespace FarmerMarketplace.Api.Migrations
                     b.HasIndex("FpoId");
 
                     b.ToTable("Users");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("a0000000-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Email = "superadmin@fasalconnect.com",
-                            IsProfileComplete = true,
-                            Location = "New Delhi",
-                            Name = "superadmin",
-                            PasswordHash = "$2a$11$Ju8edbIa8vH7FCYaPb97EePLsdfnQA.6Zs1G/1AfUuOS.Y8EZFswq",
-                            Phone = "9999999999",
-                            PreferredLanguage = "en",
-                            Role = 4,
-                            Suspended = false,
-                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
-                        });
                 });
 
             modelBuilder.Entity("FarmerMarketplace.Api.Models.DeliveryWeightLog", b =>
@@ -1442,7 +1428,7 @@ namespace FarmerMarketplace.Api.Migrations
                     b.HasOne("FarmerMarketplace.Api.Models.Order", "Order")
                         .WithMany()
                         .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("FarmerMarketplace.Api.Models.DeliveryRoute", "Route")

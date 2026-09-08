@@ -51,7 +51,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddSingleton<PasswordHasher>();
 builder.Services.AddSingleton<JwtService>();
 
-// Services (DI)
+builder.Services.AddSingleton<IPlatformConfigService, PlatformConfigService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IAdminService,AdminService>();
@@ -59,6 +59,8 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFpoService, FpoService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IPaymentEscrowService, PaymentEscrowService>();
+builder.Services.AddScoped<IReportingService, ReportingService>();
 builder.Services.AddScoped<IRouteService, RouteService>();
 builder.Services.AddScoped<RouteService>();
 builder.Services.AddSingleton<RouteBatchingService>();

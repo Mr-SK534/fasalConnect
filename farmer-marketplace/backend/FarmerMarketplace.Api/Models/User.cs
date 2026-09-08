@@ -10,7 +10,10 @@ namespace FarmerMarketplace.Api.Models
         Farmer,
         Buyer,
         FpoAdmin,
-        PlatformAdmin
+        PlatformAdmin,
+        SuperAdmin,
+        Admin,
+        Manager
     }
 
     public class User

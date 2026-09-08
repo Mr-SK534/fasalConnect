@@ -119,13 +119,109 @@ namespace FarmerMarketplace.Api.Services
 
         public async Task<AdminSummaryDto> GetSummaryAsync(Guid requestingUserId, string? role)
         {
+            var requestingUser = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == requestingUserId);
+            if (requestingUser != null)
+            {
+                role = requestingUser.Role.ToString();
+            }
+
             EnsurePlatformAdmin(role);
-            return new AdminSummaryDto { TotalFarmers = await _context.Users.CountAsync(user => user.Role == UserRole.Farmer), TotalBuyers = await _context.Users.CountAsync(user => user.Role == UserRole.Buyer), TotalFpoAdmins = await _context.Users.CountAsync(user => user.Role == UserRole.FpoAdmin), TotalProducts = await _context.Products.CountAsync(product => product.IsActive), TotalOrders = await _context.Orders.CountAsync(), PendingOrders = await _context.Orders.CountAsync(order => order.Status == OrderStatus.Pending) };
+
+            var superAdmin = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Role == UserRole.SuperAdmin);
+
+            var orders = await _context.Orders.AsNoTracking()
+                .Include(o => o.Buyer)
+                .Include(o => o.Items).ThenInclude(i => i.Farmer)
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
+
+            var escrows = await _context.EscrowTransactions.AsNoTracking().ToListAsync();
+            var escrowMap = escrows.ToDictionary(e => e.OrderId);
+
+            decimal totalBuyerPayments = 0;
+            decimal totalFarmerPayouts = 0;
+            decimal totalSuperAdminRevenue = 0;
+
+            var payoutBreakdown = new List<SuperAdminBankPayoutItemDto>();
+
+            foreach (var o in orders)
+            {
+                var deliveredKg = o.QuantityDeliveredKg ?? o.QuantityOrderedKg ?? 36.0;
+                var farmerPrice = o.FarmerAskingPricePerKg ?? (o.Items.FirstOrDefault()?.PriceAtOrderTime ?? 20.0m);
+                var farmerTotalPayout = farmerPrice * (decimal)deliveredKg;
+
+                var commissionPct = 0.08m;
+                var logisticsMargin = 0.50m;
+                var logisticsPartner = 2.00m;
+                var extraMarkup = (farmerPrice * commissionPct) + logisticsPartner + logisticsMargin;
+                var superAdminCollected = extraMarkup * (decimal)deliveredKg;
+
+                escrowMap.TryGetValue(o.Id, out var esc);
+
+                var orderBuyerPaid = esc != null ? esc.OrderedAmountRs : (o.TotalAmount > 0 ? o.TotalAmount : (farmerPrice + extraMarkup) * (decimal)deliveredKg);
+                var orderFarmerPaid = esc != null && esc.ActualAmountRs.HasValue ? esc.ActualAmountRs.Value : farmerTotalPayout;
+
+                totalBuyerPayments += orderBuyerPaid;
+                totalFarmerPayouts += orderFarmerPaid;
+                totalSuperAdminRevenue += superAdminCollected;
+
+                payoutBreakdown.Add(new SuperAdminBankPayoutItemDto
+                {
+                    OrderId = o.Id,
+                    BuyerName = o.Buyer?.Name ?? "Buyer",
+                    FarmerName = o.Items.FirstOrDefault()?.Farmer?.Name ?? "Farmer",
+                    DeliveredKg = deliveredKg,
+                    FarmerListedPricePerKg = farmerPrice,
+                    FarmerTotalPayoutRs = farmerTotalPayout,
+                    ExtraBuyerMarkupPerKg = extraMarkup,
+                    SuperAdminCollectedRevenueRs = superAdminCollected,
+                    SuperAdminBankAccount = superAdmin?.BankAccountNumber ?? superAdmin?.UpiId ?? "98765432101234",
+                    Status = o.Status.ToString(),
+                    Timestamp = o.DeliveryConfirmedDate ?? o.CreatedAt
+                });
+            }
+
+            bool isSuperAdmin = requestingUser?.Role == UserRole.SuperAdmin || string.Equals(role, nameof(UserRole.SuperAdmin), StringComparison.OrdinalIgnoreCase);
+
+            return new AdminSummaryDto
+            {
+                TotalFarmers = await _context.Users.CountAsync(user => user.Role == UserRole.Farmer),
+                TotalBuyers = await _context.Users.CountAsync(user => user.Role == UserRole.Buyer),
+                TotalFpoAdmins = await _context.Users.CountAsync(user => user.Role == UserRole.FpoAdmin),
+                TotalProducts = await _context.Products.CountAsync(product => product.IsActive),
+                TotalOrders = await _context.Orders.CountAsync(),
+                PendingOrders = await _context.Orders.CountAsync(order => order.Status == OrderStatus.Pending),
+
+                SuperAdminName = isSuperAdmin ? (superAdmin?.Name ?? "Super Admin") : "",
+                SuperAdminEmail = isSuperAdmin ? (superAdmin?.Email ?? "superadmin@fasalconnect.com") : "",
+                SuperAdminPhone = isSuperAdmin ? (superAdmin?.Phone ?? "") : "",
+                SuperAdminBankAccountNumber = isSuperAdmin ? (superAdmin?.BankAccountNumber ?? "98765432101234") : "",
+                SuperAdminBankIfsc = isSuperAdmin ? (superAdmin?.BankIfsc ?? "SBIN0001234") : "",
+                SuperAdminAccountHolderName = isSuperAdmin ? (superAdmin?.AccountHolderName ?? superAdmin?.Name ?? "SuperAdmin Platform Account") : "",
+                SuperAdminUpiId = isSuperAdmin ? (superAdmin?.UpiId ?? "superadmin@upi") : "",
+
+                TotalBuyerPaymentsRs = isSuperAdmin ? totalBuyerPayments : 0,
+                TotalFarmerPayoutsRs = isSuperAdmin ? totalFarmerPayouts : 0,
+                TotalSuperAdminRevenueRs = isSuperAdmin ? totalSuperAdminRevenue : 0,
+                SuperAdminPayoutBreakdown = isSuperAdmin ? payoutBreakdown : new List<SuperAdminBankPayoutItemDto>()
+            };
         }
+
+        private static readonly HashSet<string> AllowedAdminRoles = new(StringComparer.OrdinalIgnoreCase)
+        {
+            nameof(UserRole.PlatformAdmin),
+            nameof(UserRole.SuperAdmin),
+            nameof(UserRole.Admin),
+            nameof(UserRole.Manager),
+            nameof(UserRole.FpoAdmin)
+        };
 
         private static void EnsurePlatformAdmin(string? role)
         {
-            if (role != nameof(UserRole.PlatformAdmin)) throw new UnauthorizedAccessException("PlatformAdmin access required.");
+            if (string.IsNullOrWhiteSpace(role) || !AllowedAdminRoles.Contains(role))
+            {
+                throw new UnauthorizedAccessException("Admin access required.");
+            }
         }
 
         private static UserResponseDto MapUser(User user) => new()
@@ -135,7 +231,40 @@ namespace FarmerMarketplace.Api.Services
 
         private static OrderResponseDto MapOrder(Order order) => new()
         {
-            Id = order.Id, BuyerId = order.BuyerId, BuyerName = order.Buyer?.Name ?? string.Empty, BuyerPhone = order.Buyer?.Phone, IsBulkOrder = order.IsBulkOrder, DeliveryType = order.DeliveryType, DeliveryAddress = order.DeliveryAddress, Status = order.Status, TotalAmount = order.TotalAmount, CreatedAt = order.CreatedAt, UpdatedAt = order.UpdatedAt, Items = order.Items.Select(item => new OrderItemResponseDto { Id = item.Id, ProductId = item.ProductId, CropName = item.Product?.CropName ?? string.Empty, FarmerId = item.FarmerId, FarmerName = item.Farmer?.Name ?? string.Empty, Quantity = item.Quantity, PriceAtOrderTime = item.PriceAtOrderTime, SubTotal = item.SubTotal }).ToList()
+            Id = order.Id,
+            BuyerId = order.BuyerId,
+            BuyerName = order.Buyer?.Name ?? string.Empty,
+            BuyerPhone = order.Buyer?.Phone,
+            IsBulkOrder = order.IsBulkOrder,
+            DeliveryType = order.DeliveryType,
+            DeliveryAddress = order.DeliveryAddress,
+            Status = order.Status,
+            TotalAmount = order.TotalAmount,
+            CreatedAt = order.CreatedAt,
+            UpdatedAt = order.UpdatedAt,
+            Items = order.Items.Select(item => new OrderItemResponseDto { Id = item.Id, ProductId = item.ProductId, CropName = item.Product?.CropName ?? string.Empty, FarmerId = item.FarmerId, FarmerName = item.Farmer?.Name ?? string.Empty, Quantity = item.Quantity, PriceAtOrderTime = item.PriceAtOrderTime, SubTotal = item.SubTotal }).ToList(),
+
+            CropName = order.CropName ?? order.Items.FirstOrDefault()?.Product?.CropName ?? "Produce",
+            Season = order.Season ?? "S1 - Rabi Glut (Jan-Apr)",
+            QuantityOrderedKg = order.QuantityOrderedKg ?? (double)order.Items.Sum(i => i.Quantity),
+            QuantityPickedUpKg = order.QuantityPickedUpKg,
+            QuantityDeliveredKg = order.QuantityDeliveredKg,
+            FarmerAskingPricePerKg = order.FarmerAskingPricePerKg ?? order.Items.FirstOrDefault()?.PriceAtOrderTime ?? 20.0m,
+            FarmerId = order.FarmerId ?? order.Items.FirstOrDefault()?.FarmerId,
+            FarmerName = order.Farmer?.Name ?? order.Items.FirstOrDefault()?.Farmer?.Name ?? string.Empty,
+            FpoAdminId = order.FpoAdminId ?? order.Farmer?.FpoId,
+            Latitude = order.Latitude,
+            Longitude = order.Longitude,
+            DeliveryLat = order.DeliveryLat ?? order.Latitude,
+            DeliveryLng = order.DeliveryLng ?? order.Longitude,
+            PickupLat = order.PickupLat ?? order.Farmer?.Latitude,
+            PickupLng = order.PickupLng ?? order.Farmer?.Longitude,
+            DeliveryDateTarget = order.DeliveryDateTarget ?? order.CreatedAt.AddDays(2),
+            DeliveryConfirmedDate = order.DeliveryConfirmedDate,
+            RouteId = order.RouteId,
+            StopSequence = order.StopSequence,
+            VehicleNumber = order.VehicleNumber,
+            EstimatedArrival = order.EstimatedArrival
         };
 
         private async Task<(double Lat, double Lng)?> GeocodeAddressAsync(string? address)

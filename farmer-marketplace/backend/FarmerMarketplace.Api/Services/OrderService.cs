@@ -15,12 +15,18 @@ namespace FarmerMarketplace.Api.Services
     {
         private readonly AppDbContext _context;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IPlatformConfigService _configService;
         private readonly ILogger<OrderService> _logger;
 
-        public OrderService(AppDbContext context, IHttpClientFactory httpClientFactory, ILogger<OrderService> logger)
+        public OrderService(
+            AppDbContext context,
+            IHttpClientFactory httpClientFactory,
+            IPlatformConfigService configService,
+            ILogger<OrderService> logger)
         {
             _context = context;
             _httpClientFactory = httpClientFactory;
+            _configService = configService;
             _logger = logger;
         }
 
@@ -33,13 +39,23 @@ namespace FarmerMarketplace.Api.Services
             if (!buyerExists)
                 throw new KeyNotFoundException("Buyer account not found.");
 
+            var minQty = await _configService.GetDoubleAsync("min_order_quantity_kg", 1.0);
+            var maxQty = await _configService.GetDoubleAsync("max_order_quantity_kg", 10000.0);
+
+            var totalRequestedKg = (double)dto.Items.Sum(i => i.Quantity);
+            if (totalRequestedKg < minQty)
+                throw new InvalidOperationException($"Order quantity ({totalRequestedKg} kg) is below minimum required limit ({minQty} kg).");
+            if (totalRequestedKg > maxQty)
+                throw new InvalidOperationException($"Order quantity ({totalRequestedKg} kg) exceeds maximum allowed limit ({maxQty} kg).");
+
             var order = new Order
             {
                 BuyerId = buyerId,
                 IsBulkOrder = dto.IsBulkOrder,
                 DeliveryType = dto.DeliveryType,
                 DeliveryAddress = dto.DeliveryType == DeliveryType.Delivery ? dto.DeliveryAddress : null,
-                Status = OrderStatus.Pending
+                Status = OrderStatus.Pending,
+                QuantityOrderedKg = totalRequestedKg
             };
 
             if (order.DeliveryType == DeliveryType.Delivery)
@@ -73,6 +89,19 @@ namespace FarmerMarketplace.Api.Services
                 if (product.Quantity <= 0)
                     throw new InvalidOperationException($"Product '{product.CropName}' is out of stock.");
 
+                if (string.IsNullOrWhiteSpace(order.CropName)) order.CropName = product.CropName;
+                if (!order.FarmerAskingPricePerKg.HasValue) order.FarmerAskingPricePerKg = product.Price;
+                if (!order.FarmerId.HasValue) order.FarmerId = product.FarmerId;
+                if (!order.FpoAdminId.HasValue && product.Farmer?.FpoId.HasValue == true) order.FpoAdminId = product.Farmer.FpoId;
+
+                if (!order.PickupLat.HasValue && product.Farmer?.Latitude.HasValue == true)
+                {
+                    order.PickupLat = product.Farmer.Latitude;
+                    order.PickupLng = product.Farmer.Longitude;
+                }
+
+                var buyerPrice = await _configService.CalculateBuyerPriceAsync(product.Price, product.CropName);
+
                 var remaining = itemDto.Quantity;
                 var originalProductQuantity = product.Quantity;
 
@@ -81,13 +110,13 @@ namespace FarmerMarketplace.Api.Services
 
                 if (fromThisFarmer > 0)
                 {
-                    var subTotal = fromThisFarmer * product.Price;
+                    var subTotal = fromThisFarmer * buyerPrice;
                     order.Items.Add(new OrderItem
                     {
                         ProductId = product.Id,
                         FarmerId = product.FarmerId,
                         Quantity = fromThisFarmer,
-                        PriceAtOrderTime = product.Price,
+                        PriceAtOrderTime = buyerPrice,
                         SubTotal = subTotal
                     });
 
@@ -105,8 +134,6 @@ namespace FarmerMarketplace.Api.Services
                         throw new InvalidOperationException(
                             $"Insufficient stock. This farmer has {product.Quantity + fromThisFarmer} {product.Unit}. Enable bulk order to source from multiple farmers.");
 
-                    // Order Aggregator: split the remainder across other farmers
-                    // listing the same crop, largest stock first
                     var otherSuppliers = await _context.Products
                         .Include(p => p.Farmer)
                         .Where(p => p.IsActive && p.Quantity > 0
@@ -123,13 +150,15 @@ namespace FarmerMarketplace.Api.Services
                         var take = Math.Min(remaining, supplier.Quantity);
                         if (take <= 0) continue;
 
-                        var subTotal = take * supplier.Price;
+                        var supplierBuyerPrice = await _configService.CalculateBuyerPriceAsync(supplier.Price, supplier.CropName);
+                        var subTotal = take * supplierBuyerPrice;
+
                         order.Items.Add(new OrderItem
                         {
                             ProductId = supplier.Id,
                             FarmerId = supplier.FarmerId,
                             Quantity = take,
-                            PriceAtOrderTime = supplier.Price,
+                            PriceAtOrderTime = supplierBuyerPrice,
                             SubTotal = subTotal
                         });
 
@@ -151,8 +180,28 @@ namespace FarmerMarketplace.Api.Services
             }
 
             order.TotalAmount = totalAmount;
+            order.Season = string.IsNullOrWhiteSpace(order.Season) ? "S1 - Rabi Glut (Jan-Apr)" : order.Season;
+            order.DeliveryDateTarget = DateTime.UtcNow.AddDays(2);
+            order.DeliveryLat = order.Latitude;
+            order.DeliveryLng = order.Longitude;
 
             _context.Orders.Add(order);
+
+            var farmerAskingPrice = order.FarmerAskingPricePerKg ?? 20.0m;
+            var farmerGross = farmerAskingPrice * (decimal)totalRequestedKg;
+
+            var escrow = new EscrowTransaction
+            {
+                OrderId = order.Id,
+                BuyerId = buyerId,
+                PlatformAccountId = "PLATFORM_ESCROW_WALLET_01",
+                OrderedAmountRs = totalAmount,
+                ActualAmountRs = farmerGross,
+                Status = EscrowStatus.Held,
+                HeldDate = DateTime.UtcNow
+            };
+            _context.EscrowTransactions.Add(escrow);
+
             await _context.SaveChangesAsync();
 
             return await GetByIdAsync(order.Id, buyerId, nameof(UserRole.Buyer));
@@ -181,18 +230,23 @@ namespace FarmerMarketplace.Api.Services
                     var url = $"https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=in&q={Uri.EscapeDataString(candidate)}";
                     using var response = await client.GetAsync(url);
                     if (!response.IsSuccessStatusCode) continue;
+
                     using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
                     var result = document.RootElement.EnumerateArray().FirstOrDefault();
                     if (result.ValueKind == JsonValueKind.Undefined) continue;
+
                     var lat = result.TryGetProperty("lat", out var latProperty) ? latProperty.GetString() : null;
                     var lng = result.TryGetProperty("lon", out var lngProperty) ? lngProperty.GetString() : null;
+
                     if (double.TryParse(lat, NumberStyles.Float, CultureInfo.InvariantCulture, out var latitude)
                         && double.TryParse(lng, NumberStyles.Float, CultureInfo.InvariantCulture, out var longitude))
+                    {
                         return (latitude, longitude);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogDebug(ex, "Geocoding candidate failed: {Address}", candidate);
+                    _logger.LogWarning(ex, "Geocoding attempt failed for address candidate: {Candidate}", candidate);
                 }
             }
 
@@ -208,7 +262,7 @@ namespace FarmerMarketplace.Api.Services
 
             var isBuyer = order.BuyerId == requestingUserId;
             var isInvolvedFarmer = order.Items.Any(i => i.FarmerId == requestingUserId);
-            var isPlatformAdmin = role == nameof(UserRole.PlatformAdmin);
+            var isPlatformAdmin = role == nameof(UserRole.PlatformAdmin) || role == nameof(UserRole.SuperAdmin);
 
             if (!isBuyer && !isInvolvedFarmer && !isPlatformAdmin)
                 throw new UnauthorizedAccessException("You do not have access to this order.");
@@ -218,7 +272,7 @@ namespace FarmerMarketplace.Api.Services
 
         public async Task<List<OrderResponseDto>> GetByBuyerIdAsync(Guid buyerId, Guid requestingUserId, string? role)
         {
-            var isPlatformAdmin = role == nameof(UserRole.PlatformAdmin);
+            var isPlatformAdmin = role == nameof(UserRole.PlatformAdmin) || role == nameof(UserRole.SuperAdmin);
 
             if (buyerId != requestingUserId && !isPlatformAdmin)
                 throw new UnauthorizedAccessException("You can only view your own orders.");
@@ -236,7 +290,7 @@ namespace FarmerMarketplace.Api.Services
 
         public async Task<List<OrderResponseDto>> GetByFarmerIdAsync(Guid farmerId, Guid requestingUserId, string? role)
         {
-            var isPlatformAdmin = role == nameof(UserRole.PlatformAdmin);
+            var isPlatformAdmin = role == nameof(UserRole.PlatformAdmin) || role == nameof(UserRole.SuperAdmin);
             var isFpoAdmin = role == nameof(UserRole.FpoAdmin)
                 && await _context.Users.AnyAsync(user => user.Id == farmerId && user.FpoId == requestingUserId && user.Role == UserRole.Farmer);
 
@@ -269,7 +323,7 @@ namespace FarmerMarketplace.Api.Services
                 throw new KeyNotFoundException("Order not found.");
 
             var isInvolvedFarmer = order.Items.Any(i => i.FarmerId == requestingUserId);
-            var isPlatformAdmin = role == nameof(UserRole.PlatformAdmin);
+            var isPlatformAdmin = role == nameof(UserRole.PlatformAdmin) || role == nameof(UserRole.SuperAdmin);
             var isFpoAdmin = false;
 
             if (role == nameof(UserRole.FpoAdmin))
@@ -297,6 +351,60 @@ namespace FarmerMarketplace.Api.Services
 
             order.Status = dto.Status;
             order.UpdatedAt = DateTime.UtcNow;
+
+            if (dto.Status == OrderStatus.Delivered)
+            {
+                order.DeliveryConfirmedDate ??= DateTime.UtcNow;
+                var deliveredKg = order.QuantityDeliveredKg ?? order.QuantityOrderedKg ?? (order.Items.Any() ? (double)order.Items.Sum(i => i.Quantity) : 1.0);
+                order.QuantityDeliveredKg = deliveredKg;
+
+                var escrow = await _context.EscrowTransactions.FirstOrDefaultAsync(e => e.OrderId == order.Id);
+                if (escrow != null)
+                {
+                    escrow.Status = EscrowStatus.Released;
+                    escrow.ReleaseDate = DateTime.UtcNow;
+                }
+
+                // Auto-create payout and transaction ledger entries for linked farmers
+                var farmerId = order.FarmerId ?? order.Items.FirstOrDefault()?.FarmerId;
+                if (farmerId.HasValue)
+                {
+                    var farmer = await _context.Users.FirstOrDefaultAsync(u => u.Id == farmerId.Value);
+                    var price = order.FarmerAskingPricePerKg ?? (order.Items.FirstOrDefault()?.PriceAtOrderTime ?? 20.0m);
+                    var farmerEarn = price * (decimal)deliveredKg;
+
+                    var orderIdStr = order.Id.ToString();
+                    var existingPayout = await _context.FarmerPayouts.FirstOrDefaultAsync(p => p.OrderIdsJson.Contains(orderIdStr));
+                    if (existingPayout == null && farmer != null)
+                    {
+                        _context.FarmerPayouts.Add(new FarmerPayout
+                        {
+                            FarmerId = farmer.Id,
+                            FpoAdminId = farmer.FpoId,
+                            OrderIdsJson = System.Text.Json.JsonSerializer.Serialize(new List<Guid> { order.Id }),
+                            TotalAmountRs = farmerEarn,
+                            PayoutDate = DateTime.UtcNow,
+                            PaymentMethod = !string.IsNullOrWhiteSpace(farmer.UpiId) ? PayoutPaymentMethod.Upi : PayoutPaymentMethod.BankTransfer,
+                            UpiIdOrBankAccount = farmer.BankAccountNumber ?? farmer.UpiId ?? "Bank Account",
+                            Status = PayoutStatus.Completed,
+                            ConfirmationTimestamp = DateTime.UtcNow,
+                            CreatedAt = DateTime.UtcNow
+                        });
+
+                        _context.TransactionLedgers.Add(new TransactionLedger
+                        {
+                            OrderId = order.Id,
+                            TransactionType = LedgerTransactionType.PayoutToFarmer,
+                            FromAccount = "platform_escrow",
+                            ToAccount = $"farmer_bank:{farmer.BankAccountNumber ?? farmer.UpiId ?? farmer.Phone}",
+                            AmountRs = farmerEarn,
+                            Status = LedgerStatus.Completed,
+                            Notes = $"100% asking price payout transferred directly to farmer bank account ({farmer.BankAccountNumber ?? farmer.UpiId ?? "Bank Account"}).",
+                            CreatedBy = "order_delivery_sync"
+                        });
+                    }
+                }
+            }
 
             await _context.SaveChangesAsync();
 
@@ -333,6 +441,8 @@ namespace FarmerMarketplace.Api.Services
                 SubTotal = i.SubTotal
             }).ToList();
 
+            var primaryFarmer = order.Farmer ?? items.FirstOrDefault()?.Farmer;
+
             return new OrderResponseDto
             {
                 Id = order.Id,
@@ -343,11 +453,32 @@ namespace FarmerMarketplace.Api.Services
                 DeliveryType = order.DeliveryType,
                 DeliveryAddress = order.DeliveryAddress,
                 Status = order.Status,
-                // When scoped to one farmer, total reflects only their share of the order
                 TotalAmount = farmerScopedTo.HasValue ? itemDtos.Sum(i => i.SubTotal) : order.TotalAmount,
                 Items = itemDtos,
                 CreatedAt = order.CreatedAt,
-                UpdatedAt = order.UpdatedAt
+                UpdatedAt = order.UpdatedAt,
+
+                CropName = order.CropName ?? itemDtos.FirstOrDefault()?.CropName ?? "Produce",
+                Season = order.Season ?? "S1 - Rabi Glut (Jan-Apr)",
+                QuantityOrderedKg = order.QuantityOrderedKg ?? (double)itemDtos.Sum(i => i.Quantity),
+                QuantityPickedUpKg = order.QuantityPickedUpKg,
+                QuantityDeliveredKg = order.QuantityDeliveredKg,
+                FarmerAskingPricePerKg = order.FarmerAskingPricePerKg ?? itemDtos.FirstOrDefault()?.PriceAtOrderTime ?? 20.0m,
+                FarmerId = order.FarmerId ?? primaryFarmer?.Id,
+                FarmerName = primaryFarmer?.Name ?? itemDtos.FirstOrDefault()?.FarmerName ?? string.Empty,
+                FpoAdminId = order.FpoAdminId ?? primaryFarmer?.FpoId,
+                Latitude = order.Latitude,
+                Longitude = order.Longitude,
+                DeliveryLat = order.DeliveryLat ?? order.Latitude,
+                DeliveryLng = order.DeliveryLng ?? order.Longitude,
+                PickupLat = order.PickupLat ?? primaryFarmer?.Latitude,
+                PickupLng = order.PickupLng ?? primaryFarmer?.Longitude,
+                DeliveryDateTarget = order.DeliveryDateTarget ?? order.CreatedAt.AddDays(2),
+                DeliveryConfirmedDate = order.DeliveryConfirmedDate,
+                RouteId = order.RouteId,
+                StopSequence = order.StopSequence,
+                VehicleNumber = order.VehicleNumber,
+                EstimatedArrival = order.EstimatedArrival
             };
         }
     }
