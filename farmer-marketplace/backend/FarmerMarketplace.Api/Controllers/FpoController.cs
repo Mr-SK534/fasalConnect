@@ -82,6 +82,19 @@ namespace FarmerMarketplace.Api.Controllers
             return Ok(result);
         }
 
+        // GET /api/fpo/{fpoId}/earnings-detail
+        [HttpGet("{fpoId}/earnings-detail")]
+        [Authorize(Roles = "FpoAdmin,PlatformAdmin")]
+        public async Task<ActionResult<FpoDetailedEarningsDto>> GetDetailedEarnings(Guid fpoId)
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var role = User.FindFirstValue(ClaimTypes.Role);
+            var result = await _fpoService.GetDetailedEarningsAsync(fpoId, userId.Value, role);
+            return Ok(result);
+        }
+
         private Guid? GetUserId()
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier)

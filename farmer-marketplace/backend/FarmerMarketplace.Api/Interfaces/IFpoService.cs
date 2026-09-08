@@ -15,5 +15,7 @@ namespace FarmerMarketplace.Api.Interfaces
         Task UnlinkFarmerAsync(Guid fpoId, Guid farmerId, Guid requestingUserId);
 
         Task<FpoEarningsDto> GetEarningsAsync(Guid fpoId, Guid requestingUserId, string? role);
+
+        Task<FpoDetailedEarningsDto> GetDetailedEarningsAsync(Guid fpoId, Guid requestingUserId, string? role);
     }
 }

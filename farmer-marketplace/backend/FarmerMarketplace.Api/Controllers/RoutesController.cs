@@ -12,7 +12,7 @@ namespace FarmerMarketplace.Api.Controllers
 {
     [ApiController]
     [Route("api/routes")]
-    [Authorize(Roles = "PlatformAdmin")]
+    [Authorize(Roles = "PlatformAdmin,SuperAdmin,Admin,Manager")]
     public class RoutesController : ControllerBase
     {
         private readonly IRouteService _routeService;

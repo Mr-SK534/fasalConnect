@@ -116,6 +116,117 @@ namespace FarmerMarketplace.Api.Services
             };
         }
 
+        public async Task<FpoDetailedEarningsDto> GetDetailedEarningsAsync(Guid fpoId, Guid requestingUserId, string? role)
+        {
+            await EnsureFpoAccess(fpoId, requestingUserId, role);
+
+            var fpoUser = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == fpoId);
+            var linkedFarmers = await _context.Users.AsNoTracking()
+                .Where(u => u.FpoId == fpoId && u.Role == UserRole.Farmer)
+                .ToListAsync();
+
+            var farmerIds = linkedFarmers.Select(f => f.Id).ToList();
+
+            var paidPayments = await _context.Payments.AsNoTracking()
+                .Where(p => p.Status == PaymentStatus.Paid)
+                .ToListAsync();
+
+            var paidOrderIds = paidPayments.Select(p => p.OrderId).ToHashSet();
+            var paymentDict = paidPayments.ToDictionary(p => p.OrderId);
+
+            var orderItems = await _context.OrderItems.AsNoTracking()
+                .Include(i => i.Order).ThenInclude(o => o.Buyer)
+                .Include(i => i.Product)
+                .Where(i => farmerIds.Contains(i.FarmerId) && paidOrderIds.Contains(i.OrderId))
+                .ToListAsync();
+
+            var farmerBreakdownList = new List<FpoFarmerBreakdownDto>();
+            var networkOrderLedger = new List<FarmerEarningsOrderItemDto>();
+
+            foreach (var farmer in linkedFarmers)
+            {
+                var fItems = orderItems.Where(i => i.FarmerId == farmer.Id).ToList();
+                var farmerOrdersCount = fItems.Select(i => i.OrderId).Distinct().Count();
+                var farmerTotalQty = (double)fItems.Sum(i => i.Quantity);
+
+                decimal farmerGross = 0m;
+                foreach (var item in fItems)
+                {
+                    decimal askingPrice = item.Order?.FarmerAskingPricePerKg ?? item.PriceAtOrderTime;
+                    farmerGross += (decimal)item.Quantity * askingPrice;
+                }
+
+                farmerBreakdownList.Add(new FpoFarmerBreakdownDto
+                {
+                    FarmerId = farmer.Id,
+                    FarmerName = farmer.Name,
+                    Phone = farmer.Phone,
+                    TotalOrders = farmerOrdersCount,
+                    TotalQuantityKg = farmerTotalQty,
+                    TotalGrossEarningsRs = farmerGross,
+                    BankAccount = !string.IsNullOrWhiteSpace(farmer.BankAccountNumber) ? farmer.BankAccountNumber : "Not set",
+                    UpiId = !string.IsNullOrWhiteSpace(farmer.UpiId) ? farmer.UpiId : "Not set"
+                });
+            }
+
+            decimal totalNetworkGross = 0m;
+            decimal networkHeldEscrow = 0m;
+            decimal networkDisbursed = 0m;
+
+            foreach (var item in orderItems)
+            {
+                decimal askingPrice = item.Order?.FarmerAskingPricePerKg ?? item.PriceAtOrderTime;
+                decimal netFarmerEarn = (decimal)item.Quantity * askingPrice;
+
+                totalNetworkGross += netFarmerEarn;
+
+                var isDelivered = item.Order?.Status == OrderStatus.Delivered;
+                var escrowStatus = isDelivered ? "Disbursed" : "Held in Escrow";
+
+                if (isDelivered)
+                {
+                    networkDisbursed += netFarmerEarn;
+                }
+                else
+                {
+                    networkHeldEscrow += netFarmerEarn;
+                }
+
+                var farmerName = linkedFarmers.FirstOrDefault(f => f.Id == item.FarmerId)?.Name ?? "Farmer";
+
+                networkOrderLedger.Add(new FarmerEarningsOrderItemDto
+                {
+                    OrderItemId = item.Id,
+                    OrderId = item.OrderId,
+                    OrderNumber = item.OrderId.ToString()[..8].ToUpper(),
+                    CropName = item.Order?.CropName ?? item.Product?.CropName ?? "Produce",
+                    FarmerName = farmerName,
+                    BuyerName = item.Order?.Buyer?.Name ?? "Buyer",
+                    QuantityKg = (double)item.Quantity,
+                    ListedPricePerKg = askingPrice,
+                    TotalFarmerEarningsRs = netFarmerEarn,
+                    Status = item.Order?.Status.ToString() ?? "Paid",
+                    EscrowStatus = escrowStatus,
+                    CreatedAt = item.Order?.CreatedAt ?? DateTime.UtcNow,
+                    DeliveryConfirmedDate = item.Order?.DeliveryConfirmedDate
+                });
+            }
+
+            return new FpoDetailedEarningsDto
+            {
+                FpoId = fpoId,
+                FpoName = fpoUser?.Name ?? "FPO",
+                TotalNetworkEarningsRs = totalNetworkGross,
+                HeldInEscrowRs = networkHeldEscrow,
+                DisbursedPayoutsRs = networkDisbursed,
+                LinkedFarmersCount = linkedFarmers.Count,
+                ActiveFarmersCount = farmerBreakdownList.Count(f => f.TotalOrders > 0),
+                TotalFulfilledOrdersCount = orderItems.Select(i => i.OrderId).Distinct().Count(),
+                FarmerBreakdown = farmerBreakdownList.OrderByDescending(f => f.TotalGrossEarningsRs).ToList(),
+                NetworkOrderLedger = networkOrderLedger.OrderByDescending(l => l.CreatedAt).ToList()
+            };
+        }
+
         public async Task UnlinkFarmerAsync(Guid fpoId, Guid farmerId, Guid requestingUserId)
         {
             await EnsureFpoAccess(fpoId, requestingUserId, role: nameof(UserRole.FpoAdmin));

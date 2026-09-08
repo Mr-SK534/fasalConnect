@@ -10,7 +10,7 @@ namespace FarmerMarketplace.Api.Controllers
 {
     [ApiController]
     [Route("api/admin")]
-    [Authorize(Roles = "PlatformAdmin,FpoAdmin")]
+    [Authorize(Roles = "PlatformAdmin,FpoAdmin,SuperAdmin,Admin,Manager")]
     public class AdminController : ControllerBase
     {
         private readonly IAdminService _adminService;
@@ -33,17 +33,17 @@ namespace FarmerMarketplace.Api.Controllers
                 return Unauthorized();
 
             // FpoAdmin only sees users linked under their own FPO,
-            // PlatformAdmin sees everyone
+            // PlatformAdmin/SuperAdmin/Admin sees everyone
             var result = await _adminService.GetUsersAsync(userId, claimRole, role, search, page, pageSize);
             return Ok(result);
         }
 
         [HttpGet("users/{id}")]
-        [Authorize(Roles = "PlatformAdmin")]
+        [Authorize(Roles = "PlatformAdmin,SuperAdmin,Admin,Manager")]
         public async Task<ActionResult<UserResponseDto>> GetUser(Guid id) => Ok(await _adminService.GetUserByIdAsync(id));
 
         [HttpPost("users")]
-        [Authorize(Roles = "PlatformAdmin")]
+        [Authorize(Roles = "PlatformAdmin,SuperAdmin,Admin")]
         public async Task<ActionResult<UserResponseDto>> CreateUser([FromBody] CreateAdminUserDto dto)
         {
             var result = await _adminService.CreateUserAsync(dto);
@@ -51,7 +51,7 @@ namespace FarmerMarketplace.Api.Controllers
         }
 
         [HttpPut("users/{id}/suspend")]
-        [Authorize(Roles = "PlatformAdmin")]
+        [Authorize(Roles = "PlatformAdmin,SuperAdmin,Admin")]
         public async Task<ActionResult<UserResponseDto>> SuspendUser(Guid id, [FromBody] SuspendUserDto dto) => Ok(await _adminService.SuspendUserAsync(id, dto));
 
         // GET /api/admin/summary
@@ -70,16 +70,12 @@ namespace FarmerMarketplace.Api.Controllers
             return Ok(result);
         }
 
-        // GET /api/admin/orders
-        // TODO: enable once Order.cs / OrderService exist (per build order: Orders comes
-        // before this gets wired). Placeholder route kept here so frontend can scaffold
-        // against a stable contract now.
         [HttpGet("orders")]
-        [Authorize(Roles = "PlatformAdmin")]
+        [Authorize(Roles = "PlatformAdmin,SuperAdmin,Admin,Manager")]
         public async Task<ActionResult<AdminOrderListResponseDto>> GetOrders([FromQuery] string? status = null, [FromQuery] DateTime? dateFrom = null, [FromQuery] DateTime? dateTo = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 20) => Ok(await _adminService.GetOrdersAsync(status, dateFrom, dateTo, page, pageSize));
 
         [HttpPut("orders/{id}/override-status")]
-        [Authorize(Roles = "PlatformAdmin")]
+        [Authorize(Roles = "PlatformAdmin,SuperAdmin,Admin")]
         public async Task<ActionResult<OrderResponseDto>> OverrideOrderStatus(Guid id, [FromBody] OverrideOrderStatusDto dto) => Ok(await _adminService.OverrideOrderStatusAsync(id, dto));
     }
 }

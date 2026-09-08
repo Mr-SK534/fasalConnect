@@ -11,10 +11,12 @@ namespace FarmerMarketplace.Api.Services
     public class ProductService : IProductService
     {
         private readonly AppDbContext _context;
+        private readonly IPlatformConfigService _configService;
 
-        public ProductService(AppDbContext context)
+        public ProductService(AppDbContext context, IPlatformConfigService configService)
         {
             _context = context;
+            _configService = configService;
         }
 
         public async Task<List<ProductResponseDto>> GetAllAsync(ProductQueryDto query)
@@ -45,7 +47,12 @@ namespace FarmerMarketplace.Api.Services
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
-            return products.Select(MapToResponseDto).ToList();
+            var result = new List<ProductResponseDto>();
+            foreach (var p in products)
+            {
+                result.Add(await MapToResponseDtoAsync(p, isBuyerContext: true));
+            }
+            return result;
         }
 
         public async Task<ProductAggregateResponseDto> GetAggregateAsync(string cropName)
@@ -63,23 +70,33 @@ namespace FarmerMarketplace.Api.Services
                 return new ProductAggregateResponseDto { CropName = cropName };
             }
 
-            return new ProductAggregateResponseDto
+            var buyerPrices = new List<decimal>();
+            var farmerDtos = new List<ProductAggregateFarmerDto>();
+
+            foreach (var product in products)
             {
-                CropName = cropName,
-                TotalAvailableQuantity = products.Sum(product => product.Quantity),
-                Unit = first.Unit.ToString(),
-                AveragePrice = products.Average(product => product.Price),
-                MinPrice = products.Min(product => product.Price),
-                MaxPrice = products.Max(product => product.Price),
-                FarmerCount = products.Select(product => product.FarmerId).Distinct().Count(),
-                Farmers = products.Select(product => new ProductAggregateFarmerDto
+                var buyerPrice = await _configService.CalculateBuyerPriceAsync(product.Price, product.CropName);
+                buyerPrices.Add(buyerPrice);
+                farmerDtos.Add(new ProductAggregateFarmerDto
                 {
                     FarmerId = product.FarmerId,
                     FarmerName = product.Farmer?.Name ?? string.Empty,
                     FarmerLocation = product.Farmer?.Address ?? product.Region,
                     AvailableQuantity = product.Quantity,
-                    Price = product.Price
-                }).ToList()
+                    Price = buyerPrice
+                });
+            }
+
+            return new ProductAggregateResponseDto
+            {
+                CropName = cropName,
+                TotalAvailableQuantity = products.Sum(product => product.Quantity),
+                Unit = first.Unit.ToString(),
+                AveragePrice = buyerPrices.Any() ? Math.Round(buyerPrices.Average(), 2) : 0m,
+                MinPrice = buyerPrices.Any() ? buyerPrices.Min() : 0m,
+                MaxPrice = buyerPrices.Any() ? buyerPrices.Max() : 0m,
+                FarmerCount = products.Select(product => product.FarmerId).Distinct().Count(),
+                Farmers = farmerDtos
             };
         }
 
@@ -93,7 +110,7 @@ namespace FarmerMarketplace.Api.Services
             if (product == null)
                 throw new KeyNotFoundException("Product not found.");
 
-            return MapToResponseDto(product);
+            return await MapToResponseDtoAsync(product, isBuyerContext: true);
         }
 
         public async Task<List<ProductResponseDto>> GetByFarmerIdAsync(Guid farmerId, Guid? requestingUserId = null, string? role = null, bool includeInactive = false)
@@ -114,7 +131,12 @@ namespace FarmerMarketplace.Api.Services
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
 
-            return products.Select(MapToResponseDto).ToList();
+            var result = new List<ProductResponseDto>();
+            foreach (var p in products)
+            {
+                result.Add(await MapToResponseDtoAsync(p, isBuyerContext: false));
+            }
+            return result;
         }
 
         public async Task<ProductResponseDto> CreateAsync(Guid farmerId, ProductDto dto)
@@ -147,7 +169,7 @@ namespace FarmerMarketplace.Api.Services
                 .Include(p => p.Farmer)
                 .FirstAsync(p => p.Id == product.Id);
 
-            return MapToResponseDto(created);
+            return await MapToResponseDtoAsync(created, isBuyerContext: false);
         }
         public async Task<ProductResponseDto> UpdateAsync(Guid id, Guid requestingUserId, string? role, ProductDto dto)
        {
@@ -182,7 +204,7 @@ namespace FarmerMarketplace.Api.Services
 
             await _context.SaveChangesAsync();
 
-             return MapToResponseDto(product);
+             return await MapToResponseDtoAsync(product, isBuyerContext: false);
         }
 
         public async Task DeleteAsync(Guid id, Guid requestingUserId, string? role)
@@ -209,13 +231,18 @@ namespace FarmerMarketplace.Api.Services
             await _context.SaveChangesAsync();
         }
 
-        private static ProductResponseDto MapToResponseDto(Product product)
+        private async Task<ProductResponseDto> MapToResponseDtoAsync(Product product, bool isBuyerContext = true)
         {
+            var farmerPrice = product.Price;
+            var buyerPrice = await _configService.CalculateBuyerPriceAsync(farmerPrice, product.CropName);
+
             return new ProductResponseDto
             {
                 Id = product.Id,
                 CropName = product.CropName,
-                Price = product.Price,
+                Price = isBuyerContext ? buyerPrice : farmerPrice,
+                FarmerPrice = farmerPrice,
+                BuyerPrice = buyerPrice,
                 Quantity = product.Quantity,
                 Unit = product.Unit,
                 Category = product.Category,
@@ -231,14 +258,13 @@ namespace FarmerMarketplace.Api.Services
             };
         }
 
-
-               public async Task<(byte[] Data, string ContentType)> GetImageAsync(Guid id)
+        public async Task<(byte[] Data, string ContentType)> GetImageAsync(Guid id)
         {
-                var product = await _context.Products.FindAsync(id);
-                if (product?.ImageData == null)
+            var product = await _context.Products.FindAsync(id);
+            if (product?.ImageData == null)
                 throw new KeyNotFoundException("Image not found.");
 
-                return (product.ImageData, product.ImageContentType ?? "image/jpeg");
+            return (product.ImageData, product.ImageContentType ?? "image/jpeg");
         }
     }
 }
