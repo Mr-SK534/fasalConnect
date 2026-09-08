@@ -10,7 +10,10 @@ namespace FarmerMarketplace.Api.Models
         Farmer,
         Buyer,
         FpoAdmin,
-        PlatformAdmin
+        PlatformAdmin,
+        SuperAdmin,
+        Admin,
+        Manager
     }
 
     public class User
@@ -49,9 +52,6 @@ namespace FarmerMarketplace.Api.Models
         // ---- Profile setup fields ----
 
         [MaxLength(100)]
-        public string? Village { get; set; }
-
-        [MaxLength(100)]
         public string? District { get; set; }
 
         [MaxLength(100)]
@@ -62,6 +62,9 @@ namespace FarmerMarketplace.Api.Models
 
         public double? Latitude { get; set; }
         public double? Longitude { get; set; }
+
+        [MaxLength(200)]
+        public string? Address { get; set; }
 
         [MaxLength(200)]
         public string? Region { get; set; }
@@ -92,6 +95,11 @@ namespace FarmerMarketplace.Api.Models
         public string? DeliveryAddress { get; set; }
 
         public bool IsProfileComplete { get; set; } = false;
+
+        public bool Suspended { get; set; } = false;
+
+        [MaxLength(500)]
+        public string? SuspensionReason { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

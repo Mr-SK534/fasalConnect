@@ -1,0 +1,160 @@
+{
+  "header": {
+    "tagline": "From Our Fields to a Brighter Tomorrow"
+  },
+  "nav": {
+    "signIn": "Sign in",
+    "getStarted": "Get started"
+  },
+  "hero": {
+    "connecting": "Connecting",
+    "farmers": "Farmers",
+    "to": "to",
+    "betterTomorrow": "a Better Tomorrow",
+    "subheading": "A modern marketplace for fresh produce, fair prices, and stronger farming communities."
+  },
+  "features": {
+    "freshProduce": "Fresh Produce",
+    "directBuyers": "Direct Buyers",
+    "betterPrices": "Better Prices",
+    "strongerCommunities": "Stronger Communities"
+  },
+  "cta": {
+    "shopProducts": "Shop Fresh Products",
+    "joinFarmer": "Join as a Farmer"
+  },
+  "footer": {
+    "motto": "Together for a Greener Tomorrow",
+    "whatsApp": "WhatsApp Support"
+  },
+  "home": {
+    "badgeNoMiddlemen": "No Middlemen",
+    "liveListing": "Live Listing",
+    "sampleCrop": "Grade A Tomatoes",
+    "sampleAvailable": "420 kg batch available",
+    "buyBatch": "Buy Batch",
+    "badgeTagline": "Built for Bharat's Agricultural Future",
+    "heroTitlePart1": "Fresh produce.",
+    "heroTitlePart2": "Fair price.",
+    "heroTitlePart3": "Zero agents.",
+    "heroDescription": "FasalConnect links farmers directly with enterprise buyers and regional markets across India—eliminating extra margins and ensuring transparent transactions.",
+    "btnStartSelling": "Start Selling Today",
+    "btnFindProduce": "Find Fresh Produce",
+    "trustRazorpay": "Razorpay Secured",
+    "trustLanguages": "4 Languages",
+    "trustWhatsApp": "WhatsApp Support",
+    "stats": {
+      "income": "Income vs Traditional Mandi",
+      "fees": "Hidden Fees or Commissions",
+      "delivery": "Farm to Door Delivery",
+      "payment": "Direct Payment Assurance"
+    },
+    "featuresHeading": "Built for Modern Agritech",
+    "featuresSubheading": "Engineered specifically to solve aggregation, pricing transparency, and regional logistics challenges across India.",
+    "features": {
+      "sellPrice": {
+        "title": "Sell at your price, not theirs",
+        "body": "List your produce directly. No mandi agent, no commission layer. Buyers see your real price — you keep what you earn.",
+        "statLabel": "avg. farmer income gain"
+      },
+      "bulkOrders": {
+        "title": "Bulk orders, without the chaos",
+        "body": "A restaurant needs 200 kg of tomatoes. One farmer has 80 kg. Our aggregator quietly pools nearby FPO members and fulfils the order — you just confirm and get paid.",
+        "statLabel": "list → order → paid"
+      },
+      "cheaperDelivery": {
+        "title": "Routes that make delivery cheaper",
+        "body": "Our optimizer plans the shortest path across all active pickups in your zone. Less fuel, faster delivery, fresher produce at the buyer's door.",
+        "statLabel": "farm to buyer"
+      },
+      "demandForecast": {
+        "title": "Know what to grow next season",
+        "body": "Our demand forecast reads last season's orders and tells you which crops are trending in your region — before you plant, not after.",
+        "statLabel": "crop demand forecast"
+      }
+    },
+    "howItWorksHeading": "How FasalConnect Works",
+    "roleFarmer": "For Farmer / FPO",
+    "farmerStep1": "Register & verify profile",
+    "farmerStep2": "List produce directly with custom pricing",
+    "farmerStep3": "Fulfill pooled orders and receive same-day payout",
+    "roleBuyer": "For Buyer",
+    "buyerStep1": "Browse direct farm listings nearby",
+    "buyerStep2": "Order directly with zero agent markups",
+    "buyerStep3": "Track regional delivery in real-time",
+    "ctaHeading": "Ready to Take Direct Control?",
+    "ctaSubheading": "Join thousands of independent farmers, FPOs, and business buyers streamlining agri-trade today.",
+    "btnRegister": "Register Free"
+  },
+  "login": {
+    "heading": "Welcome back",
+    "subtitle": "Sign in to your FasalConnect account",
+    "emailOrPhone": "Email or Phone",
+    "emailOrPhonePlaceholder": "you@example.com or +91 98765 43210",
+    "password": "Password",
+    "signIn": "Sign In",
+    "signingIn": "Signing in...",
+    "noAccount": "Don't have an account?",
+    "register": "Register"
+  },
+  "register": {
+    "heading": "Create an account",
+    "subtitle": "Join the FasalConnect marketplace",
+    "iAmA": "I am a",
+    "fullName": "Full name",
+    "phoneNumber": "Phone number",
+    "email": "Email",
+    "emailOptional": "Email (optional)",
+    "password": "Password",
+    "namePlaceholder": "Ramesh Kumar",
+    "phonePlaceholder": "+91 98765 43210",
+    "emailPlaceholder": "you@example.com",
+    "passwordPlaceholder": "At least 6 characters",
+    "registerButton": "Register",
+    "registeringButton": "Creating account...",
+    "alreadyHaveAccount": "Already have an account?",
+    "loginLink": "Log in",
+    "roles": {
+      "farmer": "Farmer",
+      "buyer": "Buyer",
+      "fpoAdmin": "FPO Admin",
+      "platformAdmin": "Platform Admin"
+    }
+  },
+  "profileSetup": {
+    "heading": "Complete Your Profile",
+    "subtitle": "Help us personalize your experience",
+    "locationSection": "Location Details",
+    "roleSection": "Additional Information",
+    "languageSection": "Language Preference",
+    "village": "Village/Town",
+    "villagePlaceholder": "Enter your village or town",
+    "district": "District",
+    "districtPlaceholder": "Enter your district",
+    "state": "State",
+    "statePlaceholder": "Select your state",
+    "pincode": "Pincode",
+    "pincodePlaceholder": "6-digit pincode",
+    "autoDetect": "Auto-detect my location",
+    "detecting": "Detecting...",
+    "primaryCrops": "Primary Crops",
+    "cropPlaceholder": "Type crop name and press Enter",
+    "bankAccount": "Bank Account Number",
+    "bankAccountPlaceholder": "Enter account number",
+    "ifsc": "IFSC Code",
+    "ifscPlaceholder": "Bank IFSC code",
+    "accountHolder": "Account Holder Name",
+    "accountHolderPlaceholder": "Name as per bank",
+    "upiId": "UPI ID (optional)",
+    "upiIdPlaceholder": "yourname@upi",
+    "businessName": "Business Name (optional)",
+    "businessNamePlaceholder": "Your business name",
+    "deliveryAddress": "Delivery Address",
+    "deliveryAddressPlaceholder": "Full delivery address",
+    "gstNumber": "GST Number (optional)",
+    "gstNumberPlaceholder": "GST registration number",
+    "preferredLanguage": "Preferred Language",
+    "saveButton": "Save Profile",
+    "saving": "Saving..."
+  }
+}

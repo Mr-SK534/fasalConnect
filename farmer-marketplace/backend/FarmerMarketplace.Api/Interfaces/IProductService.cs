@@ -8,9 +8,11 @@ namespace FarmerMarketplace.Api.Interfaces
     {
         Task<List<ProductResponseDto>> GetAllAsync(ProductQueryDto query);
 
+        Task<ProductAggregateResponseDto> GetAggregateAsync(string cropName);
+
         Task<ProductResponseDto> GetByIdAsync(Guid id);
 
-        Task<List<ProductResponseDto>> GetByFarmerIdAsync(Guid farmerId);
+        Task<List<ProductResponseDto>> GetByFarmerIdAsync(Guid farmerId, Guid? requestingUserId = null, string? role = null, bool includeInactive = false);
 
         Task<ProductResponseDto> CreateAsync(Guid farmerId, ProductDto dto);
 

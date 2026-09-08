@@ -16,7 +16,7 @@ namespace FarmerMarketplace.Api.Controllers
         // Returns base64 + contentType — frontend sends these along with the rest
         // of the product form in the same POST/PUT /products request.
         [HttpPost("product-image")]
-        [Authorize(Roles = "Farmer,FpoAdmin")]
+        [Authorize(Roles = "Farmer,FpoAdmin,PlatformAdmin,SuperAdmin,Admin,Manager")]
         [RequestSizeLimit(MaxFileSizeBytes)]
         public async Task<IActionResult> UploadProductImage(IFormFile file)
         {

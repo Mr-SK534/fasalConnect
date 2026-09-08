@@ -22,6 +22,214 @@ namespace FarmerMarketplace.Api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("FarmerMarketplace.Api.Models.BatchRunLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsManual")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("OrdersRouted")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("RanAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("RoutesCreated")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SkippedOrders")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("BatchRunLogs");
+                });
+
+            modelBuilder.Entity("FarmerMarketplace.Api.Models.DeliveryRoute", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("BatchDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("BatchWindow")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("StopsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double>("TotalDistanceKm")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("VehicleCount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DeliveryRoutes");
+                });
+
+            modelBuilder.Entity("FarmerMarketplace.Api.Models.DeliveryWeightLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeliveryDatetime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("PickupDatetime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("RouteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("VarianceReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<double?>("WeightAtDeliveryKg")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("WeightAtPickupKg")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("WeightVarianceKg")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("RouteId");
+
+                    b.ToTable("DeliveryWeightLogs");
+                });
+
+            modelBuilder.Entity("FarmerMarketplace.Api.Models.EscrowTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("ActualAmountRs")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<Guid>("BuyerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DisputeReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime?>("DisputeResolvedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("HeldDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("OrderedAmountRs")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<string>("PlatformAccountId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("RefundDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ReleaseDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BuyerId");
+
+                    b.HasIndex("OrderId");
+
+                    b.ToTable("EscrowTransactions");
+                });
+
+            modelBuilder.Entity("FarmerMarketplace.Api.Models.FarmerPayout", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ConfirmationTimestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("FarmerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("FpoAdminId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("OrderIdsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("PaymentMethod")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("PayoutDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalAmountRs")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<string>("UpiIdOrBankAccount")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FarmerId");
+
+                    b.HasIndex("FpoAdminId");
+
+                    b.ToTable("FarmerPayouts");
+                });
+
             modelBuilder.Entity("FarmerMarketplace.Api.Models.Order", b =>
                 {
                     b.Property<Guid>("Id")
@@ -34,12 +242,40 @@ namespace FarmerMarketplace.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("CropName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("DeliveryAddress")
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
 
+                    b.Property<DateTime?>("DeliveryConfirmedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeliveryDateTarget")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double?>("DeliveryLat")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("DeliveryLng")
+                        .HasColumnType("double precision");
+
                     b.Property<int>("DeliveryType")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime?>("EstimatedArrival")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("FarmerAskingPricePerKg")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<Guid?>("FarmerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("FpoAdminId")
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("IsBulkOrder")
                         .HasColumnType("boolean");
@@ -50,7 +286,32 @@ namespace FarmerMarketplace.Api.Migrations
                     b.Property<double?>("Longitude")
                         .HasColumnType("double precision");
 
+                    b.Property<double?>("PickupLat")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("PickupLng")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("QuantityDeliveredKg")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("QuantityOrderedKg")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("QuantityPickedUpKg")
+                        .HasColumnType("double precision");
+
+                    b.Property<Guid?>("RouteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Season")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("StopSequence")
                         .HasColumnType("integer");
 
                     b.Property<decimal>("TotalAmount")
@@ -59,9 +320,18 @@ namespace FarmerMarketplace.Api.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("VehicleNumber")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BuyerId");
+
+                    b.HasIndex("FarmerId");
+
+                    b.HasIndex("FpoAdminId");
+
+                    b.HasIndex("RouteId");
 
                     b.ToTable("Orders");
                 });
@@ -177,6 +447,517 @@ namespace FarmerMarketplace.Api.Migrations
                     b.ToTable("PaymentSplits");
                 });
 
+            modelBuilder.Entity("FarmerMarketplace.Api.Models.PlatformConfig", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<decimal?>("MaxValue")
+                        .HasColumnType("decimal(12,4)");
+
+                    b.Property<decimal?>("MinValue")
+                        .HasColumnType("decimal(12,4)");
+
+                    b.Property<string>("RequiresRole")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("ValueType")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PlatformConfigs");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Category = "pricing",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(536),
+                            Description = "Minimum farmer can set per kg",
+                            IsActive = true,
+                            Key = "farmer_price_minimum_per_kg",
+                            MaxValue = 100m,
+                            MinValue = 0m,
+                            RequiresRole = "superadmin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(522),
+                            Value = "5.0",
+                            ValueType = 0
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Category = "pricing",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4439),
+                            Description = "Maximum farmer can set per kg",
+                            IsActive = true,
+                            Key = "farmer_price_maximum_per_kg",
+                            MaxValue = 1000m,
+                            MinValue = 0m,
+                            RequiresRole = "superadmin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4430),
+                            Value = "500.0",
+                            ValueType = 0
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Category = "fees",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4468),
+                            Description = "Platform commission on farmer price (8%)",
+                            IsActive = true,
+                            Key = "commission_pct",
+                            MaxValue = 1m,
+                            MinValue = 0m,
+                            RequiresRole = "superadmin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4454),
+                            Value = "0.08",
+                            ValueType = 2
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Category = "fees",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4492),
+                            Description = "Payment gateway fee as % of buyer total (2%)",
+                            IsActive = true,
+                            Key = "payment_gateway_pct",
+                            MaxValue = 1m,
+                            MinValue = 0m,
+                            RequiresRole = "superadmin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4482),
+                            Value = "0.02",
+                            ValueType = 2
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Category = "fees",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4515),
+                            Description = "Annual farmer subscription fee in rupees",
+                            IsActive = true,
+                            Key = "subscription_fee_per_farmer_per_year",
+                            MaxValue = 10000m,
+                            MinValue = 0m,
+                            RequiresRole = "superadmin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4506),
+                            Value = "500.0",
+                            ValueType = 0
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Category = "logistics",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4543),
+                            Description = "Cost paid to logistics partner per kg (₹)",
+                            IsActive = true,
+                            Key = "logistics_partner_payout_per_kg",
+                            MaxValue = 50m,
+                            MinValue = 0m,
+                            RequiresRole = "admin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4529),
+                            Value = "2.0",
+                            ValueType = 0
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Category = "logistics",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4571),
+                            Description = "Platform margin on logistics per kg (₹)",
+                            IsActive = true,
+                            Key = "logistics_platform_margin_per_kg",
+                            MaxValue = 50m,
+                            MinValue = 0m,
+                            RequiresRole = "admin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4562),
+                            Value = "0.5",
+                            ValueType = 0
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Category = "logistics",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4624),
+                            Description = "Minimum flat delivery charge regardless of weight",
+                            IsActive = true,
+                            Key = "min_delivery_charge",
+                            MaxValue = 500m,
+                            MinValue = 0m,
+                            RequiresRole = "admin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4614),
+                            Value = "20.0",
+                            ValueType = 0
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Category = "logistics",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4648),
+                            Description = "Max kg capacity per truck/vehicle",
+                            IsActive = true,
+                            Key = "max_weight_per_vehicle_kg",
+                            MaxValue = 10000m,
+                            MinValue = 100m,
+                            RequiresRole = "admin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4638),
+                            Value = "2000.0",
+                            ValueType = 0
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Category = "thresholds",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4720),
+                            Description = "Auto-flag dispute if weight loss exceeds this %",
+                            IsActive = true,
+                            Key = "weight_loss_threshold_pct",
+                            MaxValue = 100m,
+                            MinValue = 0m,
+                            RequiresRole = "admin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4705),
+                            Value = "5.0",
+                            ValueType = 2
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Category = "thresholds",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4744),
+                            Description = "Auto-refund without dispute if loss below this %",
+                            IsActive = true,
+                            Key = "weight_loss_auto_refund_pct",
+                            MaxValue = 100m,
+                            MinValue = 0m,
+                            RequiresRole = "admin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4730),
+                            Value = "2.0",
+                            ValueType = 2
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Category = "thresholds",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4768),
+                            Description = "Hours buyer has to dispute after delivery",
+                            IsActive = true,
+                            Key = "dispute_resolution_window_hours",
+                            MaxValue = 168m,
+                            MinValue = 1m,
+                            RequiresRole = "admin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4759),
+                            Value = "24",
+                            ValueType = 1
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Category = "thresholds",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4793),
+                            Description = "Auto-release farmer payment after this many hours if no dispute",
+                            IsActive = true,
+                            Key = "auto_release_escrow_after_hours",
+                            MaxValue = 168m,
+                            MinValue = 1m,
+                            RequiresRole = "admin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4783),
+                            Value = "24",
+                            ValueType = 1
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Category = "thresholds",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4821),
+                            Description = "Minimum order size in kg",
+                            IsActive = true,
+                            Key = "min_order_quantity_kg",
+                            MaxValue = 1000m,
+                            MinValue = 0.1m,
+                            RequiresRole = "admin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4807),
+                            Value = "1.0",
+                            ValueType = 0
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Category = "thresholds",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4886),
+                            Description = "Maximum order size in kg",
+                            IsActive = true,
+                            Key = "max_order_quantity_kg",
+                            MaxValue = 100000m,
+                            MinValue = 1m,
+                            RequiresRole = "admin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4872),
+                            Value = "10000.0",
+                            ValueType = 0
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Category = "payouts",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4929),
+                            Description = "Run payout batch every N hours",
+                            IsActive = true,
+                            Key = "payout_batch_frequency_hours",
+                            MaxValue = 168m,
+                            MinValue = 1m,
+                            RequiresRole = "admin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4914),
+                            Value = "24",
+                            ValueType = 1
+                        },
+                        new
+                        {
+                            Id = 17,
+                            Category = "payouts",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4952),
+                            Description = "Minimum accumulated amount to trigger payout (₹)",
+                            IsActive = true,
+                            Key = "minimum_payout_amount_rs",
+                            MaxValue = 10000m,
+                            MinValue = 0m,
+                            RequiresRole = "admin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4943),
+                            Value = "100.0",
+                            ValueType = 0
+                        },
+                        new
+                        {
+                            Id = 18,
+                            Category = "payouts",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4976),
+                            Description = "Preferred day for weekly payouts (0=Sunday, 1=Monday, etc)",
+                            IsActive = true,
+                            Key = "payout_day_of_week",
+                            MaxValue = 6m,
+                            MinValue = 0m,
+                            RequiresRole = "admin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4967),
+                            Value = "1",
+                            ValueType = 1
+                        },
+                        new
+                        {
+                            Id = 19,
+                            Category = "costs",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5004),
+                            Description = "Annual platform fixed costs (cloud/ops/marketing)",
+                            IsActive = true,
+                            Key = "annual_fixed_costs_rs",
+                            MaxValue = 10000000m,
+                            MinValue = 0m,
+                            RequiresRole = "superadmin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(4990),
+                            Value = "90000.0",
+                            ValueType = 0
+                        },
+                        new
+                        {
+                            Id = 20,
+                            Category = "costs",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5028),
+                            Description = "Target net margin % on platform revenue",
+                            IsActive = true,
+                            Key = "target_net_margin_pct",
+                            MaxValue = 100m,
+                            MinValue = 0m,
+                            RequiresRole = "superadmin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5018),
+                            Value = "20.0",
+                            ValueType = 2
+                        },
+                        new
+                        {
+                            Id = 21,
+                            Category = "crop_pricing",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5052),
+                            Description = "Override commission % for tomatoes",
+                            IsActive = true,
+                            Key = "tomato_commission_pct",
+                            MaxValue = 1m,
+                            MinValue = 0m,
+                            RequiresRole = "superadmin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5042),
+                            Value = "0.08",
+                            ValueType = 2
+                        },
+                        new
+                        {
+                            Id = 22,
+                            Category = "crop_pricing",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5076),
+                            Description = "Override commission % for onions",
+                            IsActive = true,
+                            Key = "onion_commission_pct",
+                            MaxValue = 1m,
+                            MinValue = 0m,
+                            RequiresRole = "superadmin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5066),
+                            Value = "0.08",
+                            ValueType = 2
+                        },
+                        new
+                        {
+                            Id = 23,
+                            Category = "crop_pricing",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5105),
+                            Description = "Override commission % for potatoes",
+                            IsActive = true,
+                            Key = "potato_commission_pct",
+                            MaxValue = 1m,
+                            MinValue = 0m,
+                            RequiresRole = "superadmin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5090),
+                            Value = "0.08",
+                            ValueType = 2
+                        },
+                        new
+                        {
+                            Id = 24,
+                            Category = "seasonal_pricing",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5129),
+                            Description = "Price multiplier for Rabi Glut season",
+                            IsActive = true,
+                            Key = "s1_rabi_glut_multiplier",
+                            MaxValue = 2.0m,
+                            MinValue = 0.1m,
+                            RequiresRole = "admin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5114),
+                            Value = "1.0",
+                            ValueType = 0
+                        },
+                        new
+                        {
+                            Id = 25,
+                            Category = "seasonal_pricing",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5152),
+                            Description = "Price multiplier for Pre-Monsoon season",
+                            IsActive = true,
+                            Key = "s2_pre_monsoon_multiplier",
+                            MaxValue = 2.0m,
+                            MinValue = 0.1m,
+                            RequiresRole = "admin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5143),
+                            Value = "1.15",
+                            ValueType = 0
+                        },
+                        new
+                        {
+                            Id = 26,
+                            Category = "seasonal_pricing",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5180),
+                            Description = "Price multiplier for Monsoon season",
+                            IsActive = true,
+                            Key = "s3_monsoon_multiplier",
+                            MaxValue = 2.0m,
+                            MinValue = 0.1m,
+                            RequiresRole = "admin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5166),
+                            Value = "1.10",
+                            ValueType = 0
+                        },
+                        new
+                        {
+                            Id = 27,
+                            Category = "seasonal_pricing",
+                            CreatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5203),
+                            Description = "Price multiplier for Kharif season",
+                            IsActive = true,
+                            Key = "s4_kharif_multiplier",
+                            MaxValue = 2.0m,
+                            MinValue = 0.1m,
+                            RequiresRole = "admin",
+                            UpdatedAt = new DateTime(2026, 9, 7, 23, 49, 21, 358, DateTimeKind.Utc).AddTicks(5189),
+                            Value = "1.10",
+                            ValueType = 0
+                        });
+                });
+
+            modelBuilder.Entity("FarmerMarketplace.Api.Models.PlatformFee", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("CommissionAmountRs")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<decimal>("CommissionPct")
+                        .HasColumnType("decimal(5,4)");
+
+                    b.Property<Guid>("EscrowId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("LogisticsPartnerChargePerKg")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("LogisticsPlatformMarginPerKg")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("PaymentGatewayFeePct")
+                        .HasColumnType("decimal(5,4)");
+
+                    b.Property<decimal>("PaymentGatewayFeeRs")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("TotalLogisticsChargeRs")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EscrowId");
+
+                    b.HasIndex("OrderId");
+
+                    b.ToTable("PlatformFees");
+                });
+
             modelBuilder.Entity("FarmerMarketplace.Api.Models.Product", b =>
                 {
                     b.Property<Guid>("Id")
@@ -238,6 +1019,151 @@ namespace FarmerMarketplace.Api.Migrations
                     b.ToTable("Products");
                 });
 
+            modelBuilder.Entity("FarmerMarketplace.Api.Models.RolePermission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("CanPerform")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Resource")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RolePermissions");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Action = "view_config",
+                            CanPerform = true,
+                            Description = "Superadmin can view all config",
+                            Resource = "all",
+                            Role = "superadmin"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Action = "edit_config",
+                            CanPerform = true,
+                            Description = "Superadmin can edit all config",
+                            Resource = "all",
+                            Role = "superadmin"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Action = "edit_pricing",
+                            CanPerform = true,
+                            Description = "Superadmin can edit pricing",
+                            Resource = "all",
+                            Role = "superadmin"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Action = "edit_critical",
+                            CanPerform = true,
+                            Description = "Superadmin can edit critical business rules",
+                            Resource = "all",
+                            Role = "superadmin"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Action = "view_config",
+                            CanPerform = true,
+                            Description = "Admin can view all config",
+                            Resource = "all",
+                            Role = "admin"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Action = "edit_config",
+                            CanPerform = true,
+                            Description = "Admin can edit logistics",
+                            Resource = "logistics",
+                            Role = "admin"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Action = "edit_config",
+                            CanPerform = true,
+                            Description = "Admin can edit business thresholds",
+                            Resource = "thresholds",
+                            Role = "admin"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Action = "edit_pricing",
+                            CanPerform = true,
+                            Description = "Admin can edit logistics pricing",
+                            Resource = "logistics",
+                            Role = "admin"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Action = "edit_critical",
+                            CanPerform = false,
+                            Description = "Admin CANNOT edit critical business rules",
+                            Resource = "all",
+                            Role = "admin"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Action = "view_config",
+                            CanPerform = true,
+                            Description = "Manager can view all config",
+                            Resource = "all",
+                            Role = "manager"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Action = "edit_config",
+                            CanPerform = false,
+                            Description = "Manager cannot edit any config",
+                            Resource = "all",
+                            Role = "manager"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Action = "edit_critical",
+                            CanPerform = false,
+                            Description = "Manager cannot edit critical config",
+                            Resource = "all",
+                            Role = "manager"
+                        });
+                });
+
             modelBuilder.Entity("FarmerMarketplace.Api.Models.Route", b =>
                 {
                     b.Property<Guid>("Id")
@@ -267,11 +1193,22 @@ namespace FarmerMarketplace.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Address")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTime>("DeliveryDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<decimal>("DistanceFromPreviousKm")
                         .HasColumnType("decimal(10,2)");
 
                     b.Property<DateTime>("EstimatedArrival")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FarmerName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<double>("Latitude")
                         .HasColumnType("double precision");
@@ -282,11 +1219,19 @@ namespace FarmerMarketplace.Api.Migrations
                     b.Property<Guid>("OrderId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("PickupDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid>("RouteId")
                         .HasColumnType("uuid");
 
                     b.Property<int>("StopSequence")
                         .HasColumnType("integer");
+
+                    b.Property<string>("StopType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
@@ -310,6 +1255,52 @@ namespace FarmerMarketplace.Api.Migrations
                     b.ToTable("TokenBlocklist");
                 });
 
+            modelBuilder.Entity("FarmerMarketplace.Api.Models.TransactionLedger", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AmountRs")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("FromAccount")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid?>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ToAccount")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("TransactionType")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.ToTable("TransactionLedgers");
+                });
+
             modelBuilder.Entity("FarmerMarketplace.Api.Models.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -319,6 +1310,10 @@ namespace FarmerMarketplace.Api.Migrations
                     b.Property<string>("AccountHolderName")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("BankAccountNumber")
                         .HasMaxLength(30)
@@ -404,6 +1399,13 @@ namespace FarmerMarketplace.Api.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<bool>("Suspended")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SuspensionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -416,6 +1418,78 @@ namespace FarmerMarketplace.Api.Migrations
                     b.HasIndex("FpoId");
 
                     b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("a0000000-0000-0000-0000-000000000001"),
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "superadmin@fasalconnect.com",
+                            IsProfileComplete = true,
+                            Location = "New Delhi",
+                            Name = "superadmin",
+                            PasswordHash = "$2a$11$Ju8edbIa8vH7FCYaPb97EePLsdfnQA.6Zs1G/1AfUuOS.Y8EZFswq",
+                            Phone = "9999999999",
+                            PreferredLanguage = "en",
+                            Role = 4,
+                            Suspended = false,
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                        });
+                });
+
+            modelBuilder.Entity("FarmerMarketplace.Api.Models.DeliveryWeightLog", b =>
+                {
+                    b.HasOne("FarmerMarketplace.Api.Models.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FarmerMarketplace.Api.Models.DeliveryRoute", "Route")
+                        .WithMany()
+                        .HasForeignKey("RouteId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Route");
+                });
+
+            modelBuilder.Entity("FarmerMarketplace.Api.Models.EscrowTransaction", b =>
+                {
+                    b.HasOne("FarmerMarketplace.Api.Models.User", "Buyer")
+                        .WithMany()
+                        .HasForeignKey("BuyerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FarmerMarketplace.Api.Models.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Buyer");
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("FarmerMarketplace.Api.Models.FarmerPayout", b =>
+                {
+                    b.HasOne("FarmerMarketplace.Api.Models.User", "Farmer")
+                        .WithMany()
+                        .HasForeignKey("FarmerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FarmerMarketplace.Api.Models.User", "FpoAdmin")
+                        .WithMany()
+                        .HasForeignKey("FpoAdminId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Farmer");
+
+                    b.Navigation("FpoAdmin");
                 });
 
             modelBuilder.Entity("FarmerMarketplace.Api.Models.Order", b =>
@@ -426,7 +1500,25 @@ namespace FarmerMarketplace.Api.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("FarmerMarketplace.Api.Models.User", "Farmer")
+                        .WithMany()
+                        .HasForeignKey("FarmerId");
+
+                    b.HasOne("FarmerMarketplace.Api.Models.User", "FpoAdmin")
+                        .WithMany()
+                        .HasForeignKey("FpoAdminId");
+
+                    b.HasOne("FarmerMarketplace.Api.Models.DeliveryRoute", "Route")
+                        .WithMany()
+                        .HasForeignKey("RouteId");
+
                     b.Navigation("Buyer");
+
+                    b.Navigation("Farmer");
+
+                    b.Navigation("FpoAdmin");
+
+                    b.Navigation("Route");
                 });
 
             modelBuilder.Entity("FarmerMarketplace.Api.Models.OrderItem", b =>
@@ -486,6 +1578,25 @@ namespace FarmerMarketplace.Api.Migrations
                     b.Navigation("Payment");
                 });
 
+            modelBuilder.Entity("FarmerMarketplace.Api.Models.PlatformFee", b =>
+                {
+                    b.HasOne("FarmerMarketplace.Api.Models.EscrowTransaction", "Escrow")
+                        .WithMany()
+                        .HasForeignKey("EscrowId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FarmerMarketplace.Api.Models.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Escrow");
+
+                    b.Navigation("Order");
+                });
+
             modelBuilder.Entity("FarmerMarketplace.Api.Models.Product", b =>
                 {
                     b.HasOne("FarmerMarketplace.Api.Models.User", "Farmer")
@@ -514,6 +1625,16 @@ namespace FarmerMarketplace.Api.Migrations
                     b.Navigation("Order");
 
                     b.Navigation("Route");
+                });
+
+            modelBuilder.Entity("FarmerMarketplace.Api.Models.TransactionLedger", b =>
+                {
+                    b.HasOne("FarmerMarketplace.Api.Models.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Order");
                 });
 
             modelBuilder.Entity("FarmerMarketplace.Api.Models.User", b =>

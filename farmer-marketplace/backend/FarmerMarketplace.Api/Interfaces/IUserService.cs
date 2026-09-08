@@ -8,6 +8,8 @@ namespace FarmerMarketplace.Api.Interfaces
     {
         Task<PublicProfileDto> GetPublicProfileAsync(Guid id);
 
+        Task<UserResponseDto> GetProfileAsync(Guid id, Guid requestingUserId);
+
         Task<UserResponseDto> UpdateBasicProfileAsync(Guid id, Guid requestingUserId, UpdateBasicProfileDto dto);
         Task<UserResponseDto> UpdateProfileAsync(Guid id, Guid requestingUserId, ProfileSetupDto dto);
     }

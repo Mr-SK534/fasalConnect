@@ -9,6 +9,8 @@ namespace FarmerMarketplace.Api.Models
     {
         Pending,
         Confirmed,
+        PickupScheduled,
+        PickedUp,
         InTransit,
         Delivered,
         Cancelled
@@ -53,5 +55,44 @@ namespace FarmerMarketplace.Api.Models
 
         public double? Latitude { get; set; }
         public double? Longitude { get; set; }
+
+        public Guid? RouteId { get; set; }
+        [ForeignKey(nameof(RouteId))]
+        public DeliveryRoute? Route { get; set; }
+
+        public int? StopSequence { get; set; }
+        public int? VehicleNumber { get; set; }
+        public DateTime? EstimatedArrival { get; set; }
+
+        public double? DeliveryLat { get; set; }
+        public double? DeliveryLng { get; set; }
+        public double? PickupLat { get; set; }
+        public double? PickupLng { get; set; }
+
+        // --- New Escrow & Weight Tracking Fields ---
+        public double? QuantityPickedUpKg { get; set; }
+        public double? QuantityDeliveredKg { get; set; }
+        public DateTime? DeliveryConfirmedDate { get; set; }
+
+        [MaxLength(100)]
+        public string? CropName { get; set; }
+
+        [MaxLength(100)]
+        public string? Season { get; set; }
+
+        public double? QuantityOrderedKg { get; set; }
+
+        [Column(TypeName = "decimal(12,2)")]
+        public decimal? FarmerAskingPricePerKg { get; set; }
+
+        public Guid? FarmerId { get; set; }
+        [ForeignKey(nameof(FarmerId))]
+        public User? Farmer { get; set; }
+
+        public Guid? FpoAdminId { get; set; }
+        [ForeignKey(nameof(FpoAdminId))]
+        public User? FpoAdmin { get; set; }
+
+        public DateTime? DeliveryDateTarget { get; set; }
     }
 }

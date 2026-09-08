@@ -76,15 +76,19 @@ namespace FarmerMarketplace.Api.Services
 
         public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
         {
-            var isEmail = dto.EmailOrPhone.Contains('@');
+            var loginValue = dto.EmailOrPhone.Trim();
+            var isEmail = loginValue.Contains('@');
 
             var user = isEmail
                 ? await _context.Users.FirstOrDefaultAsync(u =>
-                    u.Email != null && u.Email.ToLower() == dto.EmailOrPhone.ToLower())
-                : await _context.Users.FirstOrDefaultAsync(u => u.Phone == dto.EmailOrPhone);
+                    u.Email != null && u.Email.ToLower() == loginValue.ToLower())
+                : await _context.Users.FirstOrDefaultAsync(u => u.Phone == loginValue);
 
             if (user == null || !_passwordHasher.VerifyPassword(dto.Password, user.PasswordHash))
                 throw new UnauthorizedAccessException("Invalid credentials.");
+
+            if (user.Suspended)
+                throw new UnauthorizedAccessException("This account is suspended.");
 
             var (token, _, _) = _jwtService.GenerateToken(user);
 
@@ -148,7 +152,22 @@ namespace FarmerMarketplace.Api.Services
                 PreferredLanguage = user.PreferredLanguage,
                 FpoId = user.FpoId,
                 IsProfileComplete = user.IsProfileComplete,
-                CreatedAt = user.CreatedAt
+                CreatedAt = user.CreatedAt,
+                Address = user.Address,
+                District = user.District,
+                State = user.State,
+                Pincode = user.Pincode,
+                PrimaryCrops = user.PrimaryCrops,
+                BankAccountNumber = user.BankAccountNumber,
+                BankIfsc = user.BankIfsc,
+                AccountHolderName = user.AccountHolderName,
+                UpiId = user.UpiId,
+                BusinessName = user.BusinessName,
+                GstNumber = user.GstNumber,
+                DeliveryAddress = user.DeliveryAddress,
+                Latitude = user.Latitude,
+                Longitude = user.Longitude,
+                Region = user.Region
             };
         }
     }

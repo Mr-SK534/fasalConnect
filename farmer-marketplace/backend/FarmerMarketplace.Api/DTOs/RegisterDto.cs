@@ -11,12 +11,15 @@ namespace FarmerMarketplace.Api.DTOs
         [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
 
+ whatsapp-integration
         // v2: phone is now mandatory
         [Required]
         [MaxLength(15)]
         public string Phone { get; set; } = string.Empty;
 
         // v2: email is now optional
+
+        main
         [EmailAddress]
         public string? Email { get; set; }
 

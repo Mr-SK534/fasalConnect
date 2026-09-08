@@ -10,8 +10,15 @@ namespace FarmerMarketplace.Api.DTOs
         public Guid Id { get; set; }
         public string CropName { get; set; } = string.Empty;
         public decimal Price { get; set; }
+        public decimal FarmerPrice { get; set; }
+        public decimal BuyerPrice { get; set; }
         public decimal Quantity { get; set; }
         public ProductUnit Unit { get; set; }
+        public ProductUnit OriginalUnit { get; set; }
+        public decimal OriginalPrice { get; set; }
+        public decimal OriginalQuantity { get; set; }
+        public decimal PricePerKg { get; set; }
+        public decimal QuantityInKg { get; set; }
         public ProductCategory Category { get; set; }
         public DateTime HarvestDate { get; set; }
         public string? Description { get; set; }

@@ -1,0 +1,160 @@
+{
+  "header": {
+    "tagline": "आमच्या शेतातून एका उज्ज्वल उद्याकडे"
+  },
+  "nav": {
+    "signIn": "साइन इन करा",
+    "getStarted": "शुरू करा"
+  },
+  "hero": {
+    "connecting": "जोडत आहे",
+    "farmers": "शेतकऱ्यांना",
+    "to": "एका चांगल्या",
+    "betterTomorrow": "उद्याशी",
+    "subheading": "ताजी उत्पादने, वाजवी भाव आणि अधिक मजबूत शेतकरी समुदायांसाठी एक आधुनिक मार्केटप्लेस."
+  },
+  "features": {
+    "freshProduce": "ताजी उत्पादने",
+    "directBuyers": "थेट खरेदीदार",
+    "betterPrices": "उत्तम भाव",
+    "strongerCommunities": "मजबूत समुदाय"
+  },
+  "cta": {
+    "shopProducts": "ताजी उत्पादने खरेदी करा",
+    "joinFarmer": "शेतकरी म्हणून सामील व्हा"
+  },
+  "footer": {
+    "motto": "हिरवळीच्या उद्यासाठी एकत्र",
+    "whatsApp": "व्हॉट्सॲप सपोर्ट"
+  },
+  "home": {
+    "badgeNoMiddlemen": "मध्यस्थ नाही",
+    "liveListing": "लाइव्ह लिस्टिंग",
+    "sampleCrop": "ग्रेड A टोमॅटो",
+    "sampleAvailable": "420 किलो उपलब्ध",
+    "buyBatch": "खरेदी करा",
+    "badgeTagline": "भारताच्या कृषी भविष्यासाठी निर्मित",
+    "heroTitlePart1": "ताजी उत्पादने.",
+    "heroTitlePart2": "योग्य भाव.",
+    "heroTitlePart3": "मध्यस्थ नाही.",
+    "heroDescription": "फसलकनेक्ट शेतकऱ्यांना थेट संपूर्ण भारतातील खरेदीदारांशी आणि प्रादेशिक बाजारांशी जोडते—पारदर्शक व्यवहार सुनिश्चित करते.",
+    "btnStartSelling": "आजच विक्री सुरू करा",
+    "btnFindProduce": "ताजी उत्पादने शोधा",
+    "trustRazorpay": "रेझरपे सुरक्षित",
+    "trustLanguages": "4 भाषा",
+    "trustWhatsApp": "व्हॉट्सॲप सपोर्ट",
+    "stats": {
+      "income": "पारंपारिक मार्केटच्या तुलनेत उत्पन्न",
+      "fees": "लपलेले शुल्क किंवा कमिशन",
+      "delivery": "शेतापासून घरापर्यंत डिलिव्हरी",
+      "payment": "थेट पेमेंटची हमी"
+    },
+    "featuresHeading": "आधुनिक ॲग्रिटेकसाठी निर्मित",
+    "featuresSubheading": "एकत्रीकरण, किंमत पारदर्शकता आणि प्रादेशिक लॉजिस्टिक आव्हाने सोडवण्यासाठी डिझाइन केलेले.",
+    "features": {
+      "sellPrice": {
+        "title": "तुमच्या किमतीत विका, त्यांच्या नाही",
+        "body": "तुमचा माल थेट नोंदवा. कोणताही मध्यस्थ नाही, कमिशन नाही. खरेदीदारांना तुमची खरी किंमत दिसते — तुम्ही कमावलेले पैसे तुमच्याकडेच राहतात.",
+        "statLabel": "सरासरी शेतकरी उत्पन्न वाढ"
+      },
+      "bulkOrders": {
+        "title": "मोठ्या ऑर्डर्स, विनासायास",
+        "body": "हॉटेलला २०० किलो टोमॅटो हवे आहेत. एका शेतकऱ्याकडे ८० किलो आहेत. आमचे नेटवर्क जवळच्या FPO सदस्यांना एकत्र आणून ऑर्डर पूर्ण करते.",
+        "statLabel": "यादी → ऑर्डर → पैसे"
+      },
+      "cheaperDelivery": {
+        "title": "डिलिव्हरी स्वस्त करणारे मार्ग",
+        "body": "आमचे सॉफ्टवेअर तुमच्या क्षेत्रातील सर्वात लहान मार्ग निवडते. कमी इंधन, जलद डिलिव्हरी आणि खरेदीदारापर्यंत ताजी उत्पादने.",
+        "statLabel": "शेतापासून खरेदीदारापर्यंत"
+      },
+      "demandForecast": {
+        "title": "पुढील हंगामात काय पिकवायचे ते जाणून घ्या",
+        "body": "मागणीचा अंदाज सांगणारी यंत्रणा मागील हंगामातील ऑर्डर्स तपासून तुमच्या भागात कोणत्या पिकांना मागणी आहे ते सांगते.",
+        "statLabel": "पिक मागणी अंदाज"
+      }
+    },
+    "howItWorksHeading": "फसलकनेक्ट कसे काम करते",
+    "roleFarmer": "शेतकरी / FPO साठी",
+    "farmerStep1": "नोंदणी करा आणि प्रोफाइल पूर्ण करा",
+    "farmerStep2": "स्वतःच्या किमतीनुसार उत्पादने नोंदवा",
+    "farmerStep3": "ऑर्डर पूर्ण करा आणि त्याच दिवशी पैसे मिळवा",
+    "roleBuyer": "खरेदीदारासाठी",
+    "buyerStep1": "जवळील थेट शेततळ्यांची उत्पादने पहा",
+    "buyerStep2": "कोणत्याही एजंट शुल्काशिवाय थेट ऑर्डर करा",
+    "buyerStep3": "रिएल-टाइममध्ये डिलिव्हरी ट्रॅक करा",
+    "ctaHeading": "थेट नियंत्रण घेण्यास तयार आहात?",
+    "ctaSubheading": "आजच हजारो स्वतंत्र शेतकरी, FPO आणि खरेदीदारांमध्ये सामील व्हा.",
+    "btnRegister": "मोफत नोंदणी करा"
+  },
+  "login": {
+    "heading": "परत स्वागत आहे",
+    "subtitle": "तुमच्या फसलकनेक्ट खात्यात साइन इन करा",
+    "emailOrPhone": "ईमेल किंवा फोन",
+    "emailOrPhonePlaceholder": "you@example.com किंवा +91 98765 43210",
+    "password": "पासवर्ड",
+    "signIn": "साइन इन करा",
+    "signingIn": "साइन इन होत आहे...",
+    "noAccount": "खाते नाही?",
+    "register": "नोंदणी करा"
+  },
+  "register": {
+    "heading": "खाते तयार करा",
+    "subtitle": "फसलकनेक्ट मार्केटप्लेसमध्ये सामील व्हा",
+    "iAmA": "मी आहे",
+    "fullName": "पूर्ण नाव",
+    "phoneNumber": "फोन नंबर",
+    "email": "ईमेल",
+    "emailOptional": "ईमेल (ऐच्छिक)",
+    "password": "पासवर्ड",
+    "namePlaceholder": "रमेश कुमार",
+    "phonePlaceholder": "+91 98765 43210",
+    "emailPlaceholder": "you@example.com",
+    "passwordPlaceholder": "किमान 6 अक्षरे",
+    "registerButton": "नोंदणी करा",
+    "registeringButton": "खाते तयार केले जात आहे...",
+    "alreadyHaveAccount": "आधीच खाते आहे?",
+    "loginLink": "लॉग इन करा",
+    "roles": {
+      "farmer": "शेतकरी",
+      "buyer": "खरेदीदार",
+      "fpoAdmin": "एफपीओ प्रशासक",
+      "platformAdmin": "प्लॅटफॉर्म प्रशासक"
+    }
+  },
+  "profileSetup": {
+    "heading": "तुमची प्रोफाइल पूर्ण करा",
+    "subtitle": "तुमचा अनुभव वैयक्तिक करण्यात आम्हाला मदत करा",
+    "locationSection": "स्थानाचे तपशील",
+    "roleSection": "अतिरिक्त माहिती",
+    "languageSection": "भाषा प्राधान्य",
+    "village": "गाव/शहर",
+    "villagePlaceholder": "तुमचे गाव किंवा शहर प्रविष्ट करा",
+    "district": "जिल्हा",
+    "districtPlaceholder": "तुमचा जिल्हा प्रविष्ट करा",
+    "state": "राज्य",
+    "statePlaceholder": "तुमचे राज्य निवडा",
+    "pincode": "पिनकोड",
+    "pincodePlaceholder": "6 अंकी पिनकोड",
+    "autoDetect": "माझे स्थान स्वयं शोधा",
+    "detecting": "शोधत आहे...",
+    "primaryCrops": "प्राथमिक पिके",
+    "cropPlaceholder": "पिकाचे नाव टाइप करा आणि एंटर दाबा",
+    "bankAccount": "बँक खाते क्रमांक",
+    "bankAccountPlaceholder": "खाते क्रमांक प्रविष्ट करा",
+    "ifsc": "आयएफएससी कोड",
+    "ifscPlaceholder": "बँक आयएफएससी कोड",
+    "accountHolder": "खातेधारकाचे नाव",
+    "accountHolderPlaceholder": "बँकेनुसार नाव",
+    "upiId": "यूपीआय आयडी (ऐच्छिक)",
+    "upiIdPlaceholder": "yourname@upi",
+    "businessName": "व्यवसायाचे नाव (ऐच्छिक)",
+    "businessNamePlaceholder": "तुमच्या व्यवसायाचे नाव",
+    "deliveryAddress": "डिलिव्हरी पत्ता",
+    "deliveryAddressPlaceholder": "संपूर्ण डिलिव्हरी पत्ता",
+    "gstNumber": "जीएसटी क्रमांक (ऐच्छिक)",
+    "gstNumberPlaceholder": "जीएसटी नोंदणी क्रमांक",
+    "preferredLanguage": "पसंतीची भाषा",
+    "saveButton": "प्रोफाइल जतन करा",
+    "saving": "जतन करत आहे..."
+  }
+}

@@ -1,1 +1,27 @@
 @import "tailwindcss";
+@keyframes grassSwayBack {
+  0%, 100% { transform: translateX(0) skewX(0deg); }
+  50% { transform: translateX(-15px) skewX(-2deg); }
+}
+
+@keyframes grassSwayMid {
+  0%, 100% { transform: translateX(0) skewX(0deg); }
+  50% { transform: translateX(20px) skewX(3deg); }
+}
+
+@keyframes grassSwayFront {
+  0%, 100% { transform: translateX(0) skewX(0deg); }
+  50% { transform: translateX(-10px) skewX(-1.5deg); }
+}
+
+.animate-grass-back {
+  animation: grassSwayBack 7s ease-in-out infinite;
+}
+
+.animate-grass-mid {
+  animation: grassSwayMid 5s ease-in-out infinite;
+}
+
+.animate-grass-front {
+  animation: grassSwayFront 3.5s ease-in-out infinite;
+}
