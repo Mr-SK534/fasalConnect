@@ -8,6 +8,7 @@ namespace FarmerMarketplace.Api.DTOs
     // PUT /orders/{id}/status
     public class OrderStatusUpdateDto
     {
+    
         [Required]
         public OrderStatus Status { get; set; }
     }

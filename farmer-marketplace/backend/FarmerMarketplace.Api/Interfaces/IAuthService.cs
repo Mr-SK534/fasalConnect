@@ -9,5 +9,7 @@ namespace FarmerMarketplace.Api.Interfaces
         Task<AuthResponseDto> RegisterAsync(RegisterDto dto);
         Task<AuthResponseDto> LoginAsync(LoginDto dto);
         Task<UserResponseDto> GetMeAsync(Guid userId);
+        Task LogoutAsync(string jti, DateTime expiresAt);
+        Task<AuthResponseDto> RefreshAsync(Guid userId);
     }
 }

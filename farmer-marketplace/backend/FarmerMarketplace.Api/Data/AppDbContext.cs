@@ -16,6 +16,10 @@ namespace FarmerMarketplace.Api.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+               modelBuilder.Entity<User>()
+                .Ignore(u => u.Village);
+               
+
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Fpo)
                 .WithMany()
@@ -90,7 +94,8 @@ namespace FarmerMarketplace.Api.Data
 
         public DbSet<FarmerMarketplace.Api.Models.Route> Routes { get; set; }
         public DbSet<FarmerMarketplace.Api.Models.RouteStop> RouteStops { get; set; }
-
+        
+        
 
 
     }

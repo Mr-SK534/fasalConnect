@@ -58,6 +58,9 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFpoService, FpoService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IRouteService,RouteService>();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
 // TODO: register IOrderService, IForecastService,
 // IRouteService, IPaymentService, IWhatsAppService here as they're built
 
