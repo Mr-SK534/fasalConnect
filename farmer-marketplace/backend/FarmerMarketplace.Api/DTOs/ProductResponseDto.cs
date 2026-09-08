@@ -14,6 +14,11 @@ namespace FarmerMarketplace.Api.DTOs
         public decimal BuyerPrice { get; set; }
         public decimal Quantity { get; set; }
         public ProductUnit Unit { get; set; }
+        public ProductUnit OriginalUnit { get; set; }
+        public decimal OriginalPrice { get; set; }
+        public decimal OriginalQuantity { get; set; }
+        public decimal PricePerKg { get; set; }
+        public decimal QuantityInKg { get; set; }
         public ProductCategory Category { get; set; }
         public DateTime HarvestDate { get; set; }
         public string? Description { get; set; }

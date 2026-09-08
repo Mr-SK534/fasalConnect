@@ -55,10 +55,28 @@ export default function ListProduct() {
   const submit = async (event) => {
     event.preventDefault();
     setError("");
+
+    if (!form.cropName?.trim()) {
+      setError("Please enter a crop name.");
+      return;
+    }
+    if (!form.price || Number(form.price) <= 0) {
+      setError("Please enter a valid price greater than 0.");
+      return;
+    }
+    if (!form.quantity || Number(form.quantity) <= 0) {
+      setError("Please enter a valid quantity greater than 0.");
+      return;
+    }
+    if (!form.harvestDate) {
+      setError("Please select a harvest date.");
+      return;
+    }
     if (!imageFile) {
       setError("Add a crop picture before publishing the product.");
       return;
     }
+
     setSaving(true);
     try {
       const imageData = new FormData();
@@ -76,15 +94,23 @@ export default function ListProduct() {
       navigate("/farmer/dashboard");
     } catch (err) {
       const responseData = err.response?.data;
-      const validationMessage = responseData?.errors
-        ? Object.values(responseData.errors).flat().join(" ")
-        : null;
-      setError(
-        validationMessage ||
-          responseData?.message ||
-          responseData?.title ||
-          "Could not list this product.",
-      );
+      const status = err.response?.status;
+      let msg = "Could not list this product.";
+
+      if (status === 401) {
+        msg = "Your session has expired. Please log in again.";
+      } else if (status === 403) {
+        msg = "Permission denied. Ensure you are logged in as a Farmer or FPO Admin.";
+      } else if (typeof responseData === "string") {
+        msg = responseData;
+      } else if (responseData?.errors) {
+        msg = Object.values(responseData.errors).flat().join(" ");
+      } else if (responseData?.message) {
+        msg = responseData.message;
+      } else if (err.message) {
+        msg = err.message;
+      }
+      setError(msg);
     } finally {
       setSaving(false);
     }

@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { CartContext } from "./cartStore";
+import { toPricePerKg, toKgQuantity } from "../utils/unitConverter";
 
 const CART_STORAGE_KEY = "fasalconnect_cart";
 
@@ -56,6 +57,7 @@ export function CartProvider({ children }) {
         );
       }
 
+      const itemPriceKg = toPricePerKg(product.price, product.unit);
       return [
         ...items,
         {
@@ -64,9 +66,9 @@ export function CartProvider({ children }) {
           farmerId: product.farmerId,
           farmerName: product.farmerName,
           farmerLocation: product.farmerLocation,
-          price: Number(product.price || 0),
+          price: Number(itemPriceKg || 0),
           quantity: Math.min(maxQuantity, requestedQuantity),
-          unit: product.unit,
+          unit: "kg",
           maxQuantity,
           totalAvailableQuantity: Number(
             product.totalAvailableQuantity || maxQuantity,

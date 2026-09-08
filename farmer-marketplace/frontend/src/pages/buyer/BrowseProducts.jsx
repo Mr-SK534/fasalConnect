@@ -4,6 +4,7 @@ import { FiShoppingCart } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import api from "../../services/api";
 import { useCart } from "../../hooks/useCart";
+import { toPricePerKg, toKgQuantity } from "../../utils/unitConverter";
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat("en-IN", {
@@ -243,18 +244,18 @@ export default function BrowseProducts() {
                       <div className="mt-4 space-y-1 text-sm text-slate-600">
                         <p>
                           <strong className="text-green-700">
-                            {formatCurrency(product.price)}
+                            {formatCurrency(toPricePerKg(product.price, product.unit))}
                           </strong>{" "}
-                          / {product.unit}
+                          / kg
                         </p>
                         <p>
-                          {product.quantity} {product.unit} available
+                          {toKgQuantity(product.quantity, product.unit)} kg available
                         </p>
                         <p className="text-xs text-slate-500">
                           Total available across all farmers:{" "}
                           {aggregates[product.cropName.toLowerCase()]
-                            ?.totalAvailableQuantity || product.quantity}{" "}
-                          {product.unit}
+                            ?.totalAvailableQuantity || toKgQuantity(product.quantity, product.unit)}{" "}
+                          kg
                         </p>
                         <p>Harvest: {formatDate(product.harvestDate)}</p>
                       </div>
@@ -294,7 +295,7 @@ export default function BrowseProducts() {
                               ⚠️ Only{" "}
                               {aggregates[product.cropName.toLowerCase()]
                                 ?.totalAvailableQuantity || 0}{" "}
-                              {product.unit} available across all farmers
+                              kg available across all farmers
                             </span>
                           )}
                         </div>

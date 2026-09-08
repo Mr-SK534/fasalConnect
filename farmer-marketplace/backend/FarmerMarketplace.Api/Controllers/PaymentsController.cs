@@ -79,7 +79,7 @@ namespace FarmerMarketplace.Api.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                _logger.LogError(ex, "Razorpay webhook rejected: {Message}", ex.Message);
+                _logger.LogWarning("Razorpay webhook rejected: {Message}", ex.Message);
                 return Ok();
             }
 

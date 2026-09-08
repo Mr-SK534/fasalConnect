@@ -58,7 +58,7 @@ export default function Checkout() {
       );
       if (unavailable) {
         throw new Error(
-          `Stock changed for ${unavailable.cropName}. Only ${aggregates[unavailable.cropName]?.totalAvailableQuantity || 0} ${unavailable.unit} is available.`,
+          `Stock changed for ${unavailable.cropName}. Only ${aggregates[unavailable.cropName]?.totalAvailableQuantity || 0} kg is available.`,
         );
       }
       if (requiresBulk && !isBulkOrder) {

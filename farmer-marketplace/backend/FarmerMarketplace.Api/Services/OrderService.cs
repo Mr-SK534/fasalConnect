@@ -89,8 +89,9 @@ namespace FarmerMarketplace.Api.Services
                 if (product.Quantity <= 0)
                     throw new InvalidOperationException($"Product '{product.CropName}' is out of stock.");
 
+                var farmerPricePerKg = FarmerMarketplace.Api.Helpers.UnitConverter.ToPricePerKg(product.Price, product.Unit);
                 if (string.IsNullOrWhiteSpace(order.CropName)) order.CropName = product.CropName;
-                if (!order.FarmerAskingPricePerKg.HasValue) order.FarmerAskingPricePerKg = product.Price;
+                if (!order.FarmerAskingPricePerKg.HasValue) order.FarmerAskingPricePerKg = farmerPricePerKg;
                 if (!order.FarmerId.HasValue) order.FarmerId = product.FarmerId;
                 if (!order.FpoAdminId.HasValue && product.Farmer?.FpoId.HasValue == true) order.FpoAdminId = product.Farmer.FpoId;
 
@@ -100,13 +101,14 @@ namespace FarmerMarketplace.Api.Services
                     order.PickupLng = product.Farmer.Longitude;
                 }
 
-                var buyerPrice = await _configService.CalculateBuyerPriceAsync(product.Price, product.CropName);
+                var buyerPrice = await _configService.CalculateBuyerPriceAsync(farmerPricePerKg, product.CropName);
 
                 var remaining = itemDto.Quantity;
-                var originalProductQuantity = product.Quantity;
+                var productQtyInKg = FarmerMarketplace.Api.Helpers.UnitConverter.ToKgQuantity(product.Quantity, product.Unit);
+                var originalProductQuantityKg = productQtyInKg;
 
                 // Try to fulfill from the requested farmer's own stock first
-                var fromThisFarmer = Math.Min(remaining, product.Quantity);
+                var fromThisFarmer = Math.Min(remaining, productQtyInKg);
 
                 if (fromThisFarmer > 0)
                 {
@@ -120,7 +122,8 @@ namespace FarmerMarketplace.Api.Services
                         SubTotal = subTotal
                     });
 
-                    product.Quantity -= fromThisFarmer;
+                    var takenInOriginalUnit = FarmerMarketplace.Api.Helpers.UnitConverter.ToOriginalUnitQuantity(fromThisFarmer, product.Unit);
+                    product.Quantity -= takenInOriginalUnit;
                     if (product.Quantity <= 0) product.IsActive = false;
 
                     totalAmount += subTotal;
@@ -132,7 +135,7 @@ namespace FarmerMarketplace.Api.Services
                 {
                     if (!dto.IsBulkOrder)
                         throw new InvalidOperationException(
-                            $"Insufficient stock. This farmer has {product.Quantity + fromThisFarmer} {product.Unit}. Enable bulk order to source from multiple farmers.");
+                            $"Insufficient stock. This farmer has {originalProductQuantityKg} Kg available. Enable bulk order to source from multiple farmers.");
 
                     var otherSuppliers = await _context.Products
                         .Include(p => p.Farmer)
@@ -140,17 +143,22 @@ namespace FarmerMarketplace.Api.Services
                                     && p.Id != product.Id
                                     && p.FarmerId != product.FarmerId
                                     && p.CropName.ToLower() == product.CropName.ToLower())
-                        .OrderByDescending(p => p.Quantity)
                         .ToListAsync();
 
-                    foreach (var supplier in otherSuppliers)
+                    var orderedSuppliers = otherSuppliers
+                        .OrderByDescending(p => FarmerMarketplace.Api.Helpers.UnitConverter.ToKgQuantity(p.Quantity, p.Unit))
+                        .ToList();
+
+                    foreach (var supplier in orderedSuppliers)
                     {
                         if (remaining <= 0) break;
 
-                        var take = Math.Min(remaining, supplier.Quantity);
+                        var supplierQtyInKg = FarmerMarketplace.Api.Helpers.UnitConverter.ToKgQuantity(supplier.Quantity, supplier.Unit);
+                        var take = Math.Min(remaining, supplierQtyInKg);
                         if (take <= 0) continue;
 
-                        var supplierBuyerPrice = await _configService.CalculateBuyerPriceAsync(supplier.Price, supplier.CropName);
+                        var supplierFarmerPricePerKg = FarmerMarketplace.Api.Helpers.UnitConverter.ToPricePerKg(supplier.Price, supplier.Unit);
+                        var supplierBuyerPrice = await _configService.CalculateBuyerPriceAsync(supplierFarmerPricePerKg, supplier.CropName);
                         var subTotal = take * supplierBuyerPrice;
 
                         order.Items.Add(new OrderItem
@@ -162,7 +170,8 @@ namespace FarmerMarketplace.Api.Services
                             SubTotal = subTotal
                         });
 
-                        supplier.Quantity -= take;
+                        var supplierTakenInOriginalUnit = FarmerMarketplace.Api.Helpers.UnitConverter.ToOriginalUnitQuantity(take, supplier.Unit);
+                        supplier.Quantity -= supplierTakenInOriginalUnit;
                         if (supplier.Quantity <= 0) supplier.IsActive = false;
 
                         totalAmount += subTotal;
@@ -171,10 +180,10 @@ namespace FarmerMarketplace.Api.Services
 
                     if (remaining > 0)
                     {
-                        var totalAvailable = originalProductQuantity + otherSuppliers.Sum(supplier => supplier.Quantity);
-                        var farmerCount = otherSuppliers.Select(supplier => supplier.FarmerId).Append(product.FarmerId).Distinct().Count();
+                        var totalAvailableKg = originalProductQuantityKg + orderedSuppliers.Sum(supplier => FarmerMarketplace.Api.Helpers.UnitConverter.ToKgQuantity(supplier.Quantity, supplier.Unit));
+                        var farmerCount = orderedSuppliers.Select(supplier => supplier.FarmerId).Append(product.FarmerId).Distinct().Count();
                         throw new InvalidOperationException(
-                            $"Insufficient stock. Total available: {totalAvailable} {product.Unit} across {farmerCount} farmers");
+                            $"Insufficient stock. Total available: {totalAvailableKg} Kg across {farmerCount} farmers");
                     }
                 }
             }
@@ -201,6 +210,30 @@ namespace FarmerMarketplace.Api.Services
                 HeldDate = DateTime.UtcNow
             };
             _context.EscrowTransactions.Add(escrow);
+
+            // Sync order items to SalesHistories for real-time AI Demand Forecasting
+            foreach (var orderItem in order.Items)
+            {
+                var prod = await _context.Products
+                    .Include(p => p.Farmer)
+                    .FirstOrDefaultAsync(p => p.Id == orderItem.ProductId);
+
+                string crop = prod?.CropName ?? order.CropName ?? "Produce";
+                string category = prod?.Category.ToString() ?? "Vegetables";
+                string region = prod?.Farmer?.District ?? prod?.Farmer?.Location ?? order.DeliveryAddress ?? "Nashik";
+
+                _context.SalesHistories.Add(new SalesHistory
+                {
+                    Id = Guid.NewGuid(),
+                    CropName = crop,
+                    Category = category,
+                    Region = region,
+                    Date = DateTime.UtcNow.Date,
+                    QuantitySoldKg = (float)orderItem.Quantity,
+                    AveragePricePerKg = (float)orderItem.PriceAtOrderTime,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
 
             await _context.SaveChangesAsync();
 
@@ -262,9 +295,14 @@ namespace FarmerMarketplace.Api.Services
 
             var isBuyer = order.BuyerId == requestingUserId;
             var isInvolvedFarmer = order.Items.Any(i => i.FarmerId == requestingUserId);
-            var isPlatformAdmin = role == nameof(UserRole.PlatformAdmin) || role == nameof(UserRole.SuperAdmin);
+            bool isAdminRole = !string.IsNullOrEmpty(role) && (
+                role.Equals("PlatformAdmin", StringComparison.OrdinalIgnoreCase) ||
+                role.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase) ||
+                role.Equals("Admin", StringComparison.OrdinalIgnoreCase) ||
+                role.Equals("Manager", StringComparison.OrdinalIgnoreCase)
+            );
 
-            if (!isBuyer && !isInvolvedFarmer && !isPlatformAdmin)
+            if (!isBuyer && !isInvolvedFarmer && !isAdminRole)
                 throw new UnauthorizedAccessException("You do not have access to this order.");
 
             return MapToResponseDto(order, farmerScopedTo: null);
@@ -272,10 +310,17 @@ namespace FarmerMarketplace.Api.Services
 
         public async Task<List<OrderResponseDto>> GetByBuyerIdAsync(Guid buyerId, Guid requestingUserId, string? role)
         {
-            var isPlatformAdmin = role == nameof(UserRole.PlatformAdmin) || role == nameof(UserRole.SuperAdmin);
+            bool isAdminRole = !string.IsNullOrEmpty(role) && (
+                role.Equals("PlatformAdmin", StringComparison.OrdinalIgnoreCase) ||
+                role.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase) ||
+                role.Equals("Admin", StringComparison.OrdinalIgnoreCase) ||
+                role.Equals("Manager", StringComparison.OrdinalIgnoreCase)
+            );
 
-            if (buyerId != requestingUserId && !isPlatformAdmin)
-                throw new UnauthorizedAccessException("You can only view your own orders.");
+            if (buyerId != requestingUserId && !isAdminRole)
+            {
+                buyerId = requestingUserId;
+            }
 
             var orders = await _context.Orders
                 .Include(o => o.Buyer)
@@ -290,12 +335,22 @@ namespace FarmerMarketplace.Api.Services
 
         public async Task<List<OrderResponseDto>> GetByFarmerIdAsync(Guid farmerId, Guid requestingUserId, string? role)
         {
-            var isPlatformAdmin = role == nameof(UserRole.PlatformAdmin) || role == nameof(UserRole.SuperAdmin);
-            var isFpoAdmin = role == nameof(UserRole.FpoAdmin)
-                && await _context.Users.AnyAsync(user => user.Id == farmerId && user.FpoId == requestingUserId && user.Role == UserRole.Farmer);
+            bool isAdminRole = !string.IsNullOrEmpty(role) && (
+                role.Equals("PlatformAdmin", StringComparison.OrdinalIgnoreCase) ||
+                role.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase) ||
+                role.Equals("Admin", StringComparison.OrdinalIgnoreCase) ||
+                role.Equals("Manager", StringComparison.OrdinalIgnoreCase)
+            );
+            bool isFpoAdmin = !string.IsNullOrEmpty(role)
+                && role.Equals("FpoAdmin", StringComparison.OrdinalIgnoreCase)
+                && await _context.Users.AnyAsync(user => user.Id == farmerId && user.FpoId == requestingUserId);
 
-            if (farmerId != requestingUserId && !isPlatformAdmin && !isFpoAdmin)
-                throw new UnauthorizedAccessException("You can only view your own orders.");
+            // If requested farmerId differs from logged-in userId and user is not an admin/FPO admin,
+            // fall back to requestingUserId so logged-in farmer always views their own orders safely.
+            if (farmerId != requestingUserId && !isAdminRole && !isFpoAdmin)
+            {
+                farmerId = requestingUserId;
+            }
 
             var orderIds = await _context.OrderItems
                 .Where(i => i.FarmerId == farmerId)
@@ -323,17 +378,22 @@ namespace FarmerMarketplace.Api.Services
                 throw new KeyNotFoundException("Order not found.");
 
             var isInvolvedFarmer = order.Items.Any(i => i.FarmerId == requestingUserId);
-            var isPlatformAdmin = role == nameof(UserRole.PlatformAdmin) || role == nameof(UserRole.SuperAdmin);
+            bool isAdminRole = !string.IsNullOrEmpty(role) && (
+                role.Equals("PlatformAdmin", StringComparison.OrdinalIgnoreCase) ||
+                role.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase) ||
+                role.Equals("Admin", StringComparison.OrdinalIgnoreCase) ||
+                role.Equals("Manager", StringComparison.OrdinalIgnoreCase)
+            );
             var isFpoAdmin = false;
 
-            if (role == nameof(UserRole.FpoAdmin))
+            if (!string.IsNullOrEmpty(role) && role.Equals("FpoAdmin", StringComparison.OrdinalIgnoreCase))
             {
                 var farmerIds = order.Items.Select(item => item.FarmerId).Distinct().ToList();
                 isFpoAdmin = await _context.Users.AnyAsync(user => user.Id == requestingUserId && user.Role == UserRole.FpoAdmin)
                     && await _context.Users.AnyAsync(user => farmerIds.Contains(user.Id) && user.FpoId == requestingUserId);
             }
 
-            if (!isInvolvedFarmer && !isPlatformAdmin && !isFpoAdmin)
+            if (!isInvolvedFarmer && !isAdminRole && !isFpoAdmin)
                 throw new UnauthorizedAccessException("Only a farmer fulfilling this order or an admin can update its status.");
 
             var validTransition = (order.Status, dto.Status) switch

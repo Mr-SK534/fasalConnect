@@ -99,20 +99,39 @@ export default function AdminDashboard() {
       })),
     [orders],
   );
+
   const revenueData = useMemo(() => {
-    const months = {};
-    orders
-      .filter((order) => ["Confirmed", "Delivered"].includes(order.status))
-      .forEach((order) => {
+    const monthBuckets = {};
+    const now = new Date();
+
+    // Create 6-month rolling timeline leading up to current month
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = d.toLocaleDateString("en-IN", {
+        month: "short",
+        year: "2-digit",
+      });
+      monthBuckets[key] = 0;
+    }
+
+    orders.forEach((order) => {
+      if (
+        ["Confirmed", "InTransit", "Delivered"].includes(order.status) &&
+        order.createdAt
+      ) {
         const key = new Date(order.createdAt).toLocaleDateString("en-IN", {
           month: "short",
           year: "2-digit",
         });
-        months[key] = (months[key] || 0) + Number(order.totalAmount || 0);
-      });
-    return Object.entries(months).map(([month, revenue]) => ({
+        if (key in monthBuckets) {
+          monthBuckets[key] += Number(order.totalAmount || 0);
+        }
+      }
+    });
+
+    return Object.entries(monthBuckets).map(([month, revenue]) => ({
       month,
-      revenue,
+      revenue: Math.round(revenue * 100) / 100,
     }));
   }, [orders]);
 

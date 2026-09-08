@@ -30,7 +30,7 @@ const navigationByRole = {
     {
       section: "SMART",
       items: [
-        { label: "Forecast", to: "/farmer/forecast", icon: FiTrendingUp },
+        { label: "Demand Forecast", to: "/farmer/forecast", icon: FiTrendingUp },
         { label: "Schedule", to: "/farmer/schedule", icon: FiCalendar },
       ],
     },
@@ -49,6 +49,7 @@ const navigationByRole = {
         { label: "Browse Products", to: "/buyer/browse", icon: FiGrid },
         { label: "Cart", to: "/buyer/cart", icon: FiBox },
         { label: "My Orders", to: "/buyer/orders", icon: FiCheckSquare },
+        { label: "Demand Forecast", to: "/buyer/forecast", icon: FiTrendingUp },
       ],
     },
     {
@@ -65,6 +66,7 @@ const navigationByRole = {
         { label: "Orders", to: "/fpo-admin/orders", icon: FiCheckSquare },
         { label: "Linked Farmers", to: "/fpo-admin/farmers", icon: FiUsers },
         { label: "Network Earnings", to: "/fpo-admin/earnings", icon: FiDollarSign },
+        { label: "Demand Forecast", to: "/fpo-admin/forecast", icon: FiTrendingUp },
       ],
     },
     {
@@ -77,6 +79,7 @@ const navigationByRole = {
       section: "SUPER ADMIN",
       items: [
         { label: "Dashboard", to: "/admin/dashboard", icon: FiGrid },
+        { label: "Demand Forecast", to: "/admin/forecast", icon: FiTrendingUp },
         { label: "Platform Config", to: "/admin/config", icon: FiSettings },
         { label: "Revenue", to: "/admin/revenue", icon: FiDollarSign },
         { label: "Users", to: "/admin/users", icon: FiUsers },
@@ -99,6 +102,7 @@ const navigationByRole = {
       section: "PLATFORM",
       items: [
         { label: "Dashboard", to: "/admin/dashboard", icon: FiGrid },
+        { label: "Demand Forecast", to: "/admin/forecast", icon: FiTrendingUp },
         { label: "Platform Revenue", to: "/admin/revenue", icon: FiDollarSign },
         { label: "Users", to: "/admin/users", icon: FiUsers },
         { label: "Orders", to: "/admin/orders", icon: FiCheckSquare },

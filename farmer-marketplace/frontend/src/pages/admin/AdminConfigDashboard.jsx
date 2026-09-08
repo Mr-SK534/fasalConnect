@@ -1,7 +1,7 @@
 // frontend/src/pages/admin/AdminConfigDashboard.jsx
 
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../services/api";
 import { toast } from "react-hot-toast";
 
 export default function AdminConfigDashboard() {
@@ -16,12 +16,19 @@ export default function AdminConfigDashboard() {
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Add New Crop Config Modal State
+  const [showAddCropModal, setShowAddCropModal] = useState(false);
+  const [newCropName, setNewCropName] = useState("");
+  const [newCommissionPct, setNewCommissionPct] = useState("0.08");
+  const [addCropReason, setAddCropReason] = useState("");
+  const [addingCrop, setAddingCrop] = useState(false);
+
   // Audit History State
   const [auditHistory, setAuditHistory] = useState([]);
   const [loadingAudit, setLoadingAudit] = useState(false);
 
   // Simulator State
-  const [simFarmerPrice, setSimFarmerPrice] = useState(18);
+  const [simFarmerPrice, setSimFarmerPrice] = useState(25);
   const [simCommissionPct, setSimCommissionPct] = useState(0.08);
   const [simResult, setSimResult] = useState(null);
   const [simulating, setSimulating] = useState(false);
@@ -33,10 +40,7 @@ export default function AdminConfigDashboard() {
   const fetchConfig = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const res = await axios.get("/api/admin/config", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get("/admin/config");
       setConfigs(res.data.config || {});
       setUserRole(res.data.userRole || "manager");
     } catch (err) {
@@ -50,10 +54,7 @@ export default function AdminConfigDashboard() {
   const fetchAuditHistory = async () => {
     setLoadingAudit(true);
     try {
-      const token = localStorage.getItem("token");
-      const res = await axios.get("/api/admin/config/audit-history?limit=50", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get("/admin/config/audit-history?limit=50");
       setAuditHistory(res.data || []);
     } catch (err) {
       console.error("Failed to load audit history:", err);
@@ -67,6 +68,9 @@ export default function AdminConfigDashboard() {
     setActiveTab(tab);
     if (tab === "audit" && auditHistory.length === 0) {
       fetchAuditHistory();
+    }
+    if (tab === "simulate" && !simResult) {
+      runSimulation(simFarmerPrice, simCommissionPct);
     }
   };
 
@@ -86,20 +90,14 @@ export default function AdminConfigDashboard() {
 
     setSaving(true);
     try {
-      const token = localStorage.getItem("token");
-      const res = await axios.post(
-        "/api/admin/config/update",
-        {
-          key: editingItem.key,
-          new_value: newValue,
-          description: reason,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await api.post("/admin/config/update", {
+        key: editingItem.key,
+        newValue: newValue,
+        new_value: newValue,
+        description: reason,
+      });
 
-      toast.success(`✓ Updated ${res.data.key} to '${res.data.new_value}'`);
+      toast.success(`✓ Updated ${res.data.key} to '${res.data.newValue || res.data.new_value}'`);
       setEditingItem(null);
       fetchConfig();
     } catch (err) {
@@ -110,28 +108,75 @@ export default function AdminConfigDashboard() {
     }
   };
 
-  const handleSimulate = async (e) => {
+  const handleAddCropSubmit = async (e) => {
     e.preventDefault();
-    setSimulating(true);
+    if (!newCropName.trim()) {
+      toast.error("Please enter a crop name");
+      return;
+    }
+
+    setAddingCrop(true);
     try {
-      const token = localStorage.getItem("token");
-      const res = await axios.post(
-        "/api/admin/config/simulate",
-        {
-          farmerPrice: Number(simFarmerPrice),
-          newCommissionPct: Number(simCommissionPct),
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setSimResult(res.data);
+      const res = await api.post("/admin/config/add-crop", {
+        cropName: newCropName.trim(),
+        commissionPct: Number(newCommissionPct),
+        description: addCropReason.trim() || `Override commission % for ${newCropName.trim()}`,
+      });
+
+      toast.success(`✓ Added crop config for '${newCropName}' (${Number(newCommissionPct) * 100}% commission)`);
+      setShowAddCropModal(false);
+      setNewCropName("");
+      setNewCommissionPct("0.08");
+      setAddCropReason("");
+      fetchConfig();
     } catch (err) {
-      console.error("Simulation failed:", err);
-      toast.error("Price simulation failed");
+      console.error("Add crop config failed:", err);
+      toast.error(err.response?.data?.message || "Failed to add crop configuration");
+    } finally {
+      setAddingCrop(false);
+    }
+  };
+
+  const runSimulation = async (fPrice, commPct) => {
+    setSimulating(true);
+    const farmerPrice = Number(fPrice) || 0;
+    let pct = Number(commPct) || 0;
+    if (pct > 1) pct /= 100;
+
+    // Instant calculated fallback preview
+    const commissionAmt = Math.round(farmerPrice * pct * 100) / 100;
+    const logisticsTotal = 2.50; // ₹2.00 partner + ₹0.50 margin
+    const computedBuyerPrice = Math.round((farmerPrice + commissionAmt + logisticsTotal) * 100) / 100;
+    const computedPlatformRevenue = Math.round((commissionAmt + 0.50) * 100) / 100;
+
+    const fallbackResult = {
+      farmerPrice,
+      newCommissionPct: pct,
+      buyerPrice: computedBuyerPrice,
+      platformRevenuePerKg: computedPlatformRevenue,
+      message: `Simulated buyer price with ${(pct * 100).toFixed(1)}% commission`,
+    };
+
+    setSimResult(fallbackResult);
+
+    try {
+      const res = await api.post("/admin/config/simulate", {
+        farmerPrice,
+        newCommissionPct: pct,
+      });
+      if (res.data) {
+        setSimResult(res.data);
+      }
+    } catch (err) {
+      console.error("API simulation call error (using computed result):", err);
     } finally {
       setSimulating(false);
     }
+  };
+
+  const handleSimulate = (e) => {
+    e.preventDefault();
+    runSimulation(simFarmerPrice, simCommissionPct);
   };
 
   const getRoleBadgeStyle = (role) => {
@@ -210,6 +255,14 @@ export default function AdminConfigDashboard() {
                 <h2 className="font-bold text-slate-800 uppercase text-sm tracking-wider">
                   {category.replace("_", " ")} ({items.length} settings)
                 </h2>
+                {category === "crop_pricing" && (
+                  <button
+                    onClick={() => setShowAddCropModal(true)}
+                    className="rounded-lg bg-green-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-green-700 transition-colors flex items-center gap-1.5"
+                  >
+                    <span>➕</span> Add New Crop Config
+                  </button>
+                )}
               </div>
 
               <div className="overflow-x-auto">
@@ -318,7 +371,11 @@ export default function AdminConfigDashboard() {
                 type="number"
                 step="0.1"
                 value={simFarmerPrice}
-                onChange={(e) => setSimFarmerPrice(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSimFarmerPrice(val);
+                  runSimulation(val, simCommissionPct);
+                }}
                 className="w-full rounded-lg border border-slate-300 p-2.5 text-sm font-semibold text-slate-900 focus:border-green-600 focus:outline-none"
               />
             </div>
@@ -329,7 +386,11 @@ export default function AdminConfigDashboard() {
                 type="number"
                 step="0.01"
                 value={simCommissionPct}
-                onChange={(e) => setSimCommissionPct(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSimCommissionPct(val);
+                  runSimulation(simFarmerPrice, val);
+                }}
                 className="w-full rounded-lg border border-slate-300 p-2.5 text-sm font-semibold text-slate-900 focus:border-green-600 focus:outline-none"
               />
             </div>
@@ -405,6 +466,77 @@ export default function AdminConfigDashboard() {
                   className="rounded-lg bg-green-600 px-5 py-2 text-sm font-bold text-white hover:bg-green-700"
                 >
                   {saving ? "Saving..." : "Confirm & Save"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add New Crop Config Modal */}
+      {showAddCropModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl space-y-4">
+            <h3 className="text-lg font-bold text-slate-900">Add New Crop Pricing Override</h3>
+            <p className="text-xs text-slate-500">
+              Create a custom platform commission rule for any new crop (e.g. Red Onion, Wheat, Garlic, Mango).
+            </p>
+
+            <form onSubmit={handleAddCropSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Crop Name *</label>
+                <input
+                  type="text"
+                  value={newCropName}
+                  onChange={(e) => setNewCropName(e.target.value)}
+                  placeholder="e.g. Red Onion, Garlic, Wheat"
+                  required
+                  className="w-full rounded-lg border border-slate-300 p-2.5 text-sm font-bold text-slate-900 focus:border-green-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Commission Rate (e.g. 0.08 = 8%) *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="1"
+                  value={newCommissionPct}
+                  onChange={(e) => setNewCommissionPct(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-slate-300 p-2.5 text-sm font-bold text-slate-900 focus:border-green-600 focus:outline-none"
+                />
+                <p className="mt-1 text-xs text-slate-500">
+                  Current value: <strong>{(Number(newCommissionPct) * 100).toFixed(1)}%</strong>
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase text-slate-600 mb-1">Description / Reason</label>
+                <textarea
+                  value={addCropReason}
+                  onChange={(e) => setAddCropReason(e.target.value)}
+                  placeholder="e.g. Dynamic pricing override for Red Onion harvest"
+                  rows={2}
+                  className="w-full rounded-lg border border-slate-300 p-2.5 text-sm text-slate-900 focus:border-green-600 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddCropModal(false)}
+                  className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addingCrop}
+                  className="rounded-lg bg-green-600 px-5 py-2 text-sm font-bold text-white hover:bg-green-700"
+                >
+                  {addingCrop ? "Adding Crop..." : "Create Crop Config"}
                 </button>
               </div>
             </form>

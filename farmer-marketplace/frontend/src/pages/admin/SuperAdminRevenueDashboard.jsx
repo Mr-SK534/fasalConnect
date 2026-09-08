@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   FiDollarSign,
   FiCreditCard,
@@ -8,19 +8,35 @@ import {
   FiRefreshCw,
   FiArrowUpRight
 } from "react-icons/fi";
-import { getSummary } from "../../services/adminService";
+import {
+  AreaChart,
+  Area,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { getAdminOrders, getSummary } from "../../services/adminService";
+
+const unwrap = (data) =>
+  Array.isArray(data)
+    ? data
+    : data?.items || data?.orders || data?.results || [];
 
 export default function SuperAdminRevenueDashboard() {
   const [summary, setSummary] = useState(null);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const loadData = (showSpinner = false) => {
     if (showSpinner) setLoading(true);
     setError("");
-    getSummary()
-      .then((data) => {
-        setSummary(data);
+    Promise.all([getSummary(), getAdminOrders({ page: 1, pageSize: 1000 })])
+      .then(([summaryData, orderData]) => {
+        setSummary(summaryData);
+        setOrders(unwrap(orderData));
         setLoading(false);
       })
       .catch((err) => {
@@ -28,6 +44,47 @@ export default function SuperAdminRevenueDashboard() {
         setLoading(false);
       });
   };
+
+  const revenueOverTimeData = useMemo(() => {
+    const monthBuckets = {};
+    const now = new Date();
+
+    // Create 6-month rolling timeline leading up to current month
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = d.toLocaleDateString("en-IN", {
+        month: "short",
+        year: "2-digit",
+      });
+      monthBuckets[key] = { grossBuyerVolume: 0, netSuperAdminRevenue: 0 };
+    }
+
+    // Accumulate real order volumes and SuperAdmin commissions
+    orders.forEach((order) => {
+      if (
+        ["Confirmed", "InTransit", "Delivered"].includes(order.status) &&
+        order.createdAt
+      ) {
+        const key = new Date(order.createdAt).toLocaleDateString("en-IN", {
+          month: "short",
+          year: "2-digit",
+        });
+        if (key in monthBuckets) {
+          const totalAmt = Number(order.totalAmount || 0);
+          // SuperAdmin commission ~8% + markup
+          const superAdminRev = totalAmt * 0.08;
+          monthBuckets[key].grossBuyerVolume += totalAmt;
+          monthBuckets[key].netSuperAdminRevenue += superAdminRev;
+        }
+      }
+    });
+
+    return Object.entries(monthBuckets).map(([month, data]) => ({
+      month,
+      grossBuyerVolume: Math.round(data.grossBuyerVolume * 100) / 100,
+      netSuperAdminRevenue: Math.round(data.netSuperAdminRevenue * 100) / 100,
+    }));
+  }, [orders]);
 
   useEffect(() => {
     loadData(true);
@@ -188,6 +245,70 @@ export default function SuperAdminRevenueDashboard() {
           </p>
         </div>
       </div>
+
+      {/* 📈 Dynamic Revenue Over Time Chart */}
+      <section className="rounded-2xl border border-amber-200 bg-white p-6 shadow-sm space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 className="text-lg font-bold text-slate-900">Revenue Over Time</h3>
+            <p className="text-xs text-slate-500">
+              Monthly breakdown of dynamic Gross Buyer Volume vs Net SuperAdmin Revenue.
+            </p>
+          </div>
+          <div className="flex items-center gap-4 text-xs font-semibold">
+            <span className="flex items-center gap-1.5 text-blue-700">
+              <span className="h-3 w-3 rounded-full bg-blue-500 inline-block"></span>
+              Gross Buyer Volume
+            </span>
+            <span className="flex items-center gap-1.5 text-amber-800">
+              <span className="h-3 w-3 rounded-full bg-amber-500 inline-block"></span>
+              SuperAdmin Net Revenue
+            </span>
+          </div>
+        </div>
+
+        <div className="h-64 w-full pt-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={revenueOverTimeData}>
+              <defs>
+                <linearGradient id="colorGross" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
+                </linearGradient>
+                <linearGradient id="colorNet" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#64748b" }} />
+              <YAxis tick={{ fontSize: 12, fill: "#64748b" }} />
+              <Tooltip
+                formatter={(val, name) => [
+                  `₹${Number(val).toLocaleString("en-IN")}`,
+                  name === "grossBuyerVolume" ? "Gross Buyer Volume" : "SuperAdmin Revenue",
+                ]}
+              />
+              <Area
+                type="monotone"
+                dataKey="grossBuyerVolume"
+                stroke="#3b82f6"
+                strokeWidth={2.5}
+                fillOpacity={1}
+                fill="url(#colorGross)"
+              />
+              <Area
+                type="monotone"
+                dataKey="netSuperAdminRevenue"
+                stroke="#d97706"
+                strokeWidth={3}
+                fillOpacity={1}
+                fill="url(#colorNet)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </section>
 
       {/* Per-Order Payout & Markup Breakdown Table */}
       <section className="rounded-2xl border border-[#eadaaf] bg-white p-6 shadow-sm space-y-4">

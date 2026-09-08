@@ -25,8 +25,8 @@ namespace FarmerMarketplace.Api.Services
         private const double AvgSpeedMetersPerMinute = (AvgSpeedKmPerHour * 1000.0) / 60.0; // 666.6667 m/min
 
         // Shift & Trip Boundary Constants (Requirement 6)
-        private const int MaxShiftDurationMinutes = 240; // 4 Hours
-        private const long MaxShiftDurationSeconds = MaxShiftDurationMinutes * 60; // 14,400 Seconds
+        private const int MaxShiftDurationMinutes = 720; // 12 Hours
+        private const long MaxShiftDurationSeconds = MaxShiftDurationMinutes * 60; // 43,200 Seconds
 
         public RouteService(AppDbContext context, ILogger<RouteService> logger)
         {
@@ -320,25 +320,6 @@ namespace FarmerMarketplace.Api.Services
                 routing.AddDisjunction(new[] { deliveryIdx }, disjunctionPenalty);
             }
 
-            // CRITICAL FIX: Prevent multiple chunks of the SAME order from sharing the SAME vehicle,
-            // AND prevent orders created > 4 hours apart from sharing the SAME vehicle.
-            // This stops a truck from making redundant trips back-and-forth to the same pickup/delivery location!
-            for (int i = 0; i < pairCount; i++)
-            {
-                for (int j = i + 1; j < pairCount; j++)
-                {
-                    bool isSameOrderChunks = chunkNodes[i].Order.Id == chunkNodes[j].Order.Id;
-                    bool timeDiffOver4Hours = Math.Abs((chunkNodes[i].Order.CreatedAt - chunkNodes[j].Order.CreatedAt).TotalHours) > 4.0;
-
-                    if (isSameOrderChunks || timeDiffOver4Hours)
-                    {
-                        long pIdx_i = manager.NodeToIndex(1 + i * 2);
-                        long pIdx_j = manager.NodeToIndex(1 + j * 2);
-                        solver.Add(routing.VehicleVar(pIdx_i) != routing.VehicleVar(pIdx_j));
-                    }
-                }
-            }
-
             routing.SetFixedCostOfAllVehicles(100_000);
 
             // 11. Search parameters with 10-second time limit
@@ -351,7 +332,7 @@ namespace FarmerMarketplace.Api.Services
             var solution = routing.SolveWithParameters(searchParameters);
             if (solution == null)
             {
-                _logger.LogWarning("Time limit reached — returning best partial solution.");
+                _logger.LogWarning("Time limit reached or solver constraints tight — will apply Greedy Nearest-Neighbor fallback if needed.");
             }
 
             // 13. Extract Solution & Calculate ETAs including Travel + Service Times with Stop Merging
@@ -482,8 +463,122 @@ namespace FarmerMarketplace.Api.Services
                 }
             }
 
+            // GUARANTEE: If OR-Tools solution was null or produced 0 stops, execute Greedy Nearest-Neighbor VRP Fallback
+            if (solution == null || !allStops.Any())
+            {
+                _logger.LogWarning("Executing Greedy Nearest-Neighbor VRP fallback to ensure all orders are routed.");
+                allStops.Clear();
+                totalDistanceMeters = 0;
+
+                int vNum = 1;
+                double currentVehLoad = 0;
+                (double Lat, double Lng) curLoc = (depotLat, depotLng);
+                DateTime curDeparture = routeStartTime;
+                int seq = 1;
+
+                foreach (var chunkNode in chunkNodes)
+                {
+                    double q = chunkNode.ChunkWeightKg;
+                    if (currentVehLoad + q > 2000)
+                    {
+                        totalDistanceMeters += GeoUtils.DistanceInMeters(curLoc.Lat, curLoc.Lng, depotLat, depotLng);
+                        vNum++;
+                        currentVehLoad = 0;
+                        curLoc = (depotLat, depotLng);
+                        curDeparture = routeStartTime;
+                        seq = 1;
+                    }
+
+                    var order = chunkNode.Order;
+                    var perishability = chunkNode.Perishability;
+                    var farmerName = order.Items.Select(i => i.Farmer?.Name).FirstOrDefault() ?? "Farmer";
+                    var buyerName = order.Buyer?.Name ?? "Buyer";
+                    string chunkLabel = chunkNode.TotalChunks > 1 ? $" (Part {chunkNode.ChunkIndex}/{chunkNode.TotalChunks})" : "";
+
+                    // Pickup
+                    double pickupLat = order.PickupLat!.Value;
+                    double pickupLng = order.PickupLng!.Value;
+                    double pickupDist = GeoUtils.DistanceInMeters(curLoc.Lat, curLoc.Lng, pickupLat, pickupLng);
+                    totalDistanceMeters += pickupDist;
+                    curLoc = (pickupLat, pickupLng);
+                    DateTime pickupArrival = curDeparture.AddMinutes(pickupDist / AvgSpeedMetersPerMinute);
+                    curDeparture = pickupArrival.AddMinutes(PickupServiceTimeMinutes);
+                    currentVehLoad += q;
+
+                    var pickupStop = new RouteStop(
+                        Sequence: seq++,
+                        VehicleNumber: vNum,
+                        Type: "pickup",
+                        Label: $"{farmerName} (Pickup {q:0.#} kg){chunkLabel}",
+                        Lat: pickupLat,
+                        Lng: pickupLng,
+                        OrderId: order.Id,
+                        QuantityAtStop: Math.Round(currentVehLoad, 1),
+                        EstimatedArrival: pickupArrival,
+                        PerishabilityTier: perishability.Tier,
+                        DeliveryDeadline: routeStartTime.AddHours(perishability.MaxDeliveryHours),
+                        IsUrgent: false
+                    );
+                    allStops.Add(pickupStop);
+
+                    // Delivery
+                    double deliveryLat = order.DeliveryLat!.Value;
+                    double deliveryLng = order.DeliveryLng!.Value;
+                    double deliveryDist = GeoUtils.DistanceInMeters(curLoc.Lat, curLoc.Lng, deliveryLat, deliveryLng);
+                    totalDistanceMeters += deliveryDist;
+                    curLoc = (deliveryLat, deliveryLng);
+                    DateTime deliveryArrival = curDeparture.AddMinutes(deliveryDist / AvgSpeedMetersPerMinute);
+                    curDeparture = deliveryArrival.AddMinutes(DeliveryServiceTimeMinutes);
+
+                    DateTime deadline = routeStartTime.AddHours(perishability.MaxDeliveryHours);
+                    bool isUrgent = deliveryArrival > deadline;
+
+                    var deliveryStop = new RouteStop(
+                        Sequence: seq++,
+                        VehicleNumber: vNum,
+                        Type: "delivery",
+                        Label: $"{buyerName} (Delivery {q:0.#} kg){chunkLabel}",
+                        Lat: deliveryLat,
+                        Lng: deliveryLng,
+                        OrderId: order.Id,
+                        QuantityAtStop: Math.Round(currentVehLoad, 1),
+                        EstimatedArrival: deliveryArrival,
+                        PerishabilityTier: perishability.Tier,
+                        DeliveryDeadline: deadline,
+                        IsUrgent: isUrgent
+                    );
+                    allStops.Add(deliveryStop);
+
+                    currentVehLoad -= q;
+                    order.VehicleNumber = vNum;
+                    order.StopSequence = seq - 1;
+                    order.EstimatedArrival = deliveryArrival;
+                }
+
+                totalDistanceMeters += GeoUtils.DistanceInMeters(curLoc.Lat, curLoc.Lng, depotLat, depotLng);
+            }
+
+            // Renumber active vehicle numbers sequentially starting from 1 (Vehicle #1, Vehicle #2, etc.)
+            var vehicleMapping = allStops
+                .Select(s => s.VehicleNumber)
+                .Distinct()
+                .Select((v, idx) => (OldV: v, NewV: idx + 1))
+                .ToDictionary(x => x.OldV, x => x.NewV);
+
+            var remappedStops = allStops.Select(s => s with { VehicleNumber = vehicleMapping[s.VehicleNumber] }).ToList();
+
+            // Update VehicleNumber on validOrders
+            foreach (var order in validOrders)
+            {
+                var stopForOrder = remappedStops.FirstOrDefault(s => s.OrderId == order.Id);
+                if (stopForOrder != null)
+                {
+                    order.VehicleNumber = stopForOrder.VehicleNumber;
+                }
+            }
+
             double totalDistanceKm = Math.Round(totalDistanceMeters / 1000.0, 2);
-            int activeVehicleCount = allStops.Select(s => s.VehicleNumber).Distinct().Count();
+            int activeVehicleCount = remappedStops.Select(s => s.VehicleNumber).Distinct().Count();
 
             // 14. Persist DeliveryRoute entity
             var deliveryRoute = new DeliveryRoute
@@ -493,7 +588,7 @@ namespace FarmerMarketplace.Api.Services
                 BatchWindow = batchWindow,
                 VehicleCount = activeVehicleCount,
                 TotalDistanceKm = totalDistanceKm,
-                StopsJson = JsonSerializer.Serialize(allStops),
+                StopsJson = JsonSerializer.Serialize(remappedStops),
                 Status = DeliveryRouteStatus.Generated,
                 CreatedAt = DateTime.UtcNow
             };

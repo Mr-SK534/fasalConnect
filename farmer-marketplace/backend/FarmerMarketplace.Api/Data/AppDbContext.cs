@@ -223,5 +223,8 @@ namespace FarmerMarketplace.Api.Data
         // --- Dynamic Platform Configuration & RBAC DbSets ---
         public DbSet<PlatformConfig> PlatformConfigs { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
+
+        // --- AI Demand Forecasting DbSet ---
+        public DbSet<SalesHistory> SalesHistories { get; set; }
     }
 }

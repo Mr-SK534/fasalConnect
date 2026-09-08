@@ -158,11 +158,14 @@ export default function Cart() {
                           <p className="text-sm text-slate-500">
                             {item.farmerName || "Local farmer"}
                           </p>
+                          <p className="text-xs font-medium text-green-700">
+                            {formatCurrency(item.price)} / kg
+                          </p>
                         </div>
                         {stockWarnings[item.productId] !== undefined && (
                           <span className="mb-1 block rounded bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-600">
                             Stock reduced - only {stockWarnings[item.productId]}{" "}
-                            available now
+                            kg available now
                           </span>
                         )}
                         {item.requiresBulk && (
@@ -187,7 +190,7 @@ export default function Cart() {
                             <FiMinus size={16} />
                           </button>
                           <span className="min-w-[2rem] text-center font-semibold">
-                            {item.quantity}
+                            {item.quantity} kg
                           </span>
                           <button
                             type="button"
@@ -200,7 +203,7 @@ export default function Cart() {
                             <FiPlus size={16} />
                           </button>
                           <span className="text-xs text-slate-500">
-                            of {item.maxQuantity} {item.unit}
+                            of {item.maxQuantity} kg
                           </span>
                         </div>
                         <button

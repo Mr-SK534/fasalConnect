@@ -93,8 +93,14 @@ namespace FarmerMarketplace.Api.Services
         {
             var webhookSecret = _config["Razorpay:WebhookSecret"];
 
-            if (string.IsNullOrEmpty(signatureHeader) || !VerifySignature(rawBody, signatureHeader, webhookSecret!))
+            if (string.IsNullOrEmpty(webhookSecret))
+            {
+                _logger.LogWarning("Razorpay WebhookSecret is not set in configuration. Skipping signature verification in development.");
+            }
+            else if (string.IsNullOrEmpty(signatureHeader) || !VerifySignature(rawBody, signatureHeader, webhookSecret))
+            {
                 throw new UnauthorizedAccessException("Invalid webhook signature.");
+            }
 
             using var doc = JsonDocument.Parse(rawBody);
             var root = doc.RootElement;

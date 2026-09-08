@@ -70,7 +70,7 @@ namespace FarmerMarketplace.Api.Controllers
 
         // POST /api/products
         [HttpPost]
-        [Authorize(Roles = "Farmer,FpoAdmin")]
+        [Authorize(Roles = "Farmer,FpoAdmin,PlatformAdmin,SuperAdmin,Admin,Manager")]
         public async Task<ActionResult<ProductResponseDto>> Create([FromBody] ProductDto dto)
         {
             var userId = GetUserId();
@@ -82,7 +82,7 @@ namespace FarmerMarketplace.Api.Controllers
 
         // PUT /api/products/{id}
         [HttpPut("{id}")]
-        [Authorize(Roles = "Farmer,FpoAdmin")]
+        [Authorize(Roles = "Farmer,FpoAdmin,PlatformAdmin,SuperAdmin,Admin,Manager")]
         public async Task<ActionResult<ProductResponseDto>> Update(Guid id, [FromBody] ProductDto dto)
         {
             var userId = GetUserId();

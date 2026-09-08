@@ -24,17 +24,14 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Global 401 handling — if the token is invalid/expired, clear it and
-// redirect to login rather than leaving the user in a broken state
+// Global 401 handling — only clear token & redirect if session validation explicitly fails (/auth/me)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     const requestUrl = error.config?.url || "";
-    const isAuthRequest =
-      requestUrl.includes("/auth/login") ||
-      requestUrl.includes("/auth/register");
+    const isSessionCheck = requestUrl.includes("/auth/me") || requestUrl.includes("/auth/refresh");
 
-    if (error.response?.status === 401 && !isAuthRequest) {
+    if (error.response?.status === 401 && isSessionCheck) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       if (window.location.pathname !== "/login") {

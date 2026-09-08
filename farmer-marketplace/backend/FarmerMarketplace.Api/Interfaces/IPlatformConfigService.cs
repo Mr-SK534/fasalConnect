@@ -17,6 +17,8 @@ namespace FarmerMarketplace.Api.Interfaces
 
         Task<PlatformConfigResponseDto> GetAllConfigAsync(string userRole);
         Task<ConfigUpdateResultDto> UpdateConfigAsync(ConfigUpdateRequestDto dto, string userEmail, string userRole);
+        Task<ConfigUpdateResultDto> AddCropConfigAsync(AddCropConfigRequestDto dto, string userEmail, string userRole);
+        Task EnsureCropConfigExistsAsync(string cropName);
         Task<List<TransactionLedger>> GetAuditHistoryAsync(int limit);
         Task<SimulatePriceChangeResultDto> SimulatePriceChangeAsync(SimulatePriceChangeRequestDto dto);
     }

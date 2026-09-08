@@ -67,6 +67,33 @@ namespace FarmerMarketplace.Api.Controllers
             }
         }
 
+        // POST /api/admin/config/add-crop
+        [HttpPost("add-crop")]
+        public async Task<ActionResult<ConfigUpdateResultDto>> AddCropConfig([FromBody] AddCropConfigRequestDto dto)
+        {
+            var userEmail = GetUserEmail();
+            var userRole = GetUserRole();
+
+            try
+            {
+                var result = await _configService.AddCropConfigAsync(dto, userEmail, userRole);
+                return Ok(result);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { statusCode = 403, message = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { statusCode = 400, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to add crop config: {Message}", ex.Message);
+                return StatusCode(500, new { statusCode = 500, message = ex.Message });
+            }
+        }
+
         // GET /api/admin/config/audit-history
         [HttpGet("audit-history")]
         public async Task<ActionResult<List<TransactionLedger>>> GetAuditHistory([FromQuery] int limit = 50)

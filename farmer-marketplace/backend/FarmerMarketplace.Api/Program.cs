@@ -65,7 +65,7 @@ builder.Services.AddScoped<IRouteService, RouteService>();
 builder.Services.AddScoped<RouteService>();
 builder.Services.AddSingleton<RouteBatchingService>();
 builder.Services.AddHostedService(provider => provider.GetRequiredService<RouteBatchingService>());
-// TODO: register IForecastService, IWhatsAppService here as they're built
+builder.Services.AddScoped<IForecastService, ForecastService>();
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -121,6 +121,28 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Ensure database tables exist on startup
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.EnsureCreated();
+
+    // Ensure SalesHistories table exists in PostgreSQL
+    db.Database.ExecuteSqlRaw(@"
+        CREATE TABLE IF NOT EXISTS ""SalesHistories"" (
+            ""Id"" uuid NOT NULL PRIMARY KEY,
+            ""CropName"" character varying(100) NOT NULL,
+            ""Category"" character varying(50) NOT NULL DEFAULT '',
+            ""Region"" character varying(100) NOT NULL DEFAULT '',
+            ""FarmerId"" uuid NULL,
+            ""Date"" timestamp with time zone NOT NULL,
+            ""QuantitySoldKg"" real NOT NULL,
+            ""AveragePricePerKg"" real NOT NULL,
+            ""CreatedAt"" timestamp with time zone NOT NULL
+        );
+    ");
+}
 
 if (app.Environment.IsDevelopment())
 {

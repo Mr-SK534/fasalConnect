@@ -67,34 +67,39 @@ namespace FarmerMarketplace.Api.Services
             var first = products.FirstOrDefault();
             if (first == null)
             {
-                return new ProductAggregateResponseDto { CropName = cropName };
+                return new ProductAggregateResponseDto { CropName = cropName, Unit = "Kg" };
             }
 
-            var buyerPrices = new List<decimal>();
+            var buyerPricesPerKg = new List<decimal>();
             var farmerDtos = new List<ProductAggregateFarmerDto>();
 
             foreach (var product in products)
             {
-                var buyerPrice = await _configService.CalculateBuyerPriceAsync(product.Price, product.CropName);
-                buyerPrices.Add(buyerPrice);
+                var farmerPricePerKg = FarmerMarketplace.Api.Helpers.UnitConverter.ToPricePerKg(product.Price, product.Unit);
+                var buyerPricePerKg = await _configService.CalculateBuyerPriceAsync(farmerPricePerKg, product.CropName);
+                var availableQtyKg = FarmerMarketplace.Api.Helpers.UnitConverter.ToKgQuantity(product.Quantity, product.Unit);
+
+                buyerPricesPerKg.Add(buyerPricePerKg);
                 farmerDtos.Add(new ProductAggregateFarmerDto
                 {
                     FarmerId = product.FarmerId,
                     FarmerName = product.Farmer?.Name ?? string.Empty,
                     FarmerLocation = product.Farmer?.Address ?? product.Region,
-                    AvailableQuantity = product.Quantity,
-                    Price = buyerPrice
+                    AvailableQuantity = availableQtyKg,
+                    Price = buyerPricePerKg
                 });
             }
+
+            var totalQtyKg = products.Sum(product => FarmerMarketplace.Api.Helpers.UnitConverter.ToKgQuantity(product.Quantity, product.Unit));
 
             return new ProductAggregateResponseDto
             {
                 CropName = cropName,
-                TotalAvailableQuantity = products.Sum(product => product.Quantity),
-                Unit = first.Unit.ToString(),
-                AveragePrice = buyerPrices.Any() ? Math.Round(buyerPrices.Average(), 2) : 0m,
-                MinPrice = buyerPrices.Any() ? buyerPrices.Min() : 0m,
-                MaxPrice = buyerPrices.Any() ? buyerPrices.Max() : 0m,
+                TotalAvailableQuantity = totalQtyKg,
+                Unit = "Kg",
+                AveragePrice = buyerPricesPerKg.Any() ? Math.Round(buyerPricesPerKg.Average(), 2) : 0m,
+                MinPrice = buyerPricesPerKg.Any() ? buyerPricesPerKg.Min() : 0m,
+                MaxPrice = buyerPricesPerKg.Any() ? buyerPricesPerKg.Max() : 0m,
                 FarmerCount = products.Select(product => product.FarmerId).Distinct().Count(),
                 Farmers = farmerDtos
             };
@@ -162,6 +167,9 @@ namespace FarmerMarketplace.Api.Services
 
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
+
+            // Auto-register crop in PlatformConfig with default 0.08 commission if not already present
+            await _configService.EnsureCropConfigExistsAsync(dto.CropName);
 
             // reload with Farmer included so response has FarmerName/FarmerLocation populated
             var created = await _context.Products
@@ -233,18 +241,28 @@ namespace FarmerMarketplace.Api.Services
 
         private async Task<ProductResponseDto> MapToResponseDtoAsync(Product product, bool isBuyerContext = true)
         {
-            var farmerPrice = product.Price;
-            var buyerPrice = await _configService.CalculateBuyerPriceAsync(farmerPrice, product.CropName);
+            var farmerPricePerKg = FarmerMarketplace.Api.Helpers.UnitConverter.ToPricePerKg(product.Price, product.Unit);
+            var buyerPricePerKg = await _configService.CalculateBuyerPriceAsync(farmerPricePerKg, product.CropName);
+
+            var farmerPriceOriginal = product.Price;
+            var buyerPriceOriginal = await _configService.CalculateBuyerPriceAsync(farmerPriceOriginal, product.CropName);
+
+            var quantityInKg = FarmerMarketplace.Api.Helpers.UnitConverter.ToKgQuantity(product.Quantity, product.Unit);
 
             return new ProductResponseDto
             {
                 Id = product.Id,
                 CropName = product.CropName,
-                Price = isBuyerContext ? buyerPrice : farmerPrice,
-                FarmerPrice = farmerPrice,
-                BuyerPrice = buyerPrice,
-                Quantity = product.Quantity,
-                Unit = product.Unit,
+                Price = isBuyerContext ? buyerPricePerKg : farmerPriceOriginal,
+                FarmerPrice = isBuyerContext ? farmerPricePerKg : farmerPriceOriginal,
+                BuyerPrice = isBuyerContext ? buyerPricePerKg : buyerPriceOriginal,
+                Quantity = isBuyerContext ? quantityInKg : product.Quantity,
+                Unit = isBuyerContext ? ProductUnit.Kg : product.Unit,
+                OriginalUnit = product.Unit,
+                OriginalPrice = product.Price,
+                OriginalQuantity = product.Quantity,
+                PricePerKg = buyerPricePerKg,
+                QuantityInKg = quantityInKg,
                 Category = product.Category,
                 HarvestDate = product.HarvestDate,
                 Description = product.Description,

@@ -167,6 +167,45 @@ namespace FarmerMarketplace.Api.Services
             using var scope = _scopeFactory.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
+            // Auto-sync all listed crops from Products into PlatformConfigs (category: crop_pricing) with default 0.08 (8%) commission
+            var listedCrops = await context.Products
+                .AsNoTracking()
+                .Select(p => p.CropName)
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Distinct()
+                .ToListAsync();
+
+            bool addedAny = false;
+            foreach (var crop in listedCrops)
+            {
+                string cleanCrop = crop.Trim().ToLower().Replace(" ", "_");
+                string key = $"{cleanCrop}_commission_pct";
+                if (!await context.PlatformConfigs.AnyAsync(c => c.Key == key))
+                {
+                    context.PlatformConfigs.Add(new PlatformConfig
+                    {
+                        Category = "crop_pricing",
+                        Key = key,
+                        Value = "0.08",
+                        ValueType = ConfigValueType.Percent,
+                        MinValue = 0m,
+                        MaxValue = 1m,
+                        RequiresRole = "admin",
+                        Description = $"Auto-registered crop pricing commission % for {crop.Trim()}",
+                        IsActive = true,
+                        UpdatedBy = "system",
+                        UpdatedAt = DateTime.UtcNow
+                    });
+                    addedAny = true;
+                }
+            }
+
+            if (addedAny)
+            {
+                await context.SaveChangesAsync();
+                await ReloadAsync();
+            }
+
             var configs = await context.PlatformConfigs
                 .AsNoTracking()
                 .Where(c => c.IsActive)
@@ -206,6 +245,40 @@ namespace FarmerMarketplace.Api.Services
                 UserRole = userRole,
                 Config = grouped
             };
+        }
+
+        public async Task EnsureCropConfigExistsAsync(string cropName)
+        {
+            if (string.IsNullOrWhiteSpace(cropName)) return;
+
+            string cleanCrop = cropName.Trim().ToLower().Replace(" ", "_");
+            string key = $"{cleanCrop}_commission_pct";
+
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            var existing = await context.PlatformConfigs.AnyAsync(c => c.Key == key);
+            if (!existing)
+            {
+                var newConfig = new PlatformConfig
+                {
+                    Category = "crop_pricing",
+                    Key = key,
+                    Value = "0.08",
+                    ValueType = ConfigValueType.Percent,
+                    MinValue = 0m,
+                    MaxValue = 1m,
+                    RequiresRole = "admin",
+                    Description = $"Auto-registered crop pricing commission % for {cropName.Trim()}",
+                    IsActive = true,
+                    UpdatedBy = "system",
+                    UpdatedAt = DateTime.UtcNow
+                };
+                context.PlatformConfigs.Add(newConfig);
+                await context.SaveChangesAsync();
+                await ReloadAsync();
+                _logger.LogInformation("Auto-registered new crop config key '{Key}' with default 0.08 commission.", key);
+            }
         }
 
         public async Task<ConfigUpdateResultDto> UpdateConfigAsync(ConfigUpdateRequestDto dto, string userEmail, string userRole)
@@ -290,6 +363,85 @@ namespace FarmerMarketplace.Api.Services
             };
         }
 
+        public async Task<ConfigUpdateResultDto> AddCropConfigAsync(AddCropConfigRequestDto dto, string userEmail, string userRole)
+        {
+            if (string.IsNullOrWhiteSpace(dto.CropName))
+            {
+                throw new ArgumentException("Crop name is required.");
+            }
+
+            int callerLevel = RoleHierarchy.TryGetValue(userRole, out var lvl) ? lvl : 0;
+            if (callerLevel < 3)
+            {
+                throw new UnauthorizedAccessException($"Adding new crop config requires superadmin role. Your role: {userRole}");
+            }
+
+            string cleanCrop = dto.CropName.Trim().ToLower().Replace(" ", "_");
+            string key = $"{cleanCrop}_commission_pct";
+
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            var existing = await context.PlatformConfigs.FirstOrDefaultAsync(c => c.Key == key);
+            string oldValue = "0";
+
+            if (existing != null)
+            {
+                oldValue = existing.Value;
+                existing.Value = dto.CommissionPct.ToString(CultureInfo.InvariantCulture);
+                existing.UpdatedBy = userEmail;
+                existing.UpdatedAt = DateTime.UtcNow;
+                existing.IsActive = true;
+            }
+            else
+            {
+                var newConfig = new PlatformConfig
+                {
+                    Category = "crop_pricing",
+                    Key = key,
+                    Value = dto.CommissionPct.ToString(CultureInfo.InvariantCulture),
+                    ValueType = ConfigValueType.Percent,
+                    MinValue = 0m,
+                    MaxValue = 1m,
+                    RequiresRole = "superadmin",
+                    Description = !string.IsNullOrWhiteSpace(dto.Description)
+                        ? dto.Description
+                        : $"Override commission % for {dto.CropName.Trim()}",
+                    IsActive = true,
+                    UpdatedBy = userEmail,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                context.PlatformConfigs.Add(newConfig);
+            }
+
+            var ledger = new TransactionLedger
+            {
+                TransactionType = LedgerTransactionType.ConfigChange,
+                FromAccount = $"user:{userEmail}",
+                ToAccount = "platform_config",
+                AmountRs = 0m,
+                Status = LedgerStatus.Completed,
+                Notes = $"[{userRole.ToUpper()}] Added/Updated crop config key '{key}' with commission {dto.CommissionPct * 100}%. Reason: {dto.Description}",
+                CreatedBy = userEmail,
+                Timestamp = DateTime.UtcNow
+            };
+            context.TransactionLedgers.Add(ledger);
+
+            await context.SaveChangesAsync();
+            await ReloadAsync();
+
+            return new ConfigUpdateResultDto
+            {
+                Status = "added",
+                Key = key,
+                OldValue = oldValue,
+                NewValue = dto.CommissionPct.ToString(CultureInfo.InvariantCulture),
+                ChangedBy = userEmail,
+                ChangedByRole = userRole,
+                Timestamp = DateTime.UtcNow
+            };
+        }
+
         public async Task<List<TransactionLedger>> GetAuditHistoryAsync(int limit)
         {
             using var scope = _scopeFactory.CreateScope();
@@ -305,21 +457,27 @@ namespace FarmerMarketplace.Api.Services
 
         public async Task<SimulatePriceChangeResultDto> SimulatePriceChangeAsync(SimulatePriceChangeRequestDto dto)
         {
+            decimal commissionPct = dto.NewCommissionPct;
+            if (commissionPct > 1.0m)
+            {
+                commissionPct /= 100.0m;
+            }
+
             decimal logisticsPartner = await GetDecimalAsync("logistics_partner_payout_per_kg", 2.0m);
             decimal logisticsMargin = await GetDecimalAsync("logistics_platform_margin_per_kg", 0.5m);
             decimal logisticsTotal = logisticsPartner + logisticsMargin;
 
-            decimal commissionPerKg = dto.FarmerPrice * dto.NewCommissionPct;
+            decimal commissionPerKg = Math.Round(dto.FarmerPrice * commissionPct, 2);
             decimal buyerPrice = Math.Round(dto.FarmerPrice + commissionPerKg + logisticsTotal, 2);
             decimal platformRevenue = Math.Round(commissionPerKg + logisticsMargin, 2);
 
             return new SimulatePriceChangeResultDto
             {
                 FarmerPrice = dto.FarmerPrice,
-                NewCommissionPct = dto.NewCommissionPct,
+                NewCommissionPct = commissionPct,
                 BuyerPrice = buyerPrice,
                 PlatformRevenuePerKg = platformRevenue,
-                Message = $"Simulated buyer price with {dto.NewCommissionPct * 100}% commission"
+                Message = $"Simulated buyer price with {commissionPct * 100}% commission"
             };
         }
     }
