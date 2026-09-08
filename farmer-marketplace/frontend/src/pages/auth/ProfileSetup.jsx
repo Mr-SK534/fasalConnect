@@ -83,6 +83,12 @@ export default function ProfileSetup() {
 
   const isFarmer =
     user?.role === ROLES.FARMER || user?.role === ROLES.FPO_ADMIN;
+  const isAdminLike =
+    user?.role === ROLES.SUPER_ADMIN ||
+    user?.role === ROLES.PLATFORM_ADMIN ||
+    user?.role === ROLES.ADMIN ||
+    user?.role === ROLES.MANAGER;
+  const showBankSection = isFarmer || isAdminLike;
   const isBuyer = user?.role === ROLES.BUYER;
 
   // Auto-detect location
@@ -188,12 +194,12 @@ export default function ProfileSetup() {
       latitude,
       longitude,
       preferredLanguage,
-      // Farmer/FPO fields
+      // Farmer / FPO / Admin Bank fields
       primaryCrops: isFarmer ? selectedCrops.join(",") : null,
-      bankAccountNumber: isFarmer ? bankAccount : null,
-      bankIfsc: isFarmer ? ifsc.toUpperCase() : null,
-      accountHolderName: isFarmer ? accountHolder : null,
-      upiId: isFarmer ? upiId : null,
+      bankAccountNumber: showBankSection ? bankAccount : null,
+      bankIfsc: showBankSection ? ifsc.toUpperCase() : null,
+      accountHolderName: showBankSection ? accountHolder : null,
+      upiId: showBankSection ? upiId : null,
       // Buyer fields
       businessName: isBuyer ? businessName : null,
       deliveryAddress: isBuyer ? deliveryAddress : null,
@@ -354,47 +360,49 @@ export default function ProfileSetup() {
             </div>
           </div>
 
-          {/* ── Section B: Farmer / FPO ── */}
-          {isFarmer && (
+          {/* ── Section B: Farming & Banking Details ── */}
+          {showBankSection && (
             <div className="space-y-2">
               <p className="text-white font-bold text-sm drop-shadow-xs uppercase tracking-wider border-b border-white/20 pb-1">
-                {t("profileSetup.roleSection", "🌾 Farming Details")}
+                {t("profileSetup.roleSection", isFarmer ? "🌾 Farming Details" : "🏦 Banking & Payout Details")}
               </p>
 
               {/* Crop tag input */}
-              <div>
-                <label className="block font-bold text-white mb-1 drop-shadow-xs">
-                  {t("profileSetup.primaryCrops", "Primary Crops")}
-                </label>
-                <div className="w-full px-3 py-1.5 bg-white/80 border border-white/40 rounded-xl flex flex-wrap gap-1.5 min-h-[38px] items-center shadow-xs">
-                  {crops.map((crop) => (
-                    <span
-                      key={crop}
-                      className="flex items-center gap-1 bg-[#2e7d32] text-white text-xs font-bold px-2 py-0.5 rounded-md shadow-2xs"
-                    >
-                      {crop}
-                      <button
-                        type="button"
-                        onClick={() => removeCrop(crop)}
-                        className="hover:text-red-300 font-extrabold text-xs"
+              {isFarmer && (
+                <div>
+                  <label className="block font-bold text-white mb-1 drop-shadow-xs">
+                    {t("profileSetup.primaryCrops", "Primary Crops")}
+                  </label>
+                  <div className="w-full px-3 py-1.5 bg-white/80 border border-white/40 rounded-xl flex flex-wrap gap-1.5 min-h-[38px] items-center shadow-xs">
+                    {crops.map((crop) => (
+                      <span
+                        key={crop}
+                        className="flex items-center gap-1 bg-[#2e7d32] text-white text-xs font-bold px-2 py-0.5 rounded-md shadow-2xs"
                       >
-                        ✕
-                      </button>
-                    </span>
-                  ))}
-                  <input
-                    type="text"
-                    value={cropInput}
-                    onChange={(e) => setCropInput(e.target.value)}
-                    onKeyDown={handleCropKeyDown}
-                    placeholder={t(
-                      "profileSetup.cropPlaceholder",
-                      "Type crop & press Enter",
-                    )}
-                    className="flex-1 min-w-[140px] bg-transparent outline-none text-sm font-medium text-slate-900 placeholder:text-slate-400"
-                  />
+                        {crop}
+                        <button
+                          type="button"
+                          onClick={() => removeCrop(crop)}
+                          className="hover:text-red-300 font-extrabold text-xs"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                    <input
+                      type="text"
+                      value={cropInput}
+                      onChange={(e) => setCropInput(e.target.value)}
+                      onKeyDown={handleCropKeyDown}
+                      placeholder={t(
+                        "profileSetup.cropPlaceholder",
+                        "Type crop & press Enter",
+                      )}
+                      className="flex-1 min-w-[140px] bg-transparent outline-none text-sm font-medium text-slate-900 placeholder:text-slate-400"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>

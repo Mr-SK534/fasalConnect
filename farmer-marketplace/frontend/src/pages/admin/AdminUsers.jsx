@@ -12,6 +12,9 @@ const roles = {
   Buyer: "bg-blue-100 text-blue-700",
   FpoAdmin: "bg-purple-100 text-purple-700",
   PlatformAdmin: "bg-red-100 text-red-700",
+  SuperAdmin: "bg-rose-100 text-rose-800 border border-rose-200",
+  Admin: "bg-blue-100 text-blue-800 border border-blue-200",
+  Manager: "bg-emerald-100 text-emerald-800 border border-emerald-200",
 };
 const unwrap = (data) =>
   Array.isArray(data) ? data : data?.items || data?.users || [];
@@ -52,7 +55,7 @@ export default function AdminUsers() {
     phone: "",
     email: "",
     password: "",
-    role: "Farmer",
+    role: "SuperAdmin",
     preferredLanguage: "en",
     address: "",
     district: "",
@@ -379,7 +382,7 @@ export default function AdminUsers() {
                 ["Crops", detail.primaryCrops],
                 ["Business", detail.businessName],
                 ["Delivery", detail.deliveryAddress],
-                ["Bank", mask(detail.bankAccountNumber)],
+                ["Bank Account", detail.bankAccountNumber],
                 ["IFSC", detail.bankIfsc],
                 ["Account holder", detail.accountHolderName],
                 [
@@ -508,11 +511,15 @@ export default function AdminUsers() {
                   onChange={(event) =>
                     setCreateForm({ ...createForm, role: event.target.value })
                   }
-                  className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3"
+                  className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 font-semibold"
                 >
-                  <option>Farmer</option>
-                  <option>Buyer</option>
-                  <option>FpoAdmin</option>
+                  <option value="SuperAdmin">SuperAdmin</option>
+                  <option value="PlatformAdmin">PlatformAdmin</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Manager">Manager</option>
+                  <option value="FpoAdmin">FpoAdmin</option>
+                  <option value="Farmer">Farmer</option>
+                  <option value="Buyer">Buyer</option>
                 </select>
               </label>
               <label className="text-sm font-medium text-slate-700 sm:col-span-2">

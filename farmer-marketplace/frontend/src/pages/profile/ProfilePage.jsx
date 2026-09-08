@@ -79,6 +79,12 @@ export default function ProfilePage() {
 
   const isFarmer =
     user?.role === ROLES.FARMER || user?.role === ROLES.FPO_ADMIN;
+  const isAdminLike =
+    user?.role === ROLES.SUPER_ADMIN ||
+    user?.role === ROLES.PLATFORM_ADMIN ||
+    user?.role === ROLES.ADMIN ||
+    user?.role === ROLES.MANAGER;
+  const showBankSection = isFarmer || isAdminLike;
   const isBuyer = user?.role === ROLES.BUYER;
   const update = (event) =>
     setForm({ ...form, [event.target.name]: event.target.value });
@@ -190,10 +196,10 @@ export default function ProfilePage() {
         ...form,
         preferredLanguage: form.preferredLanguage,
         primaryCrops: isFarmer ? form.primaryCrops : null,
-        bankAccountNumber: isFarmer ? form.bankAccountNumber : null,
-        bankIfsc: isFarmer ? form.bankIfsc : null,
-        accountHolderName: isFarmer ? form.accountHolderName : null,
-        upiId: isFarmer ? form.upiId : null,
+        bankAccountNumber: showBankSection ? form.bankAccountNumber : null,
+        bankIfsc: showBankSection ? form.bankIfsc : null,
+        accountHolderName: showBankSection ? form.accountHolderName : null,
+        upiId: showBankSection ? form.upiId : null,
         businessName: isBuyer ? form.businessName : null,
         deliveryAddress: isBuyer ? form.deliveryAddress : null,
         gstNumber: isBuyer ? form.gstNumber : null,
@@ -335,31 +341,37 @@ export default function ProfilePage() {
           </label>
         </div>
       </section>
-      {isFarmer && (
+      {showBankSection && (
         <section className="rounded-xl bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-bold">Farmer / FPO details</h3>
-          <label>
-            Primary crops
-            <input
-              value={cropInput}
-              onChange={(event) => setCropInput(event.target.value)}
-              onKeyDown={addCrop}
-              placeholder="Type a crop and press Enter"
-              className={inputClass}
-            />
-          </label>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {crops.map((crop) => (
-              <button
-                type="button"
-                key={crop}
-                onClick={() => removeCrop(crop)}
-                className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800"
-              >
-                {crop} ×
-              </button>
-            ))}
-          </div>
+          <h3 className="mb-4 text-lg font-bold">
+            {isFarmer ? "Farmer / FPO details" : "Bank & Payout Details"}
+          </h3>
+          {isFarmer && (
+            <>
+              <label>
+                Primary crops
+                <input
+                  value={cropInput}
+                  onChange={(event) => setCropInput(event.target.value)}
+                  onKeyDown={addCrop}
+                  placeholder="Type a crop and press Enter"
+                  className={inputClass}
+                />
+              </label>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {crops.map((crop) => (
+                  <button
+                    type="button"
+                    key={crop}
+                    onClick={() => removeCrop(crop)}
+                    className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800"
+                  >
+                    {crop} ×
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             {[
               ["bankAccountNumber", "Bank account number"],
