@@ -68,6 +68,7 @@ farmer_marketplace_results.csv
 docs/
 **/docs/
 plan/
+**/plan/
 
 # --- Misc ---
 *.bak
