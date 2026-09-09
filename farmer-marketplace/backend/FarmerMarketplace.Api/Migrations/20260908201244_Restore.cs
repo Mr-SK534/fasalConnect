@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -14,9 +14,7 @@ namespace FarmerMarketplace.Api.Migrations
             migrationBuilder.DropTable(
                 name: "WhatsAppRegistrationSessions");
 
-            migrationBuilder.DropColumn(
-                name: "Village",
-                table: "Users");
+            migrationBuilder.Sql("ALTER TABLE \"Users\" DROP COLUMN IF EXISTS \"Village\";");
         }
 
         /// <inheritdoc />

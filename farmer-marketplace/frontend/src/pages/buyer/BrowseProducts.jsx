@@ -57,29 +57,25 @@ export default function BrowseProducts() {
             const product = nextProducts.find(
               (candidate) => candidate.id === item.productId,
             );
-            const aggregate = product
-              ? aggregateMap[product.cropName.toLowerCase()]
-              : null;
+            const cropKey = (item.cropName || product?.cropName || "").toLowerCase();
+            const aggregate = cropKey ? aggregateMap[cropKey] : null;
+            const productQty = Number(product?.quantityInKg || product?.quantity || 0);
+            const aggQty = Number(aggregate?.totalAvailableQuantity || 0);
+            const availableQty = productQty > 0 ? productQty : (aggQty > 0 ? aggQty : item.maxQuantity || 99999);
+            const totalAvail = aggQty > 0 ? aggQty : availableQty;
             return [
               item.productId,
               {
-                quantity: Number(product?.quantity || 0),
-                totalAvailableQuantity: Number(
-                  aggregate?.totalAvailableQuantity || 0,
-                ),
-                farmerCount: Number(aggregate?.farmerCount || 0),
+                quantity: productQty > 0 ? productQty : availableQty,
+                totalAvailableQuantity: totalAvail,
+                farmerCount: Number(aggregate?.farmerCount || 1),
+                farmers: aggregate?.farmers || [],
+                averagePrice: Number(aggregate?.averagePrice || product?.price || 0),
+                isAvailable: product ? product.isActive !== false : true,
               },
             ];
           }),
         );
-        if (
-          cartItems.some(
-            (item) =>
-              !nextProducts.some((product) => product.id === item.productId),
-          )
-        ) {
-          toast("Some items in your cart are no longer available");
-        }
         updateAvailability(availabilityByProductId);
       })
       .catch((requestError) =>
@@ -88,7 +84,7 @@ export default function BrowseProducts() {
         ),
       )
       .finally(() => setLoading(false));
-  }, [cartItems, updateAvailability]);
+  }, [updateAvailability]);
 
   useEffect(() => {
     fetchProducts();
@@ -122,14 +118,20 @@ export default function BrowseProducts() {
 
   const handleAdd = (product) => {
     const quantity = Number(quantities[product.id] || 1);
-    const aggregate = aggregates[product.cropName.toLowerCase()];
+    const cropKey = (product.cropName || "").toLowerCase();
+    const aggregate = aggregates[cropKey];
+    const itemStock = Number(product.quantityInKg || product.quantity || 0);
+    const totalAvail = Number(aggregate?.totalAvailableQuantity || itemStock || 99999);
     addToCart(
       {
         ...product,
-        totalAvailableQuantity:
-          aggregate?.totalAvailableQuantity || product.quantity,
+        quantity: itemStock > 0 ? itemStock : 99999,
+        quantityInKg: itemStock > 0 ? itemStock : 99999,
+        totalAvailableQuantity: totalAvail,
         farmerCount: aggregate?.farmerCount || 1,
-        requiresBulk: quantity > product.quantity,
+        farmers: aggregate?.farmers || [],
+        averagePrice: Number(aggregate?.averagePrice || product.price || 0),
+        requiresBulk: quantity > (itemStock > 0 ? itemStock : 99999),
       },
       quantity,
     );

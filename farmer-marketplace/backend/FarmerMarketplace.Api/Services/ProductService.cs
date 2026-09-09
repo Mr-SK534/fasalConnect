@@ -213,8 +213,7 @@ namespace FarmerMarketplace.Api.Services
 
             await _context.SaveChangesAsync();
 
-            return MapToResponseDto(product);
-             return await MapToResponseDtoAsync(product, isBuyerContext: false);
+            return await MapToResponseDtoAsync(product, isBuyerContext: false);
         }
 
         public async Task DeleteAsync(Guid id, Guid requestingUserId, string? role)
@@ -279,11 +278,6 @@ namespace FarmerMarketplace.Api.Services
                 TypicalFarmerSharePercent = insight.TypicalFarmerSharePercent,
                 EstimatedTraditionalRetailPrice = insight.EstimatedTraditionalRetailPrice,
                 FarmerEarningsAdvantagePercent = insight.FarmerEarningsAdvantagePercent
-            };
-        }
-
-
-                FarmerLocation = product.Farmer?.Address
             };
         }
 

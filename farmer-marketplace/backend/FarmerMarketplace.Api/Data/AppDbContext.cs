@@ -1,107 +1,3 @@
- whatsapp-integration
-// backend/FarmerMarketplace.Api/Data/AppDbContext.cs
-
-using FarmerMarketplace.Api.Models;
-using Microsoft.EntityFrameworkCore;
-
-namespace FarmerMarketplace.Api.Data
-{
-    public class AppDbContext : DbContext
-    {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-        {
-        }
-
-        public DbSet<User> Users { get; set; }
-
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-               modelBuilder.Entity<User>()
-                .Ignore(u => u.Village);
-               
-
-            modelBuilder.Entity<User>()
-                .HasOne(u => u.Fpo)
-                .WithMany()
-                .HasForeignKey(u => u.FpoId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<OrderItem>()
-            .HasOne(oi => oi.Order)
-            .WithMany(o => o.Items)
-            .HasForeignKey(oi => oi.OrderId)
-            .OnDelete(DeleteBehavior.Cascade); // deleting an order deletes its items
-
-            modelBuilder.Entity<OrderItem>()
-            .HasOne(oi => oi.Product)
-            .WithMany()
-            .HasForeignKey(oi => oi.ProductId)
-            .OnDelete(DeleteBehavior.Restrict); // don't delete order history if product is deleted
-
-            modelBuilder.Entity<OrderItem>()
-            .HasOne(oi => oi.Farmer)
-            .WithMany()
-            .HasForeignKey(oi => oi.FarmerId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Order>()
-            .HasOne(o => o.Buyer)
-            .WithMany()
-            .HasForeignKey(o => o.BuyerId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Payment>()
-           .HasOne(p => p.Order)
-            .WithMany()
-           .HasForeignKey(p => p.OrderId)
-           .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<PaymentSplit>()
-            .HasOne(s => s.Payment)
-            .WithMany(p => p.Splits)
-            .HasForeignKey(s => s.PaymentId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<PaymentSplit>()
-           .HasOne(s => s.Farmer)
-           .WithMany()
-           .HasForeignKey(s => s.FarmerId)
-           .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<RouteStop>()
-            .HasOne(s => s.Route)
-            .WithMany(r => r.Stops)
-            .HasForeignKey(s => s.RouteId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<RouteStop>()
-                .HasOne(s => s.Order)
-                .WithMany()
-                .HasForeignKey(s => s.OrderId)
-                .OnDelete(DeleteBehavior.Restrict);
-        }
-
-        public DbSet<Product> Products { get; set; }
-        // backend/FarmerMarketplace.Api/Data/AppDbContext.cs (add this DbSet)
-
-        public DbSet<TokenBlocklist> TokenBlocklist { get; set; }
-
-        public DbSet<Order> Orders { get; set; }
-        public DbSet<OrderItem> OrderItems { get; set; }
-
-        public DbSet<Payment> Payments { get; set; }
-        public DbSet<PaymentSplit> PaymentSplits { get; set; }
-
-        public DbSet<FarmerMarketplace.Api.Models.Route> Routes { get; set; }
-        public DbSet<FarmerMarketplace.Api.Models.RouteStop> RouteStops { get; set; }
-        
-        
-
-
-    }
-}
-
 // backend/FarmerMarketplace.Api/Data/AppDbContext.cs
 
 using FarmerMarketplace.Api.Models;
@@ -122,7 +18,30 @@ namespace FarmerMarketplace.Api.Data
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<Product> Products { get; set; }
+        public DbSet<TokenBlocklist> TokenBlocklist { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<Payment> Payments { get; set; }
+        public DbSet<PaymentSplit> PaymentSplits { get; set; }
+        public DbSet<FarmerMarketplace.Api.Models.Route> Routes { get; set; }
+        public DbSet<FarmerMarketplace.Api.Models.RouteStop> RouteStops { get; set; }
+        public DbSet<DeliveryRoute> DeliveryRoutes { get; set; }
+        public DbSet<BatchRunLog> BatchRunLogs { get; set; }
 
+        // --- Payment System & Financial Model DbSets ---
+        public DbSet<EscrowTransaction> EscrowTransactions { get; set; }
+        public DbSet<PlatformFee> PlatformFees { get; set; }
+        public DbSet<FarmerPayout> FarmerPayouts { get; set; }
+        public DbSet<TransactionLedger> TransactionLedgers { get; set; }
+        public DbSet<DeliveryWeightLog> DeliveryWeightLogs { get; set; }
+
+        // --- Dynamic Platform Configuration & RBAC DbSets ---
+        public DbSet<PlatformConfig> PlatformConfigs { get; set; }
+        public DbSet<RolePermission> RolePermissions { get; set; }
+
+        // --- AI Demand Forecasting DbSet ---
+        public DbSet<SalesHistory> SalesHistories { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -133,52 +52,52 @@ namespace FarmerMarketplace.Api.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<OrderItem>()
-            .HasOne(oi => oi.Order)
-            .WithMany(o => o.Items)
-            .HasForeignKey(oi => oi.OrderId)
-            .OnDelete(DeleteBehavior.Cascade); // deleting an order deletes its items
+                .HasOne(oi => oi.Order)
+                .WithMany(o => o.Items)
+                .HasForeignKey(oi => oi.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<OrderItem>()
-            .HasOne(oi => oi.Product)
-            .WithMany()
-            .HasForeignKey(oi => oi.ProductId)
-            .OnDelete(DeleteBehavior.Restrict); // don't delete order history if product is deleted
+                .HasOne(oi => oi.Product)
+                .WithMany()
+                .HasForeignKey(oi => oi.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<OrderItem>()
-            .HasOne(oi => oi.Farmer)
-            .WithMany()
-            .HasForeignKey(oi => oi.FarmerId)
-            .OnDelete(DeleteBehavior.Restrict);
+                .HasOne(oi => oi.Farmer)
+                .WithMany()
+                .HasForeignKey(oi => oi.FarmerId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Order>()
-            .HasOne(o => o.Buyer)
-            .WithMany()
-            .HasForeignKey(o => o.BuyerId)
-            .OnDelete(DeleteBehavior.Restrict);
+                .HasOne(o => o.Buyer)
+                .WithMany()
+                .HasForeignKey(o => o.BuyerId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Payment>()
-           .HasOne(p => p.Order)
-            .WithMany()
-           .HasForeignKey(p => p.OrderId)
-           .OnDelete(DeleteBehavior.Restrict);
+                .HasOne(p => p.Order)
+                .WithMany()
+                .HasForeignKey(p => p.OrderId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<PaymentSplit>()
-            .HasOne(s => s.Payment)
-            .WithMany(p => p.Splits)
-            .HasForeignKey(s => s.PaymentId)
-            .OnDelete(DeleteBehavior.Cascade);
+                .HasOne(s => s.Payment)
+                .WithMany(p => p.Splits)
+                .HasForeignKey(s => s.PaymentId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<PaymentSplit>()
-           .HasOne(s => s.Farmer)
-           .WithMany()
-           .HasForeignKey(s => s.FarmerId)
-           .OnDelete(DeleteBehavior.Restrict);
+                .HasOne(s => s.Farmer)
+                .WithMany()
+                .HasForeignKey(s => s.FarmerId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<RouteStop>()
-            .HasOne(s => s.Route)
-            .WithMany(r => r.Stops)
-            .HasForeignKey(s => s.RouteId)
-            .OnDelete(DeleteBehavior.Cascade);
+                .HasOne(s => s.Route)
+                .WithMany(r => r.Stops)
+                .HasForeignKey(s => s.RouteId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<RouteStop>()
                 .HasOne(s => s.Order)
@@ -235,7 +154,7 @@ namespace FarmerMarketplace.Api.Data
                 .HasForeignKey(dw => dw.RouteId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Seed SuperAdmin User (Name: superadmin, Password: 123456)
+            // Seed SuperAdmin User
             var superAdminId = Guid.Parse("a0000000-0000-0000-0000-000000000001");
             modelBuilder.Entity<User>().HasData(
                 new User
@@ -302,34 +221,5 @@ namespace FarmerMarketplace.Api.Data
                 new PlatformConfig { Id = 27, Category = "seasonal_pricing", Key = "s4_kharif_multiplier", Value = "1.10", ValueType = ConfigValueType.Decimal, MinValue = 0.1m, MaxValue = 2.0m, RequiresRole = "admin", Description = "Price multiplier for Kharif season" }
             );
         }
-
-        public DbSet<Product> Products { get; set; }
-        public DbSet<TokenBlocklist> TokenBlocklist { get; set; }
-
-        public DbSet<Order> Orders { get; set; }
-        public DbSet<OrderItem> OrderItems { get; set; }
-
-        public DbSet<Payment> Payments { get; set; }
-        public DbSet<PaymentSplit> PaymentSplits { get; set; }
-
-        public DbSet<FarmerMarketplace.Api.Models.Route> Routes { get; set; }
-        public DbSet<FarmerMarketplace.Api.Models.RouteStop> RouteStops { get; set; }
-        public DbSet<DeliveryRoute> DeliveryRoutes { get; set; }
-        public DbSet<BatchRunLog> BatchRunLogs { get; set; }
-
-        // --- Payment System & Financial Model DbSets ---
-        public DbSet<EscrowTransaction> EscrowTransactions { get; set; }
-        public DbSet<PlatformFee> PlatformFees { get; set; }
-        public DbSet<FarmerPayout> FarmerPayouts { get; set; }
-        public DbSet<TransactionLedger> TransactionLedgers { get; set; }
-        public DbSet<DeliveryWeightLog> DeliveryWeightLogs { get; set; }
-
-        // --- Dynamic Platform Configuration & RBAC DbSets ---
-        public DbSet<PlatformConfig> PlatformConfigs { get; set; }
-        public DbSet<RolePermission> RolePermissions { get; set; }
-
-        // --- AI Demand Forecasting DbSet ---
-        public DbSet<SalesHistory> SalesHistories { get; set; }
     }
 }
-main

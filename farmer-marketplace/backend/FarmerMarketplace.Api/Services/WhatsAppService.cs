@@ -702,7 +702,7 @@ namespace FarmerMarketplace.Api.Services
                 if (step == "STEP_BUYER_DELIVERY_ADDRESS")
                 {
                     var deliv = message.Equals("skip", StringComparison.OrdinalIgnoreCase) ? user.Location : message;
-                    user.Village = Truncate(deliv, 200); // Temporary storage
+                    user.Address = Truncate(deliv, 200); // Temporary storage
                     user.DeliveryAddress = $"{sessionPrefix}STEP_GST_NUMBER";
                     user.UpdatedAt = DateTime.UtcNow;
                     await _context.SaveChangesAsync();
@@ -734,8 +734,8 @@ namespace FarmerMarketplace.Api.Services
                     }
 
                     user.IsProfileComplete = true;
-                    user.DeliveryAddress = user.Village; // Move actual address to DeliveryAddress
-                    user.Village = null;
+                    user.DeliveryAddress = user.Address; // Move actual address to DeliveryAddress
+                    user.Address = null;
                     user.UpdatedAt = DateTime.UtcNow;
                     await _context.SaveChangesAsync();
 

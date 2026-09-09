@@ -10,7 +10,7 @@ import {
 import { useCart } from "../../hooks/useCart";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
-
+import { useMemo } from "react";
 const formatCurrency = (value) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(
     value,
@@ -27,67 +27,79 @@ export default function Cart() {
   } = useCart();
   const [stockWarnings, setStockWarnings] = useState({});
 
+  const cartItemIds = useMemo(
+    () => cartItems.map((item) => item.productId).sort().join(","),
+    [cartItems],
+  );
+
   useEffect(() => {
     const refreshAvailability = async () => {
       if (!cartItems.length) return;
-      const productsResponse = await api.get("/products");
-      const products = productsResponse.data || [];
-      const aggregateEntries = await Promise.all(
-        [...new Set(cartItems.map((item) => item.cropName))].map(
-          async (cropName) => {
-            const aggregate = await api.get(
-              `/products/aggregate/${encodeURIComponent(cropName)}`,
-            );
-            return [cropName, aggregate.data];
-          },
-        ),
-      );
-      const aggregates = Object.fromEntries(aggregateEntries);
-
-      const byProductId = Object.fromEntries(
-        cartItems.map((item) => {
-          const product = products.find((p) => p.id === item.productId);
-          const aggregate = aggregates[item.cropName];
-          return [
-            item.productId,
-            {
-              quantity: Number(product?.quantity || 0),
-              totalAvailableQuantity: Number(
-                aggregate?.totalAvailableQuantity || 0,
-              ),
-              farmerCount: Number(aggregate?.farmerCount || 0),
+      try {
+        const productsResponse = await api.get("/products");
+        const products = productsResponse.data || [];
+        const aggregateEntries = await Promise.all(
+          [...new Set(cartItems.map((item) => item.cropName).filter(Boolean))].map(
+            async (cropName) => {
+              try {
+                const aggregate = await api.get(
+                  `/products/aggregate/${encodeURIComponent(cropName)}`,
+                );
+                return [cropName.toLowerCase(), aggregate.data];
+              } catch {
+                return [cropName.toLowerCase(), null];
+              }
             },
-          ];
-        }),
-      );
+          ),
+        );
+        const aggregates = Object.fromEntries(aggregateEntries);
 
-      setStockWarnings(
-        Object.fromEntries(
-          cartItems
-            .filter(
-              (item) =>
-                Number(
-                  byProductId[item.productId]?.totalAvailableQuantity || 0,
-                ) < item.quantity,
-            )
-            .map((item) => [
+        const byProductId = Object.fromEntries(
+          cartItems.map((item) => {
+            const product = products.find((p) => p.id === item.productId);
+            const cropKey = (item.cropName || "").toLowerCase();
+            const aggregate = aggregates[cropKey];
+            const productQty = Number(product?.quantityInKg || product?.quantity || 0);
+            const aggQty = Number(aggregate?.totalAvailableQuantity || 0);
+            const availableQty = productQty > 0 ? productQty : (aggQty > 0 ? aggQty : item.maxQuantity || 99999);
+            const totalAvail = aggQty > 0 ? aggQty : availableQty;
+            return [
               item.productId,
-              byProductId[item.productId]?.totalAvailableQuantity || 0,
-            ]),
-        ),
-      );
+              {
+                quantity: productQty > 0 ? productQty : availableQty,
+                totalAvailableQuantity: totalAvail,
+                farmerCount: Number(aggregate?.farmerCount || 1),
+                farmers: aggregate?.farmers || [],
+                averagePrice: Number(aggregate?.averagePrice || product?.price || 0),
+                isAvailable: product ? product.isActive !== false : true,
+              },
+            ];
+          }),
+        );
 
-      updateAvailability(byProductId);
-      if (Object.values(byProductId).some((item) => item.quantity < 1))
-        toast("Some items in your cart are no longer available");
+        setStockWarnings(
+          Object.fromEntries(
+            cartItems
+              .filter(
+                (item) =>
+                  Number(
+                    byProductId[item.productId]?.totalAvailableQuantity || item.maxQuantity || 99999,
+                  ) < item.quantity,
+              )
+              .map((item) => [
+                item.productId,
+                byProductId[item.productId]?.totalAvailableQuantity || item.maxQuantity || 99999,
+              ]),
+          ),
+        );
+
+        updateAvailability(byProductId);
+      } catch (error) {
+        console.warn("[Cart] Could not refresh stock availability:", error);
+      }
     };
-    refreshAvailability().catch((error) =>
-      toast.error(
-        error.response?.data?.message ||
-          "Could not refresh stock availability.",
-      ),
-    );
-  }, [cartItems, updateAvailability]);
+    refreshAvailability();
+  }, [cartItemIds, updateAvailability]);
 
   return (
     <main className="min-h-screen bg-[#f8f9f4] px-4 py-8 text-slate-700">
@@ -169,8 +181,8 @@ export default function Cart() {
                           </span>
                         )}
                         {item.requiresBulk && (
-                          <span className="mb-1 block w-fit rounded-full bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700">
-                            Multi-farmer
+                          <span className="mb-1 block w-fit rounded-full bg-purple-50 px-2.5 py-1 text-xs font-semibold text-purple-700 border border-purple-200">
+                            ℹ️ Multi-farmer Sourcing ({item.farmerCount || 2} Farmers)
                           </span>
                         )}
                         <p className="text-xl font-bold text-green-700">
@@ -178,32 +190,41 @@ export default function Cart() {
                         </p>
                       </div>
                       <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() =>
                               updateQuantity(item.productId, item.quantity - 1)
                             }
                             disabled={item.quantity <= 1}
-                            className="flex h-9 w-9 items-center justify-center rounded-full border border-green-200 bg-green-50 text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex h-9 w-9 items-center justify-center rounded-full border border-green-200 bg-green-50 text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-green-100"
                           >
                             <FiMinus size={16} />
                           </button>
-                          <span className="min-w-[2rem] text-center font-semibold">
-                            {item.quantity} kg
-                          </span>
+                          <input
+                            type="number"
+                            min="1"
+                            max={item.maxQuantity || 99999}
+                            value={item.quantity}
+                            onChange={(e) =>
+                              updateQuantity(item.productId, Number(e.target.value))
+                            }
+                            className="w-16 rounded-lg border border-slate-200 py-1 text-center font-semibold text-slate-800 focus:border-green-500 focus:outline-none"
+                            aria-label={`Quantity in kg for ${item.cropName}`}
+                          />
+                          <span className="text-sm font-semibold text-slate-700">kg</span>
                           <button
                             type="button"
                             onClick={() =>
                               updateQuantity(item.productId, item.quantity + 1)
                             }
                             disabled={item.quantity >= item.maxQuantity}
-                            className="flex h-9 w-9 items-center justify-center rounded-full border border-green-200 bg-green-50 text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex h-9 w-9 items-center justify-center rounded-full border border-green-200 bg-green-50 text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-green-100"
                           >
                             <FiPlus size={16} />
                           </button>
                           <span className="text-xs text-slate-500">
-                            of {item.maxQuantity} kg
+                            (max {item.maxQuantity} kg)
                           </span>
                         </div>
                         <button

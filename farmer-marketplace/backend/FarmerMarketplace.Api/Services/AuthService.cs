@@ -76,13 +76,38 @@ namespace FarmerMarketplace.Api.Services
 
         public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
         {
-            var loginValue = dto.EmailOrPhone.Trim();
+            var loginValue = dto.EmailOrPhone?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(loginValue))
+                throw new UnauthorizedAccessException("Invalid credentials.");
+
             var isEmail = loginValue.Contains('@');
 
-            var user = isEmail
-                ? await _context.Users.FirstOrDefaultAsync(u =>
-                    u.Email != null && u.Email.ToLower() == loginValue.ToLower())
-                : await _context.Users.FirstOrDefaultAsync(u => u.Phone == loginValue);
+            User? user = null;
+
+            if (isEmail)
+            {
+                var lowerEmail = loginValue.ToLower();
+                user = await _context.Users.FirstOrDefaultAsync(u =>
+                    u.Email != null && u.Email.ToLower() == lowerEmail);
+            }
+            else
+            {
+                var digitsOnly = new string(loginValue.Where(char.IsDigit).ToArray());
+                var clean10DigitPhone = digitsOnly;
+                if (digitsOnly.Length == 12 && digitsOnly.StartsWith("91"))
+                {
+                    clean10DigitPhone = digitsOnly.Substring(2);
+                }
+                else if (digitsOnly.Length == 11 && digitsOnly.StartsWith("0"))
+                {
+                    clean10DigitPhone = digitsOnly.Substring(1);
+                }
+
+                user = await _context.Users.FirstOrDefaultAsync(u =>
+                    u.Phone == loginValue ||
+                    (u.Phone != null && clean10DigitPhone.Length > 0 && u.Phone == clean10DigitPhone) ||
+                    (u.Phone != null && clean10DigitPhone.Length == 10 && u.Phone.EndsWith(clean10DigitPhone)));
+            }
 
             if (user == null || !_passwordHasher.VerifyPassword(dto.Password, user.PasswordHash))
                 throw new UnauthorizedAccessException("Invalid credentials.");

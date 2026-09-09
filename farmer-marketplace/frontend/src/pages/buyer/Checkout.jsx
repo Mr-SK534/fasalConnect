@@ -41,24 +41,33 @@ export default function Checkout() {
     try {
       console.log("[Checkout] validating aggregate stock");
       const aggregateEntries = await Promise.all(
-        [...new Set(cartItems.map((item) => item.cropName))].map(
+        [...new Set(cartItems.map((item) => item.cropName).filter(Boolean))].map(
           async (cropName) => {
-            const response = await api.get(
-              `/products/aggregate/${encodeURIComponent(cropName)}`,
-            );
-            return [cropName, response.data];
+            try {
+              const response = await api.get(
+                `/products/aggregate/${encodeURIComponent(cropName)}`,
+              );
+              return [cropName.toLowerCase(), response.data];
+            } catch {
+              return [cropName.toLowerCase(), null];
+            }
           },
         ),
       );
       const aggregates = Object.fromEntries(aggregateEntries);
-      const unavailable = cartItems.find(
-        (item) =>
-          Number(aggregates[item.cropName]?.totalAvailableQuantity || 0) <
-          item.quantity,
-      );
+      const unavailable = cartItems.find((item) => {
+        const cropKey = (item.cropName || "").toLowerCase();
+        const agg = aggregates[cropKey] || aggregates[item.cropName];
+        const aggStock = Number(agg?.totalAvailableQuantity || 0);
+        const availStock = aggStock > 0 ? aggStock : Number(item.maxQuantity || item.totalAvailableQuantity || item.quantity || 99999);
+        return availStock < item.quantity;
+      });
       if (unavailable) {
+        const cropKey = (unavailable.cropName || "").toLowerCase();
+        const agg = aggregates[cropKey] || aggregates[unavailable.cropName];
+        const availStock = Number(agg?.totalAvailableQuantity || unavailable.maxQuantity || unavailable.quantity || 0);
         throw new Error(
-          `Stock changed for ${unavailable.cropName}. Only ${aggregates[unavailable.cropName]?.totalAvailableQuantity || 0} kg is available.`,
+          `Stock changed for ${unavailable.cropName}. Only ${availStock} kg is available.`,
         );
       }
       if (requiresBulk && !isBulkOrder) {
