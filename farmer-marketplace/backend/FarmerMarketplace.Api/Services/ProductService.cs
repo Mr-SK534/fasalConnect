@@ -5,6 +5,7 @@ using FarmerMarketplace.Api.DTOs;
 using FarmerMarketplace.Api.Interfaces;
 using FarmerMarketplace.Api.Models;
 using Microsoft.EntityFrameworkCore;
+using FarmerMarketplace.Api.Utils;
 
 namespace FarmerMarketplace.Api.Services
 {
@@ -180,38 +181,39 @@ namespace FarmerMarketplace.Api.Services
             return await MapToResponseDtoAsync(created, isBuyerContext: false);
         }
         public async Task<ProductResponseDto> UpdateAsync(Guid id, Guid requestingUserId, string? role, ProductDto dto)
-       {
-             var product = await _context.Products
-             .Include(p => p.Farmer)
-             .FirstOrDefaultAsync(p => p.Id == id);
+        {
+            var product = await _context.Products
+            .Include(p => p.Farmer)
+            .FirstOrDefaultAsync(p => p.Id == id);
 
-             if (product == null)
-                  throw new KeyNotFoundException("Product not found.");
+            if (product == null)
+                throw new KeyNotFoundException("Product not found.");
 
-             var isOwner = product.FarmerId == requestingUserId;
+            var isOwner = product.FarmerId == requestingUserId;
 
-             // FpoAdmin can edit only if this product's farmer is actually linked to them
-                 var isFpoAdminOfThisFarmer = role == nameof(UserRole.FpoAdmin)
-                        && product.Farmer != null
-                        && product.Farmer.FpoId == requestingUserId;
+            // FpoAdmin can edit only if this product's farmer is actually linked to them
+            var isFpoAdminOfThisFarmer = role == nameof(UserRole.FpoAdmin)
+                   && product.Farmer != null
+                   && product.Farmer.FpoId == requestingUserId;
 
             if (!isOwner && !isFpoAdminOfThisFarmer)
                 throw new UnauthorizedAccessException("You do not have permission to edit this product.");
 
-                product.CropName = dto.CropName;
-                product.Price = dto.Price;
-                product.Quantity = dto.Quantity;
-                product.Unit = dto.Unit;
-                product.Category = dto.Category;
-                product.HarvestDate = dto.HarvestDate;
-                product.Description = dto.Description;
-                product.ImageData = Convert.FromBase64String(dto.ImageBase64);
-                product.ImageContentType = dto.ImageContentType;
-                product.Region = dto.Region;
-                product.UpdatedAt = DateTime.UtcNow;
+            product.CropName = dto.CropName;
+            product.Price = dto.Price;
+            product.Quantity = dto.Quantity;
+            product.Unit = dto.Unit;
+            product.Category = dto.Category;
+            product.HarvestDate = dto.HarvestDate;
+            product.Description = dto.Description;
+            product.ImageData = Convert.FromBase64String(dto.ImageBase64);
+            product.ImageContentType = dto.ImageContentType;
+            product.Region = dto.Region;
+            product.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
+            return MapToResponseDto(product);
              return await MapToResponseDtoAsync(product, isBuyerContext: false);
         }
 
@@ -226,13 +228,13 @@ namespace FarmerMarketplace.Api.Services
             var isOwner = product.FarmerId == requestingUserId;
             var isPlatformAdmin = role == nameof(UserRole.PlatformAdmin);
 
-             var isFpoAdminOfThisFarmer = role == nameof(UserRole.FpoAdmin)
-                  && product.Farmer != null
-                  && product.Farmer.FpoId == requestingUserId;
+            var isFpoAdminOfThisFarmer = role == nameof(UserRole.FpoAdmin)
+                 && product.Farmer != null
+                 && product.Farmer.FpoId == requestingUserId;
 
             // FpoAdmin can delete only if this product's farmer is actually linked to them
-             if (!isOwner && !isPlatformAdmin && !isFpoAdminOfThisFarmer)
-               throw new UnauthorizedAccessException("You do not have permission to delete this product.");
+            if (!isOwner && !isPlatformAdmin && !isFpoAdminOfThisFarmer)
+                throw new UnauthorizedAccessException("You do not have permission to delete this product.");
 
             product.IsActive = false;
             product.UpdatedAt = DateTime.UtcNow;
@@ -241,6 +243,7 @@ namespace FarmerMarketplace.Api.Services
 
         private async Task<ProductResponseDto> MapToResponseDtoAsync(Product product, bool isBuyerContext = true)
         {
+            var insight = PricingInsightHelper.Calculate(product.CropName, product.Category, product.Price);
             var farmerPricePerKg = FarmerMarketplace.Api.Helpers.UnitConverter.ToPricePerKg(product.Price, product.Unit);
             var buyerPricePerKg = await _configService.CalculateBuyerPriceAsync(farmerPricePerKg, product.CropName);
 
@@ -272,6 +275,14 @@ namespace FarmerMarketplace.Api.Services
                 CreatedAt = product.CreatedAt,
                 FarmerId = product.FarmerId,
                 FarmerName = product.Farmer?.Name ?? string.Empty,
+                FarmerLocation = product.Farmer?.Location,
+                TypicalFarmerSharePercent = insight.TypicalFarmerSharePercent,
+                EstimatedTraditionalRetailPrice = insight.EstimatedTraditionalRetailPrice,
+                FarmerEarningsAdvantagePercent = insight.FarmerEarningsAdvantagePercent
+            };
+        }
+
+
                 FarmerLocation = product.Farmer?.Address
             };
         }

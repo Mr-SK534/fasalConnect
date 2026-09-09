@@ -59,6 +59,13 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFpoService, FpoService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+ whatsapp-integration
+builder.Services.AddScoped<IRouteService,RouteService>();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
+// TODO: register IOrderService, IForecastService,
+// IRouteService, IPaymentService, IWhatsAppService here as they're built
+
 builder.Services.AddScoped<IPaymentEscrowService, PaymentEscrowService>();
 builder.Services.AddScoped<IReportingService, ReportingService>();
 builder.Services.AddScoped<IRouteService, RouteService>();
@@ -66,6 +73,7 @@ builder.Services.AddScoped<RouteService>();
 builder.Services.AddSingleton<RouteBatchingService>();
 builder.Services.AddHostedService(provider => provider.GetRequiredService<RouteBatchingService>());
 builder.Services.AddScoped<IForecastService, ForecastService>();
+main
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");

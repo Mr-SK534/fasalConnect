@@ -32,5 +32,11 @@ namespace FarmerMarketplace.Api.DTOs
         public Guid FarmerId { get; set; }
         public string FarmerName { get; set; } = string.Empty;
         public string? FarmerLocation { get; set; }
+
+        // Fair Price Insight — illustrative, based on RBI/NABARD research benchmarks,
+        // not a live market price feed
+        public double TypicalFarmerSharePercent { get; set; }
+        public decimal EstimatedTraditionalRetailPrice { get; set; }
+        public double FarmerEarningsAdvantagePercent { get; set; }
     }
 }

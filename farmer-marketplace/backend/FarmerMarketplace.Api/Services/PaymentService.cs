@@ -9,7 +9,6 @@ using FarmerMarketplace.Api.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Razorpay.Api;
 
-
 namespace FarmerMarketplace.Api.Services
 {
     public class PaymentService : IPaymentService
