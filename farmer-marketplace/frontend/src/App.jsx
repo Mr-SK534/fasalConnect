@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import AppRoutes from "./routes/AppRoutes";
+import WhatsAppFloatingButton from "./components/common/WhatsAppFloatingButton";
 
 function App() {
   return (
@@ -11,6 +12,7 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <AppRoutes />
+          <WhatsAppFloatingButton />
           <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
         </CartProvider>
       </AuthProvider>
