@@ -19,10 +19,7 @@ export const ROLE_OPTIONS = [
   { value: ROLES.FARMER, label: "Farmer" },
   { value: ROLES.BUYER, label: "Buyer" },
   { value: ROLES.FPO_ADMIN, label: "FPO Admin" },
-  { value: ROLES.PLATFORM_ADMIN, label: "Platform Admin" },
-  { value: ROLES.SUPER_ADMIN, label: "Super Admin" },
-  { value: ROLES.ADMIN, label: "Admin" },
-  { value: ROLES.MANAGER, label: "Manager" },
+  { value: ROLES.PLATFORM_ADMIN, label: "Platform Admin" }
 ];
 
 export const DASHBOARD_PATH_BY_ROLE = {
