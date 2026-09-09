@@ -590,7 +590,11 @@ namespace FarmerMarketplace.Api.Services
                 .Where(i => i.FarmerId == farmerId)
                 .ToListAsync();
 
-            var escrows = await _context.EscrowTransactions.AsNoTracking().ToListAsync();
+            var orderIds = orderItems.Select(i => i.OrderId).Distinct().ToList();
+            var escrows = await _context.EscrowTransactions
+                .AsNoTracking()
+                .Where(e => orderIds.Contains(e.OrderId))
+                .ToListAsync();
             var escrowMap = escrows.ToDictionary(e => e.OrderId);
 
             decimal totalEarnings = 0;

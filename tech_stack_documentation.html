@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FasalConnect - Complete Tech Stack Specification</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-page: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-card-subtle: #f1f5f9;
+            --border-color: #e2e8f0;
+            --border-hover: #cbd5e1;
+            
+            --emerald-600: #059669;
+            --emerald-700: #047857;
+            --emerald-800: #065f46;
+            --emerald-50: #ecfdf5;
+            --emerald-100: #d1fae5;
+            
+            --amber-500: #f59e0b;
+            --amber-50: #fffbe6;
+            --blue-600: #2563eb;
+            --blue-50: #eff6ff;
+            --purple-600: #9333ea;
+            --purple-50: #faf5ff;
+            
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --code-bg: #1e293b;
+            --code-text: #38bdf8;
+            
+            --radius-xl: 20px;
+            --radius-lg: 14px;
+            --radius-md: 10px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04);
+            --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.04);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 900;
+            font-size: 1.35rem;
+            color: var(--emerald-700);
+            letter-spacing: -0.02em;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--emerald-600), #10b981);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 1.3rem;
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+        }
+
+        .header-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tag-pill {
+            background: var(--emerald-50);
+            border: 1px solid var(--emerald-100);
+            color: var(--emerald-700);
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 40px 24px 80px 24px;
+        }
+
+        /* Hero Banner */
+        .hero {
+            background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 50%, #e6f4ea 100%);
+            border: 1px solid #bbf7d0;
+            border-radius: var(--radius-xl);
+            padding: 44px;
+            margin-bottom: 36px;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .hero-title-badge {
+            display: inline-block;
+            background: var(--emerald-600);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 14px;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--text-primary);
+            letter-spacing: -0.03em;
+            line-height: 1.2;
+            margin-bottom: 12px;
+        }
+
+        .hero h1 span {
+            color: var(--emerald-600);
+        }
+
+        .hero p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 880px;
+            font-weight: 500;
+            line-height: 1.6;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-top: 28px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(5, 150, 105, 0.2);
+            border-radius: var(--radius-lg);
+            padding: 16px 20px;
+            backdrop-filter: blur(8px);
+        }
+
+        .stat-num {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--emerald-700);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 4px;
+        }
+
+        /* Filter Controls */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            background: #ffffff;
+            padding: 10px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-weight: 700;
+            font-size: 0.88rem;
+            padding: 8px 18px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover {
+            background: var(--bg-card-subtle);
+            color: var(--text-primary);
+        }
+
+        .filter-btn.active {
+            background: var(--emerald-600);
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+        }
+
+        /* Section & Cards */
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title span.icon {
+            font-size: 1.5rem;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .tech-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tech-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--emerald-600);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .tech-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .tech-name {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .version-badge {
+            background: var(--bg-card-subtle);
+            color: var(--emerald-700);
+            border: 1px solid var(--border-color);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        .tech-desc {
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            margin-bottom: 16px;
+            flex-grow: 1;
+        }
+
+        .usage-tag {
+            background: var(--emerald-50);
+            border-left: 3px solid var(--emerald-600);
+            padding: 10px 14px;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            font-size: 0.83rem;
+            font-weight: 600;
+            color: var(--emerald-800);
+        }
+
+        .usage-tag strong {
+            color: var(--emerald-900);
+            font-weight: 800;
+        }
+
+        /* System Integration Table */
+        .table-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 40px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+            font-size: 0.92rem;
+        }
+
+        th {
+            background: var(--bg-card-subtle);
+            color: var(--text-primary);
+            font-weight: 800;
+            text-align: left;
+            padding: 14px 16px;
+            border-bottom: 2px solid var(--border-color);
+            text-transform: uppercase;
+            font-size: 0.78rem;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        tr:hover td {
+            background: var(--emerald-50);
+        }
+
+        td.feature {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        td code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-card-subtle);
+            color: var(--emerald-700);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.83rem;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            font-weight: 600;
+            border-top: 1px solid var(--border-color);
+            background: #ffffff;
+            margin-top: 60px;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 16px 20px;
+            }
+            .hero {
+                padding: 24px;
+            }
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+            .tech-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation Header -->
+    <header>
+        <div class="logo">
+            <div class="logo-icon">🌾</div>
+            <span>FasalConnect Tech Stack</span>
+        </div>
+        <div class="header-meta">
+            <span class="tag-pill">🌱 Direct Farmer-to-Consumer Platform</span>
+            <span class="tag-pill">v1.0.0 (Production Architecture)</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero">
+            <span class="hero-title-badge">Technical Architecture Overview</span>
+            <h1>Comprehensive <span>Tech Stack Specification</span></h1>
+            <p>
+                FasalConnect is engineered with a high-performance, decoupled architecture combining a modern React SPA, 
+                an ASP.NET Core 10 Web API, AI-driven demand forecasting, and Google OR-Tools vehicle routing optimization.
+            </p>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-num">React 19</div>
+                    <div class="stat-label">Frontend SPA (Vite 8)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-num">.NET 10</div>
+                    <div class="stat-label">ASP.NET Core C# API</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-num">ML.NET 5</div>
+                    <div class="stat-label">SSA Time-Series AI</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-num">OR-Tools</div>
+                    <div class="stat-label">VRP Route Optimization</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-num">PostgreSQL</div>
+                    <div class="stat-label">EF Core 10 + PostGIS</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="filter-bar">
+            <span style="font-size: 0.85rem; font-weight: 800; color: var(--text-muted); margin-right: 8px;">FILTER STACK:</span>
+            <button class="filter-btn active" onclick="filterTech('all')">All Stack</button>
+            <button class="filter-btn" onclick="filterTech('frontend')">Frontend (React)</button>
+            <button class="filter-btn" onclick="filterTech('backend')">Backend (.NET 10)</button>
+            <button class="filter-btn" onclick="filterTech('ai')">AI & Math Engines</button>
+            <button class="filter-btn" onclick="filterTech('infra')">Payments & Services</button>
+        </div>
+
+        <!-- FRONTEND SECTION -->
+        <div class="tech-section" id="section-frontend">
+            <h2 class="section-title"><span class="icon">🎨</span> Frontend Stack (React SPA Ecosystem)</h2>
+            <div class="tech-grid">
+                
+                <div class="tech-card" data-category="frontend">
+                    <div class="tech-header">
+                        <span class="tech-name">⚛️ React</span>
+                        <span class="version-badge">v19.2.8</span>
+                    </div>
+                    <p class="tech-desc">Core UI framework providing component-based interactive user interfaces with Concurrent Rendering and Context API for global state management.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> Single-Page Application (SPA) component architecture.</div>
+                </div>
+
+                <div class="tech-card" data-category="frontend">
+                    <div class="tech-header">
+                        <span class="tech-name">⚡ Vite</span>
+                        <span class="version-badge">v8.2.2</span>
+                    </div>
+                    <p class="tech-desc">Next-generation frontend tooling providing lightning-fast HMR (Hot Module Replacement) and optimized Rollup production bundling.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> Development server, ESM bundler, & asset compiler.</div>
+                </div>
+
+                <div class="tech-card" data-category="frontend">
+                    <div class="tech-header">
+                        <span class="tech-name">🎨 Tailwind CSS</span>
+                        <span class="version-badge">v4.3.3</span>
+                    </div>
+                    <p class="tech-desc">Utility-first CSS framework coupled with <code>@tailwindcss/vite</code> plugin, enabling glassmorphic cards, emerald responsive themes, and micro-interactions.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> Design system, responsive layouts, & light/dark styling.</div>
+                </div>
+
+                <div class="tech-card" data-category="frontend">
+                    <div class="tech-header">
+                        <span class="tech-name">🗺️ React Leaflet & Leaflet.js</span>
+                        <span class="version-badge">v5.0.0 / v1.9.4</span>
+                    </div>
+                    <p class="tech-desc">Interactive mapping engine powered by OpenStreetMap tiles for farm pickup coordinates, buyer delivery locations, and public cold storage hubs.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> Geospatial routing maps & farm location rendering.</div>
+                </div>
+
+                <div class="tech-card" data-category="frontend">
+                    <div class="tech-header">
+                        <span class="tech-name">📊 Recharts</span>
+                        <span class="version-badge">v3.10.1</span>
+                    </div>
+                    <p class="tech-desc">Composable charting library built with SVG components, rendering AI demand forecasts, APMC Mandi rate comparisons, and revenue dashboards.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> Time-series graphs & financial data visualization.</div>
+                </div>
+
+                <div class="tech-card" data-category="frontend">
+                    <div class="tech-header">
+                        <span class="tech-name">🌐 i18next & react-i18next</span>
+                        <span class="version-badge">v26.4.1 / v17.0.13</span>
+                    </div>
+                    <p class="tech-desc">Internationalization framework delivering complete multi-lingual support (English, Hindi, Marathi, Tamil) with dynamic language switching.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> Multi-language localization for vernacular farmers.</div>
+                </div>
+
+                <div class="tech-card" data-category="frontend">
+                    <div class="tech-header">
+                        <span class="tech-name">🧭 React Router DOM</span>
+                        <span class="version-badge">v7.18.3</span>
+                    </div>
+                    <p class="tech-desc">Client-side declarative routing system featuring RoleGuard route protection and multi-step buyer checkout flows.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> SPA navigation & role-based route security.</div>
+                </div>
+
+                <div class="tech-card" data-category="frontend">
+                    <div class="tech-header">
+                        <span class="tech-name">📦 Axios</span>
+                        <span class="version-badge">v1.20.0</span>
+                    </div>
+                    <p class="tech-desc">Promise-based HTTP client equipped with custom request/response interceptors for automatic JWT authentication header injection.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> REST API communication & token refresh interceptors.</div>
+                </div>
+
+                <div class="tech-card" data-category="frontend">
+                    <div class="tech-header">
+                        <span class="tech-name">🧊 Three.js & React Three Fiber</span>
+                        <span class="version-badge">v0.185.1 / v9.7.0</span>
+                    </div>
+                    <p class="tech-desc">WebGL 3D graphics renderer enabling 3D crop growth visualization and interactive produce quality inspectors.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> 3D produce & farm visualizer components.</div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- BACKEND SECTION -->
+        <div class="tech-section" id="section-backend">
+            <h2 class="section-title"><span class="icon">⚡</span> Backend Stack (.NET 10 ASP.NET Core API)</h2>
+            <div class="tech-grid">
+
+                <div class="tech-card" data-category="backend">
+                    <div class="tech-header">
+                        <span class="tech-name">🖥️ ASP.NET Core Web API</span>
+                        <span class="version-badge">.NET 10.0</span>
+                    </div>
+                    <p class="tech-desc">High-throughput RESTful Web API framework written in C#, delivering controller endpoints, middleware pipelines, and dependency injection.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> Core backend business logic & RESTful endpoints.</div>
+                </div>
+
+                <div class="tech-card" data-category="backend">
+                    <div class="tech-header">
+                        <span class="tech-name">🗄️ Entity Framework Core 10</span>
+                        <span class="version-badge">v10.0.11</span>
+                    </div>
+                    <p class="tech-desc">Object-Relational Mapper (ORM) optimized with selective LINQ projections (excluding heavy BLOB columns) and automated migration handling.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> Database access layer & Entity modeling.</div>
+                </div>
+
+                <div class="tech-card" data-category="backend">
+                    <div class="tech-header">
+                        <span class="tech-name">🐘 PostgreSQL & Npgsql</span>
+                        <span class="version-badge">v10.0.3 Provider</span>
+                    </div>
+                    <p class="tech-desc">Enterprise open-source relational database storing transactional orders, escrow ledgers, product catalogs, and spatial farm locations.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> Relational persistent database.</div>
+                </div>
+
+                <div class="tech-card" data-category="backend">
+                    <div class="tech-header">
+                        <span class="tech-name">🔑 JWT Bearer Authentication</span>
+                        <span class="version-badge">v10.0.11</span>
+                    </div>
+                    <p class="tech-desc">Stateless authentication using HMAC-SHA256 tokens with claims-based Role-Based Access Control (RBAC across 8 user roles).</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> User authentication & security authorization.</div>
+                </div>
+
+                <div class="tech-card" data-category="backend">
+                    <div class="tech-header">
+                        <span class="tech-name">🔒 BCrypt.Net-Next</span>
+                        <span class="version-badge">v4.2.0</span>
+                    </div>
+                    <p class="tech-desc">Adaptive key-derivation password hashing algorithm protecting user credentials against dictionary & rainbow table attacks.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> Salted password hashing & verification.</div>
+                </div>
+
+                <div class="tech-card" data-category="backend">
+                    <div class="tech-header">
+                        <span class="tech-name">📖 Swashbuckle OpenAPI</span>
+                        <span class="version-badge">v10.2.3</span>
+                    </div>
+                    <p class="tech-desc">Automated Swagger UI documentation and OpenAPI specification generator for testing and inspecting REST endpoint contracts.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> Interactive API documentation & client generation.</div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- AI & MATH SECTION -->
+        <div class="tech-section" id="section-ai">
+            <h2 class="section-title"><span class="icon">🧠</span> AI, Machine Learning & Optimization Engines</h2>
+            <div class="tech-grid">
+
+                <div class="tech-card" data-category="ai">
+                    <div class="tech-header">
+                        <span class="tech-name">📈 Microsoft ML.NET Time-Series</span>
+                        <span class="version-badge">v5.0.0</span>
+                    </div>
+                    <p class="tech-desc">Machine Learning engine implementing Singular Spectrum Analysis (SSA) for crop demand forecasting, trend decomposition, and Transfer Learning across unlisted crop categories.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> 30-Day Multi-Crop Demand Forecasting Model.</div>
+                </div>
+
+                <div class="tech-card" data-category="ai">
+                    <div class="tech-header">
+                        <span class="tech-name">🚚 Google OR-Tools</span>
+                        <span class="version-badge">v9.15.6755</span>
+                    </div>
+                    <p class="tech-desc">Combinatorial optimization solver executing Vehicle Routing Problem with Time Windows (VRPTW) to aggregate multi-farmer crop pickups into optimal logistics routes.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> Multi-stop route optimization & vehicle assignment.</div>
+                </div>
+
+                <div class="tech-card" data-category="ai">
+                    <div class="tech-header">
+                        <span class="tech-name">📐 Haversine Geo-Distance Matrix</span>
+                        <span class="version-badge">Custom C# Utility</span>
+                    </div>
+                    <p class="tech-desc">Great-circle spherical trigonometry solver with road tortuosity factor calibration (\(\tau = 1.30\)) for accurate travel time and freight cost calculations.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> Kilometric distance & logistics pricing engine.</div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- PAYMENTS & SERVICES SECTION -->
+        <div class="tech-section" id="section-infra">
+            <h2 class="section-title"><span class="icon">💳</span> Financial, Payments & Communication Stack</h2>
+            <div class="tech-grid">
+
+                <div class="tech-card" data-category="infra">
+                    <div class="tech-header">
+                        <span class="tech-name">💰 Razorpay Escrow SDK</span>
+                        <span class="version-badge">v3.3.2</span>
+                    </div>
+                    <p class="tech-desc">Financial payment gateway handling UPI, Netbanking, Cards, automated escrow holding, and automated bank payouts to farmers upon delivery verification.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> Buyer checkout & direct farmer escrow payout.</div>
+                </div>
+
+                <div class="tech-card" data-category="infra">
+                    <div class="tech-header">
+                        <span class="tech-name">📞 Twilio Communications</span>
+                        <span class="version-badge">v8.0.0</span>
+                    </div>
+                    <p class="tech-desc">Automated IVR (Interactive Voice Response) toll-free phone booking system and SMS dispatch engine tailored for internet-less rural farmers.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> Phone-less voice booking & SMS notifications.</div>
+                </div>
+
+                <div class="tech-card" data-category="infra">
+                    <div class="tech-header">
+                        <span class="tech-name">🏛️ Agmarknet APMC Mandi Rates</span>
+                        <span class="version-badge">Govt Benchmark Service</span>
+                    </div>
+                    <p class="tech-desc">Integration layer fetching official Government APMC Mandi rates (Min, Modal, Max) to provide farmers real-time direct selling price comparison advisories.</p>
+                    <div class="usage-tag"><strong>Primary Role:</strong> Real-time APMC Mandi benchmark price feed.</div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- INTEGRATION TABLE -->
+        <div class="table-card">
+            <h2 class="section-title"><span class="icon">🔄</span> Core System Architectural Mappings</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 16px;">Summary mapping showing how technology stack components interact across system modules:</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Module / Feature</th>
+                        <th>Frontend Technology</th>
+                        <th>Backend Service</th>
+                        <th>Data & Engine Layer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="feature">AI Demand & Mandi Advisory</td>
+                        <td>Recharts, Tailwind CSS</td>
+                        <td><code>ForecastService.cs</code></td>
+                        <td>ML.NET SSA Time-Series + Agmarknet Rates</td>
+                    </tr>
+                    <tr>
+                        <td class="feature">Direct Escrow Settlement</td>
+                        <td>React Checkout Modal</td>
+                        <td><code>PaymentEscrowService.cs</code></td>
+                        <td>Razorpay SDK + Double-Entry Ledger</td>
+                    </tr>
+                    <tr>
+                        <td class="feature">Multi-Farmer Route Solver</td>
+                        <td>React Leaflet & Leaflet.js</td>
+                        <td><code>RouteService.cs</code></td>
+                        <td>Google OR-Tools VRP Solver + Haversine</td>
+                    </tr>
+                    <tr>
+                        <td class="feature">Phone-less Offline Booking</td>
+                        <td>IVR Audio Flow Indicator</td>
+                        <td><code>IVRController.cs</code></td>
+                        <td>Twilio Voice TwiML Gateway</td>
+                    </tr>
+                    <tr>
+                        <td class="feature">Catalog & Marketplace</td>
+                        <td>React 19, Axios</td>
+                        <td><code>ProductService.cs</code></td>
+                        <td>PostgreSQL EF Core (BLOB Projection Exclusions)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        FasalConnect Platform Architecture Specification • Built for Ministry of Consumer Affairs, Food & Public Distribution (Team Zenith)
+    </footer>
+
+    <script>
+        function filterTech(category) {
+            // Update active button state
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Show/Hide sections & cards
+            const cards = document.querySelectorAll('.tech-card');
+            cards.forEach(card => {
+                if (category === 'all' || card.getAttribute('data-category') === category) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            const sections = document.querySelectorAll('.tech-section');
+            sections.forEach(sec => {
+                if (category === 'all') {
+                    sec.style.display = 'block';
+                } else {
+                    const secId = sec.getAttribute('id');
+                    if (secId === 'section-' + category) {
+                        sec.style.display = 'block';
+                    } else {
+                        sec.style.display = 'none';
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

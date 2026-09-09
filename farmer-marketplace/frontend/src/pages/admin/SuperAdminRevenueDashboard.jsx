@@ -30,17 +30,26 @@ export default function SuperAdminRevenueDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [authError, setAuthError] = useState(false);
+
   const loadData = (showSpinner = false) => {
+    if (authError) return;
     if (showSpinner) setLoading(true);
     setError("");
-    Promise.all([getSummary(), getAdminOrders({ page: 1, pageSize: 1000 })])
+    Promise.all([getSummary(), getAdminOrders({ page: 1, pageSize: 100 })])
       .then(([summaryData, orderData]) => {
         setSummary(summaryData);
         setOrders(unwrap(orderData));
         setLoading(false);
       })
       .catch((err) => {
-        setError(err.response?.data?.message || "Failed to load SuperAdmin revenue data.");
+        const status = err.response?.status;
+        if (status === 401 || status === 403) {
+          setAuthError(true);
+          setError("Unauthorized: Admin privileges required to view platform revenue ledger.");
+        } else {
+          setError(err.response?.data?.message || "Failed to load SuperAdmin revenue data.");
+        }
         setLoading(false);
       });
   };
@@ -88,14 +97,18 @@ export default function SuperAdminRevenueDashboard() {
 
   useEffect(() => {
     loadData(true);
-    const interval = setInterval(() => loadData(false), 5000);
-    const handleFocus = () => loadData(false);
+    const interval = setInterval(() => {
+      if (!authError) loadData(false);
+    }, 30000);
+    const handleFocus = () => {
+      if (!authError) loadData(false);
+    };
     window.addEventListener("focus", handleFocus);
     return () => {
       clearInterval(interval);
       window.removeEventListener("focus", handleFocus);
     };
-  }, []);
+  }, [authError]);
 
   if (loading) {
     return (

@@ -38,5 +38,9 @@ namespace FarmerMarketplace.Api.DTOs
         public double TypicalFarmerSharePercent { get; set; }
         public decimal EstimatedTraditionalRetailPrice { get; set; }
         public double FarmerEarningsAdvantagePercent { get; set; }
+
+        // Pre-calculated crop aggregates (eliminates N+1 frontend requests)
+        public decimal TotalAvailableQuantityKg { get; set; }
+        public int FarmerCountForCrop { get; set; }
     }
 }

@@ -1,6 +1,7 @@
 // frontend/src/pages/forecast/DemandForecastPage.jsx
 
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../hooks/useAuth";
 import { ROLES } from "../../utils/roles";
 import {
@@ -24,6 +25,9 @@ import {
 
 export default function DemandForecastPage() {
   const { user } = useAuth();
+  const { i18n } = useTranslation();
+  const currentLang = i18n.language || "en";
+
   const isAdmin =
     user?.role === ROLES.SUPER_ADMIN ||
     user?.role === ROLES.PLATFORM_ADMIN ||
@@ -75,7 +79,7 @@ export default function DemandForecastPage() {
   useEffect(() => {
     if (!selectedCrop) return;
     setLoadingCrop(true);
-    getCropForecast(selectedCrop, selectedRegion, horizonDays)
+    getCropForecast(selectedCrop, selectedRegion, horizonDays, currentLang)
       .then((data) => {
         setCropForecast(data);
         setLoadingCrop(false);
@@ -84,7 +88,7 @@ export default function DemandForecastPage() {
         console.error("Failed to load crop forecast:", err);
         setLoadingCrop(false);
       });
-  }, [selectedCrop, selectedRegion, horizonDays]);
+  }, [selectedCrop, selectedRegion, horizonDays, currentLang]);
 
   // Load Farmers List for Admin / SuperAdmin / FPO
   useEffect(() => {
@@ -104,7 +108,7 @@ export default function DemandForecastPage() {
   useEffect(() => {
     if (selectedFarmerId && (isAdmin || isFpo || activeTab === "farmer")) {
       setLoadingFarmer(true);
-      getFarmerForecast(selectedFarmerId, horizonDays)
+      getFarmerForecast(selectedFarmerId, horizonDays, currentLang)
         .then((data) => {
           setFarmerForecast(data);
           setLoadingFarmer(false);
@@ -114,17 +118,17 @@ export default function DemandForecastPage() {
           setLoadingFarmer(false);
         });
     }
-  }, [selectedFarmerId, horizonDays, isAdmin, isFpo, activeTab]);
+  }, [selectedFarmerId, horizonDays, isAdmin, isFpo, activeTab, currentLang]);
 
   // Load Top Crops Summary
   useEffect(() => {
-    getTopCropsSummary(14)
+    getTopCropsSummary(14, currentLang)
       .then((data) => {
         setCropsSummary(data || []);
         setLoadingSummary(false);
       })
       .catch(() => setLoadingSummary(false));
-  }, []);
+  }, [currentLang]);
 
   // Handle custom crop submission
   const handleCustomCropSubmit = (e) => {
@@ -149,14 +153,14 @@ export default function DemandForecastPage() {
               <FiTrendingUp size={28} className="text-[#f5d77f]" />
             </span>
             <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#f5d77f]">
-              Universal Multi-Crop AI Forecast Engine
+              AI Market Demand & APMC Mandi Benchmark
             </span>
           </div>
           <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">
-            Agricultural Demand & Multi-Crop Intelligence
+            Farmer & FPO Crop Selling Advisory
           </h1>
           <p className="mt-2 text-sm font-medium text-emerald-100 leading-relaxed">
-            Predict demand for <b>ANY crop</b> (Garlic, Chilli, Sugarcane, Mango, Ginger, Wheat, Rice, etc.). Powered by ML.NET SSA time-series modeling & Category Transfer Learning.
+            Simple market signals based on <b>Govt Agmarknet APMC Mandi Rates</b> and AI demand forecasting. Know when to harvest, what price to demand, and how to maximize direct sales revenue.
           </p>
         </div>
       </div>
@@ -186,7 +190,7 @@ export default function DemandForecastPage() {
               }`}
             >
               <FiGrid size={18} />
-              <span>Universal Crop Analytics</span>
+              <span>Crop Demand & Mandi Benchmarks</span>
             </button>
           </div>
 
@@ -204,7 +208,7 @@ export default function DemandForecastPage() {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                  <FiUser className="text-[#2e7d32]" /> Select Farmer to Inspect Personal Forecast
+                  <FiUser className="text-[#2e7d32]" /> Select Farmer to Inspect Personal Advisory
                 </h3>
                 <p className="text-xs text-slate-500">
                   SuperAdmin & Admin privilege: View crop yield projections and 30-day demand curves for any registered farmer's actual listed produce.
@@ -276,7 +280,7 @@ export default function DemandForecastPage() {
               <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 p-6 shadow-sm flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-800">
-                    Farmer Forecast Profile
+                    Farmer Advisory Profile
                   </span>
                   <h2 className="text-2xl font-black text-slate-900 mt-1">
                     {farmerForecast.farmerName}
@@ -313,10 +317,10 @@ export default function DemandForecastPage() {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                  <FiGrid className="text-[#2e7d32]" /> Universal Crop Search & Custom Forecast
+                  <FiGrid className="text-[#2e7d32]" /> Crop Demand Advisory & Govt Mandi Benchmark
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Select from active marketplace crops or type <b>ANY custom crop name</b> (e.g. Garlic, Chilli, Ginger, Sugarcane, Mango, Turmeric).
+                  Select your crop or type <b>ANY custom crop name</b> (e.g. Garlic, Chilli, Ginger, Sugarcane, Mango, Turmeric) to see market signals & Agmarknet APMC rates.
                 </p>
               </div>
 
@@ -472,3 +476,4 @@ export default function DemandForecastPage() {
     </div>
   );
 }
+

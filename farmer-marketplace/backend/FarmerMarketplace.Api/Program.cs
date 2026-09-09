@@ -46,12 +46,14 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddHttpClient();
+builder.Services.AddMemoryCache();
 
 // Security helpers
 builder.Services.AddSingleton<PasswordHasher>();
 builder.Services.AddSingleton<JwtService>();
 
 builder.Services.AddSingleton<IPlatformConfigService, PlatformConfigService>();
+builder.Services.AddScoped<ITranslationService, TranslationService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IAdminService, AdminService>();

@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import GrassCanvas from './GrassCanvas';
+import LanguageSelector from '../components/common/LanguageSelector';
 
 // Inline SVG Icons
 const FreshProduceIcon = ({ className = "w-5 h-5" }) => (
@@ -35,19 +36,8 @@ const ArrowRightIcon = ({ className = "w-4 h-4" }) => (
   </svg>
 );
 
-const GlobeIcon = ({ className = "w-4 h-4" }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M3.6 9h16.8M3.6 15h16.8M12 3a15.3 15.3 0 014 9 15.3 15.3 0 01-4 9 15.3 15.3 0 01-4-9 15.3 15.3 0 014-9z" />
-  </svg>
-);
-
 export default function Home() {
-  const { t, i18n } = useTranslation();
-
-  const handleLanguageChange = (e) => {
-    i18n.changeLanguage(e.target.value);
-  };
+  const { t } = useTranslation();
 
   return (
     <div className="relative h-screen w-full bg-[#8aceff] font-sans text-gray-800 overflow-hidden flex flex-col justify-between">
@@ -86,21 +76,7 @@ export default function Home() {
 
         {/* Action Controls & Language Selector */}
         <div className="flex items-center space-x-3 sm:space-x-4 ml-auto">
-          
-          {/* Language Selector Dropdown */}
-          <div className="relative flex items-center bg-white/90 border border-gray-200 rounded-xl px-2.5 py-1.5 shadow-sm backdrop-blur-sm">
-            <GlobeIcon className="w-4 h-4 text-emerald-700 mr-1.5" />
-            <select
-              onChange={handleLanguageChange}
-              value={i18n.language || 'en'}
-              className="bg-transparent text-xs font-bold text-gray-700 focus:outline-none cursor-pointer pr-1"
-            >
-              <option value="en">English</option>
-              <option value="hi">हिंदी</option>
-              <option value="bn">বাংলা</option>
-              <option value="mr">मराठी</option>
-            </select>
-          </div>
+          <LanguageSelector />
 
           <Link 
             to="/login" 
@@ -232,3 +208,4 @@ export default function Home() {
     </div>
   );
 }
+
