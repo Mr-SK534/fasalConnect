@@ -1,20 +1,26 @@
-// backend/FarmerMarketplace.Api/Services/OrderService.cs
-
 using FarmerMarketplace.Api.Data;
 using FarmerMarketplace.Api.DTOs;
 using FarmerMarketplace.Api.Interfaces;
 using FarmerMarketplace.Api.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace FarmerMarketplace.Api.Services
 {
     public class OrderService : IOrderService
     {
         private readonly AppDbContext _context;
+        private readonly IWhatsAppService _whatsAppService;
+        private readonly ILogger<OrderService> _logger;
 
-        public OrderService(AppDbContext context)
+        public OrderService(
+            AppDbContext context, 
+            IWhatsAppService whatsAppService,
+            ILogger<OrderService> logger)
         {
             _context = context;
+            _whatsAppService = whatsAppService;
+            _logger = logger;
         }
 
         public async Task<OrderResponseDto> CreateAsync(Guid buyerId, OrderDto dto)
@@ -75,8 +81,7 @@ namespace FarmerMarketplace.Api.Services
                         throw new InvalidOperationException(
                             $"Insufficient stock for '{product.CropName}'. Only {product.Quantity + fromThisFarmer} available.");
 
-                    // Order Aggregator: split the remainder across other farmers
-                    // listing the same crop, largest stock first
+                    // Order Aggregator: split remainder across other farmers listing the same crop
                     var otherSuppliers = await _context.Products
                         .Where(p => p.IsActive
                                     && p.Id != product.Id
@@ -179,7 +184,6 @@ namespace FarmerMarketplace.Api.Services
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
 
-            // Scope each order's Items to just this farmer's own lines, per contract
             return orders.Select(o => MapToResponseDto(o, farmerScopedTo: farmerId)).ToList();
         }
 
@@ -201,8 +205,15 @@ namespace FarmerMarketplace.Api.Services
 
             await _context.SaveChangesAsync();
 
-            // TODO: trigger WhatsApp notification to buyer once WhatsAppService exists
-            // await _whatsAppService.NotifyOrderStatusChange(order.BuyerId, order.Id, order.Status);
+            // 🔔 Trigger status update notification to the Buyer
+            try
+            {
+                await _whatsAppService.NotifyOrderStatusChangeAsync(order, dto.Status);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send status update WhatsApp message for Order #{OrderId}", order.Id);
+            }
 
             return MapToResponseDto(order, farmerScopedTo: null);
         }
@@ -243,7 +254,6 @@ namespace FarmerMarketplace.Api.Services
                 DeliveryType = order.DeliveryType,
                 DeliveryAddress = order.DeliveryAddress,
                 Status = order.Status,
-                // When scoped to one farmer, total reflects only their share of the order
                 TotalAmount = farmerScopedTo.HasValue ? itemDtos.Sum(i => i.SubTotal) : order.TotalAmount,
                 Items = itemDtos,
                 CreatedAt = order.CreatedAt,

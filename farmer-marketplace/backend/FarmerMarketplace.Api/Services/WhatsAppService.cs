@@ -1,4 +1,6 @@
 using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using FarmerMarketplace.Api.Data;
 using FarmerMarketplace.Api.DTOs;
@@ -6,6 +8,7 @@ using FarmerMarketplace.Api.Interfaces;
 using FarmerMarketplace.Api.Models;
 using FarmerMarketplace.Api.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace FarmerMarketplace.Api.Services
 {
@@ -14,6 +17,7 @@ namespace FarmerMarketplace.Api.Services
         private readonly HttpClient _httpClient;
         private readonly AppDbContext _context;
         private readonly PasswordHasher _passwordHasher;
+        private const string GatewayUrl = "http://localhost:4000/send";
 
         // Regex Validators
         private static readonly Regex IndianMobileRegex = new(@"^[6-9]\d{9}$", RegexOptions.Compiled);
@@ -32,6 +36,77 @@ namespace FarmerMarketplace.Api.Services
             _context = context;
             _passwordHasher = passwordHasher;
         }
+
+        // =========================================================================
+        // 1. ORDER & PAYMENT NOTIFICATIONS (STATUS & PAYMENT CONFIRMATIONS)
+        // =========================================================================
+
+        /// <summary>
+        /// Triggered when an order's status is updated via PUT /orders/{id}/status.
+        /// Alerts the buyer with the new status and next steps.
+        /// </summary>
+        public async Task NotifyOrderStatusChangeAsync(Order order, OrderStatus newStatus)
+        {
+            if (order.Buyer == null || string.IsNullOrWhiteSpace(order.Buyer.Phone))
+                return;
+
+            var statusEmoji = newStatus switch
+            {
+                OrderStatus.Confirmed => "✅",
+                OrderStatus.InTransit => "🚚",
+                OrderStatus.Delivered => "🎉",
+                OrderStatus.Cancelled => "❌",
+                _ => "ℹ️"
+            };
+
+            var orderCode = order.Id.ToString()[..8].ToUpper();
+            var sb = new StringBuilder();
+            sb.AppendLine("🔔 *Order Status Update - FarmerMarketplace*");
+            sb.AppendLine("━━━━━━━━━━━━━━━━━━━━");
+            sb.AppendLine($"Namaste, *{order.Buyer.Name}*! 🙏");
+            sb.AppendLine($"Your order *#{orderCode}* status is now:");
+            sb.AppendLine($"{statusEmoji} *{newStatus}*\n");
+
+            if (newStatus == OrderStatus.Confirmed)
+                sb.AppendLine("Farmers have confirmed your order and started packing your produce.");
+            else if (newStatus == OrderStatus.InTransit)
+                sb.AppendLine("Your fresh produce is out for delivery! 🚛");
+            else if (newStatus == OrderStatus.Delivered)
+                sb.AppendLine("Your order has arrived. Enjoy your farm-fresh harvest! 🥗");
+            else if (newStatus == OrderStatus.Cancelled)
+                sb.AppendLine("Your order has been cancelled.");
+
+            sb.AppendLine("\nThank you for choosing FarmerMarketplace!");
+
+            await SendMessageAsync(order.Buyer.Phone, sb.ToString());
+        }
+
+        /// <summary>
+        /// Triggered when Razorpay payment is captured via webhook.
+        /// Confirms the payment and order placement to the buyer.
+        /// </summary>
+        public async Task NotifyPaymentCapturedAsync(Order order, decimal amount, string paymentId)
+        {
+            if (order.Buyer == null || string.IsNullOrWhiteSpace(order.Buyer.Phone))
+                return;
+
+            var orderCode = order.Id.ToString()[..8].ToUpper();
+            var sb = new StringBuilder();
+            sb.AppendLine("💳 *Payment Received! - FarmerMarketplace*");
+            sb.AppendLine("━━━━━━━━━━━━━━━━━━━━");
+            sb.AppendLine($"Namaste, *{order.Buyer.Name}*! 🙏");
+            sb.AppendLine($"We have received your payment of *₹{amount:N2}* for Order *#{orderCode}*.");
+            sb.AppendLine($"• *Payment ID:* {paymentId}");
+            sb.AppendLine("• *Status:* Confirmed ✅");
+            sb.AppendLine($"• *Fulfillment:* {order.DeliveryType}\n");
+            sb.AppendLine("Farmers have been notified to prepare your fresh produce for dispatch! 🌾");
+
+            await SendMessageAsync(order.Buyer.Phone, sb.ToString());
+        }
+
+        // =========================================================================
+        // 2. INCOMING WEBHOOK HANDLER (CHATBOT QUESTIONNAIRE & PROFILE STATE MACHINE)
+        // =========================================================================
 
         public async Task ReceiveMessageAsync(WhatsAppIncomingDto request)
         {
@@ -473,7 +548,6 @@ namespace FarmerMarketplace.Api.Services
                 // --- 10. REGION ---
                 if (step == "STEP_REGION")
                 {
-                    // Saved cleanly to user.Region in the Users table
                     user.Region = message.Equals("skip", StringComparison.OrdinalIgnoreCase) ? null : Truncate(message, 200);
                     user.DeliveryAddress = $"{sessionPrefix}STEP_PINCODE";
                     user.UpdatedAt = DateTime.UtcNow;
@@ -769,9 +843,57 @@ namespace FarmerMarketplace.Api.Services
             }
         }
 
-        // =========================
-        // HELPER UTILITIES
-        // =========================
+        // =========================================================================
+        // 3. DISPATCH & FORMATTING UTILITIES
+        // =========================================================================
+
+        /// <summary>
+        /// Convenience overload accepting phone number and text string directly.
+        /// Normalizes Indian 10-digit mobile numbers to the standard JID format.
+        /// </summary>
+        public async Task<bool> SendMessageAsync(string phoneNumber, string message)
+        {
+            if (string.IsNullOrWhiteSpace(phoneNumber) || string.IsNullOrWhiteSpace(message))
+                return false;
+
+            try
+            {
+                var cleanDigits = new string(phoneNumber.Where(char.IsDigit).ToArray());
+                if (cleanDigits.Length == 10) 
+                    cleanDigits = "91" + cleanDigits;
+
+                var recipientJid = cleanDigits.Contains("@") ? cleanDigits : $"{cleanDigits}@s.whatsapp.net";
+
+                await SendMessageAsync(new WhatsAppSendDto
+                {
+                    To = recipientJid,
+                    Message = message
+                });
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[WhatsApp Gateway Error] Failed to send message to {phoneNumber}: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Dispatches the payload to the external Node.js Baileys gateway at http://localhost:4000/send.
+        /// </summary>
+        public async Task SendMessageAsync(WhatsAppSendDto request)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync(GatewayUrl, request);
+                response.EnsureSuccessStatusCode();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[WhatsApp Send Error] {ex.Message}");
+            }
+        }
 
         private static bool IsGreeting(string msg)
         {
@@ -807,19 +929,6 @@ namespace FarmerMarketplace.Api.Services
         {
             if (string.IsNullOrWhiteSpace(rawPhone)) return string.Empty;
             return rawPhone.Split('@')[0].Trim();
-        }
-
-        public async Task SendMessageAsync(WhatsAppSendDto request)
-        {
-            try
-            {
-                var response = await _httpClient.PostAsJsonAsync("http://localhost:4000/send", request);
-                response.EnsureSuccessStatusCode();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[WhatsApp Send Error] {ex.Message}");
-            }
         }
     }
 }

@@ -1,12 +1,13 @@
-// backend/FarmerMarketplace.Api/Services/PaymentService.cs
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using FarmerMarketplace.Api.Data;
 using FarmerMarketplace.Api.DTOs;
-using FarmerMarketplace.Api.Models;
 using FarmerMarketplace.Api.Interfaces;
+using FarmerMarketplace.Api.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Razorpay.Api;
 
 namespace FarmerMarketplace.Api.Services
@@ -15,11 +16,19 @@ namespace FarmerMarketplace.Api.Services
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
+        private readonly IWhatsAppService _whatsAppService;
+        private readonly ILogger<PaymentService> _logger;
 
-        public PaymentService(AppDbContext context, IConfiguration config)
+        public PaymentService(
+            AppDbContext context,
+            IConfiguration config,
+            IWhatsAppService whatsAppService,
+            ILogger<PaymentService> logger)
         {
             _context = context;
             _config = config;
+            _whatsAppService = whatsAppService;
+            _logger = logger;
         }
 
         public async Task<CreatePaymentOrderResponseDto> CreateOrderAsync(Guid buyerId, CreatePaymentOrderDto dto)
@@ -35,7 +44,6 @@ namespace FarmerMarketplace.Api.Services
             if (order.Status != OrderStatus.Pending)
                 throw new InvalidOperationException("This order is not awaiting payment.");
 
-            // Always use the server-recorded total — never trust dto.Amount directly.
             var amount = order.TotalAmount;
             var amountInPaise = (int)(amount * 100);
 
@@ -53,13 +61,13 @@ namespace FarmerMarketplace.Api.Services
             Razorpay.Api.Order rzpOrder = client.Order.Create(options);
             var razorpayOrderId = rzpOrder["id"].ToString()!;
 
-                       var payment = new FarmerMarketplace.Api.Models.Payment
+            var payment = new FarmerMarketplace.Api.Models.Payment
             {
-                     OrderId = order.Id,
-                     RazorpayOrderId = razorpayOrderId,
-                     Amount = amount,
-                     Currency = "INR",
-                     Status = PaymentStatus.Created
+                OrderId = order.Id,
+                RazorpayOrderId = razorpayOrderId,
+                Amount = amount,
+                Currency = "INR",
+                Status = PaymentStatus.Created
             };
 
             _context.Payments.Add(payment);
@@ -86,7 +94,7 @@ namespace FarmerMarketplace.Api.Services
             var eventType = root.GetProperty("event").GetString();
 
             if (eventType != "payment.captured" && eventType != "payment.failed")
-                return; // ignore events we don't act on
+                return;
 
             var paymentEntity = root
                 .GetProperty("payload")
@@ -97,10 +105,10 @@ namespace FarmerMarketplace.Api.Services
             var razorpayPaymentId = paymentEntity.GetProperty("id").GetString();
 
             var payment = await _context.Payments
-                .Include(p => p.Order)
+                .Include(p => p.Order).ThenInclude(o => o.Buyer)
                 .FirstOrDefaultAsync(p => p.RazorpayOrderId == razorpayOrderId);
 
-            if (payment == null) return; // unknown order — nothing to update
+            if (payment == null) return;
 
             if (eventType == "payment.captured")
             {
@@ -108,18 +116,36 @@ namespace FarmerMarketplace.Api.Services
                 payment.RazorpayPaymentId = razorpayPaymentId;
 
                 if (payment.Order != null)
+                {
                     payment.Order.Status = OrderStatus.Confirmed;
+                    payment.Order.UpdatedAt = DateTime.UtcNow;
+                }
 
-                // TODO: trigger WhatsApp "payment confirmed" notification once
-                // WhatsAppService exists (per contract's NotificationService triggers)
+                payment.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+
+                // 💳 Trigger Payment Captured Notification to Buyer
+                if (payment.Order != null)
+                {
+                    try
+                    {
+                        await _whatsAppService.NotifyPaymentCapturedAsync(
+                            payment.Order, 
+                            payment.Amount, 
+                            razorpayPaymentId ?? string.Empty);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to send payment confirmation WhatsApp notification for Order #{OrderId}", payment.OrderId);
+                    }
+                }
             }
             else
             {
                 payment.Status = PaymentStatus.Failed;
+                payment.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
             }
-
-            payment.UpdatedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
         }
 
         public async Task<List<PaymentSplitResultDto>> SplitAsync(Guid orderId)
@@ -146,11 +172,6 @@ namespace FarmerMarketplace.Api.Services
             {
                 var farmer = await _context.Users.FirstOrDefaultAsync(u => u.Id == group.FarmerId);
 
-                // TODO: actual Razorpay Route transfer requires the farmer to have a
-                // linked Razorpay account (razorpay_account_id) from onboarding/KYC —
-                // not yet captured on User. For now, record the split as Pending so
-                // the money owed is tracked; wire up the real transfer call once
-                // farmer bank details are verified through Razorpay's onboarding flow.
                 var split = new PaymentSplit
                 {
                     PaymentId = payment.Id,
