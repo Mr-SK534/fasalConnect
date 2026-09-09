@@ -64,6 +64,11 @@ desktop.ini
 # --- Data / generated outputs (keep seed CSV, ignore generated ones) ---
 farmer_marketplace_results.csv
 
+# --- Documentation & Generated Specs ---
+docs/
+**/docs/
+plan/
+
 # --- Misc ---
 *.bak
 *.tmp
