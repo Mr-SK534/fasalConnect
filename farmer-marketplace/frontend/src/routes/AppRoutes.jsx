@@ -179,7 +179,14 @@ export default function AppRoutes() {
             </SuperAdminRoute>
           }
         />
-        <Route path="revenue" element={<SuperAdminRevenueDashboard />} />
+        <Route
+          path="revenue"
+          element={
+            <SuperAdminRoute>
+              <SuperAdminRevenueDashboard />
+            </SuperAdminRoute>
+          }
+        />
       </Route>
       {/* ---------- Fallback ---------- */}
       <Route path="*" element={<Home />} />

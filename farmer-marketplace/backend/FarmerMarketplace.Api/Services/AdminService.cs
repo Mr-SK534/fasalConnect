@@ -100,7 +100,62 @@ namespace FarmerMarketplace.Api.Services
         public async Task<AdminOrderListResponseDto> GetOrdersAsync(string? status, DateTime? dateFrom, DateTime? dateTo, int page, int pageSize)
         {
             page = Math.Max(1, page); pageSize = Math.Clamp(pageSize, 1, 100);
-            var query = _context.Orders.AsNoTracking().Include(order => order.Buyer).Include(order => order.Items).ThenInclude(item => item.Product).Include(order => order.Items).ThenInclude(item => item.Farmer).AsQueryable();
+            var query = _context.Orders
+                .AsNoTracking()
+                .Select(order => new Order
+                {
+                    Id = order.Id,
+                    BuyerId = order.BuyerId,
+                    Buyer = order.Buyer,
+                    IsBulkOrder = order.IsBulkOrder,
+                    DeliveryType = order.DeliveryType,
+                    DeliveryAddress = order.DeliveryAddress,
+                    Status = order.Status,
+                    TotalAmount = order.TotalAmount,
+                    CreatedAt = order.CreatedAt,
+                    UpdatedAt = order.UpdatedAt,
+                    CropName = order.CropName,
+                    Season = order.Season,
+                    QuantityOrderedKg = order.QuantityOrderedKg,
+                    QuantityPickedUpKg = order.QuantityPickedUpKg,
+                    QuantityDeliveredKg = order.QuantityDeliveredKg,
+                    FarmerAskingPricePerKg = order.FarmerAskingPricePerKg,
+                    FarmerId = order.FarmerId,
+                    FpoAdminId = order.FpoAdminId,
+                    Latitude = order.Latitude,
+                    Longitude = order.Longitude,
+                    DeliveryLat = order.DeliveryLat,
+                    DeliveryLng = order.DeliveryLng,
+                    PickupLat = order.PickupLat,
+                    PickupLng = order.PickupLng,
+                    DeliveryDateTarget = order.DeliveryDateTarget,
+                    DeliveryConfirmedDate = order.DeliveryConfirmedDate,
+                    RouteId = order.RouteId,
+                    StopSequence = order.StopSequence,
+                    VehicleNumber = order.VehicleNumber,
+                    EstimatedArrival = order.EstimatedArrival,
+                    Items = order.Items.Select(item => new OrderItem
+                    {
+                        Id = item.Id,
+                        OrderId = item.OrderId,
+                        ProductId = item.ProductId,
+                        FarmerId = item.FarmerId,
+                        Quantity = item.Quantity,
+                        PriceAtOrderTime = item.PriceAtOrderTime,
+                        SubTotal = item.SubTotal,
+                        Farmer = item.Farmer,
+                        Product = item.Product == null ? null : new Product
+                        {
+                            Id = item.Product.Id,
+                            CropName = item.Product.CropName,
+                            Price = item.Product.Price,
+                            Unit = item.Product.Unit,
+                            Category = item.Product.Category
+                        }
+                    }).ToList()
+                })
+                .AsQueryable();
+
             if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<OrderStatus>(status, true, out var parsedStatus)) query = query.Where(order => order.Status == parsedStatus);
             if (dateFrom.HasValue) query = query.Where(order => order.CreatedAt >= dateFrom.Value);
             if (dateTo.HasValue) query = query.Where(order => order.CreatedAt < dateTo.Value.Date.AddDays(1));
@@ -130,8 +185,30 @@ namespace FarmerMarketplace.Api.Services
             var superAdmin = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Role == UserRole.SuperAdmin);
 
             var orders = await _context.Orders.AsNoTracking()
-                .Include(o => o.Buyer)
-                .Include(o => o.Items).ThenInclude(i => i.Farmer)
+                .Select(o => new Order
+                {
+                    Id = o.Id,
+                    BuyerId = o.BuyerId,
+                    Buyer = o.Buyer,
+                    Status = o.Status,
+                    TotalAmount = o.TotalAmount,
+                    QuantityDeliveredKg = o.QuantityDeliveredKg,
+                    QuantityOrderedKg = o.QuantityOrderedKg,
+                    FarmerAskingPricePerKg = o.FarmerAskingPricePerKg,
+                    DeliveryConfirmedDate = o.DeliveryConfirmedDate,
+                    CreatedAt = o.CreatedAt,
+                    Items = o.Items.Select(i => new OrderItem
+                    {
+                        Id = i.Id,
+                        OrderId = i.OrderId,
+                        ProductId = i.ProductId,
+                        FarmerId = i.FarmerId,
+                        Quantity = i.Quantity,
+                        PriceAtOrderTime = i.PriceAtOrderTime,
+                        SubTotal = i.SubTotal,
+                        Farmer = i.Farmer
+                    }).ToList()
+                })
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
 

@@ -6,10 +6,10 @@ namespace FarmerMarketplace.Api.Interfaces
 {
     public interface IForecastService
     {
-        Task<CropForecastResultDto> ForecastCropDemandAsync(string cropName, string? region = null, int horizonDays = 30);
-        Task<FarmerForecastResultDto> ForecastFarmerDemandAsync(Guid farmerId, int horizonDays = 30);
+        Task<CropForecastResultDto> ForecastCropDemandAsync(string cropName, string? region = null, int horizonDays = 30, string targetLang = "en");
+        Task<FarmerForecastResultDto> ForecastFarmerDemandAsync(Guid farmerId, int horizonDays = 30, string targetLang = "en");
         Task<List<FarmerListItemDto>> GetFarmersForForecastAsync(string? search = null);
-        Task<List<CropDemandSummaryDto>> GetTopDemandedCropsForecastAsync(int horizonDays = 14);
+        Task<List<CropDemandSummaryDto>> GetTopDemandedCropsForecastAsync(int horizonDays = 14, string targetLang = "en");
         Task<List<string>> GetAvailableCropsAsync();
     }
 }

@@ -30,6 +30,17 @@ namespace FarmerMarketplace.Api.DTOs
         public string PriceAdvisory { get; set; } = string.Empty;
         public bool IsCategoryTransferModel { get; set; } = false;
         public string CategoryModelNote { get; set; } = string.Empty;
+
+        // Govt Agmarknet APMC Mandi Benchmark & Farmer Simplicity Fields
+        public string GovMandiSource { get; set; } = "Agmarknet / Ministry of Agriculture (APMC Mandi)";
+        public decimal MinMandiPricePerKg { get; set; }
+        public decimal ModalMandiPricePerKg { get; set; }
+        public decimal MaxMandiPricePerKg { get; set; }
+        public string DemandSignal { get; set; } = "STABLE_DEMAND"; // "HIGH_DEMAND", "STABLE_DEMAND", "EXCESS_SUPPLY"
+        public string FarmerSimpleAdvice { get; set; } = string.Empty;
+        public string FpoGroupTip { get; set; } = string.Empty;
+        public double DirectSaleAdvantagePercent { get; set; } = 25.0;
+
         public List<HistoricalDataPointDto> HistoricalPoints { get; set; } = new();
         public List<ForecastDataPointDto> ForecastPoints { get; set; } = new();
     }

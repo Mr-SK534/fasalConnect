@@ -15,6 +15,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useCart } from "../hooks/useCart";
 import { ROLES } from "../utils/roles";
+import LanguageSelector from "../components/common/LanguageSelector";
 
 const navigationByRole = {
   [ROLES.FARMER]: [
@@ -227,8 +228,9 @@ function DashboardLayout() {
               </h1>
             </div>
 
-            {/* Profile Bar */}
+            {/* Profile & Language Controls */}
             <div className="flex items-center gap-3">
+              <LanguageSelector />
               {user?.role === ROLES.BUYER && (
                 <NavLink
                   to="/buyer/cart"
@@ -292,3 +294,4 @@ function DashboardLayout() {
 }
 
 export default DashboardLayout;
+

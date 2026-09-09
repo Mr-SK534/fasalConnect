@@ -26,14 +26,19 @@ namespace FarmerMarketplace.Api.Controllers
         public async Task<IActionResult> GetCropForecast(
             string cropName,
             [FromQuery] string? region = null,
-            [FromQuery] int horizonDays = 30)
+            [FromQuery] int horizonDays = 30,
+            [FromQuery] string lang = "en")
         {
             if (string.IsNullOrWhiteSpace(cropName))
             {
                 return BadRequest(new { statusCode = 400, message = "Crop name is required." });
             }
 
-            var result = await _forecastService.ForecastCropDemandAsync(cropName, region, horizonDays);
+            string targetLang = string.IsNullOrWhiteSpace(lang) || lang == "en"
+                ? Request.Headers["Accept-Language"].ToString().Split(',')[0]
+                : lang;
+
+            var result = await _forecastService.ForecastCropDemandAsync(cropName, region, horizonDays, targetLang);
             return Ok(result);
         }
 
@@ -45,9 +50,14 @@ namespace FarmerMarketplace.Api.Controllers
         [Authorize]
         public async Task<IActionResult> GetFarmerForecast(
             Guid farmerId,
-            [FromQuery] int horizonDays = 30)
+            [FromQuery] int horizonDays = 30,
+            [FromQuery] string lang = "en")
         {
-            var result = await _forecastService.ForecastFarmerDemandAsync(farmerId, horizonDays);
+            string targetLang = string.IsNullOrWhiteSpace(lang) || lang == "en"
+                ? Request.Headers["Accept-Language"].ToString().Split(',')[0]
+                : lang;
+
+            var result = await _forecastService.ForecastFarmerDemandAsync(farmerId, horizonDays, targetLang);
             return Ok(result);
         }
 
@@ -68,9 +78,15 @@ namespace FarmerMarketplace.Api.Controllers
         /// </summary>
         [HttpGet("summary")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetTopCropsSummary([FromQuery] int horizonDays = 14)
+        public async Task<IActionResult> GetTopCropsSummary(
+            [FromQuery] int horizonDays = 14,
+            [FromQuery] string lang = "en")
         {
-            var summary = await _forecastService.GetTopDemandedCropsForecastAsync(horizonDays);
+            string targetLang = string.IsNullOrWhiteSpace(lang) || lang == "en"
+                ? Request.Headers["Accept-Language"].ToString().Split(',')[0]
+                : lang;
+
+            var summary = await _forecastService.GetTopDemandedCropsForecastAsync(horizonDays, targetLang);
             return Ok(summary);
         }
 

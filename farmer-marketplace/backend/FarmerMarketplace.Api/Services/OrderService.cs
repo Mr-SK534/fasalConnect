@@ -323,11 +323,61 @@ namespace FarmerMarketplace.Api.Services
             }
 
             var orders = await _context.Orders
-                .Include(o => o.Buyer)
-                .Include(o => o.Items).ThenInclude(i => i.Product)
-                .Include(o => o.Items).ThenInclude(i => i.Farmer)
+                .AsNoTracking()
                 .Where(o => o.BuyerId == buyerId)
                 .OrderByDescending(o => o.CreatedAt)
+                .Select(o => new Order
+                {
+                    Id = o.Id,
+                    BuyerId = o.BuyerId,
+                    Buyer = o.Buyer,
+                    IsBulkOrder = o.IsBulkOrder,
+                    DeliveryType = o.DeliveryType,
+                    DeliveryAddress = o.DeliveryAddress,
+                    Status = o.Status,
+                    TotalAmount = o.TotalAmount,
+                    CreatedAt = o.CreatedAt,
+                    UpdatedAt = o.UpdatedAt,
+                    CropName = o.CropName,
+                    Season = o.Season,
+                    QuantityOrderedKg = o.QuantityOrderedKg,
+                    QuantityPickedUpKg = o.QuantityPickedUpKg,
+                    QuantityDeliveredKg = o.QuantityDeliveredKg,
+                    FarmerAskingPricePerKg = o.FarmerAskingPricePerKg,
+                    FarmerId = o.FarmerId,
+                    FpoAdminId = o.FpoAdminId,
+                    Latitude = o.Latitude,
+                    Longitude = o.Longitude,
+                    DeliveryLat = o.DeliveryLat,
+                    DeliveryLng = o.DeliveryLng,
+                    PickupLat = o.PickupLat,
+                    PickupLng = o.PickupLng,
+                    DeliveryDateTarget = o.DeliveryDateTarget,
+                    DeliveryConfirmedDate = o.DeliveryConfirmedDate,
+                    RouteId = o.RouteId,
+                    StopSequence = o.StopSequence,
+                    VehicleNumber = o.VehicleNumber,
+                    EstimatedArrival = o.EstimatedArrival,
+                    Items = o.Items.Select(i => new OrderItem
+                    {
+                        Id = i.Id,
+                        OrderId = i.OrderId,
+                        ProductId = i.ProductId,
+                        FarmerId = i.FarmerId,
+                        Quantity = i.Quantity,
+                        PriceAtOrderTime = i.PriceAtOrderTime,
+                        SubTotal = i.SubTotal,
+                        Farmer = i.Farmer,
+                        Product = i.Product == null ? null : new Product
+                        {
+                            Id = i.Product.Id,
+                            CropName = i.Product.CropName,
+                            Price = i.Product.Price,
+                            Unit = i.Product.Unit,
+                            Category = i.Product.Category
+                        }
+                    }).ToList()
+                })
                 .ToListAsync();
 
             return orders.Select(o => MapToResponseDto(o, farmerScopedTo: null)).ToList();
@@ -359,11 +409,61 @@ namespace FarmerMarketplace.Api.Services
                 .ToListAsync();
 
             var orders = await _context.Orders
-                .Include(o => o.Buyer)
-                .Include(o => o.Items).ThenInclude(i => i.Product)
-                .Include(o => o.Items).ThenInclude(i => i.Farmer)
+                .AsNoTracking()
                 .Where(o => orderIds.Contains(o.Id))
                 .OrderByDescending(o => o.CreatedAt)
+                .Select(o => new Order
+                {
+                    Id = o.Id,
+                    BuyerId = o.BuyerId,
+                    Buyer = o.Buyer,
+                    IsBulkOrder = o.IsBulkOrder,
+                    DeliveryType = o.DeliveryType,
+                    DeliveryAddress = o.DeliveryAddress,
+                    Status = o.Status,
+                    TotalAmount = o.TotalAmount,
+                    CreatedAt = o.CreatedAt,
+                    UpdatedAt = o.UpdatedAt,
+                    CropName = o.CropName,
+                    Season = o.Season,
+                    QuantityOrderedKg = o.QuantityOrderedKg,
+                    QuantityPickedUpKg = o.QuantityPickedUpKg,
+                    QuantityDeliveredKg = o.QuantityDeliveredKg,
+                    FarmerAskingPricePerKg = o.FarmerAskingPricePerKg,
+                    FarmerId = o.FarmerId,
+                    FpoAdminId = o.FpoAdminId,
+                    Latitude = o.Latitude,
+                    Longitude = o.Longitude,
+                    DeliveryLat = o.DeliveryLat,
+                    DeliveryLng = o.DeliveryLng,
+                    PickupLat = o.PickupLat,
+                    PickupLng = o.PickupLng,
+                    DeliveryDateTarget = o.DeliveryDateTarget,
+                    DeliveryConfirmedDate = o.DeliveryConfirmedDate,
+                    RouteId = o.RouteId,
+                    StopSequence = o.StopSequence,
+                    VehicleNumber = o.VehicleNumber,
+                    EstimatedArrival = o.EstimatedArrival,
+                    Items = o.Items.Select(i => new OrderItem
+                    {
+                        Id = i.Id,
+                        OrderId = i.OrderId,
+                        ProductId = i.ProductId,
+                        FarmerId = i.FarmerId,
+                        Quantity = i.Quantity,
+                        PriceAtOrderTime = i.PriceAtOrderTime,
+                        SubTotal = i.SubTotal,
+                        Farmer = i.Farmer,
+                        Product = i.Product == null ? null : new Product
+                        {
+                            Id = i.Product.Id,
+                            CropName = i.Product.CropName,
+                            Price = i.Product.Price,
+                            Unit = i.Product.Unit,
+                            Category = i.Product.Category
+                        }
+                    }).ToList()
+                })
                 .ToListAsync();
 
             // Scope each order's Items to just this farmer's own lines, per contract

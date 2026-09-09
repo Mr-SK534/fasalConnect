@@ -42,14 +42,14 @@ export default function BrowseProducts() {
           ? response.data.filter((product) => product.isActive !== false)
           : [];
         setProducts(nextProducts);
-        const aggregateEntries = await Promise.all(
-          nextProducts.map(async (product) => {
-            const aggregateResponse = await api.get(
-              `/products/aggregate/${encodeURIComponent(product.cropName)}`,
-            );
-            return [product.cropName.toLowerCase(), aggregateResponse.data];
-          }),
-        );
+        const aggregateEntries = nextProducts.map((product) => [
+          product.cropName.toLowerCase(),
+          {
+            totalAvailableQuantity: Number(product.totalAvailableQuantityKg || product.quantityInKg || product.quantity || 0),
+            farmerCount: Number(product.farmerCountForCrop || 1),
+            averagePrice: Number(product.price || 0),
+          },
+        ]);
         const aggregateMap = Object.fromEntries(aggregateEntries);
         setAggregates(aggregateMap);
         const availabilityByProductId = Object.fromEntries(
@@ -337,3 +337,5 @@ export default function BrowseProducts() {
     </main>
   );
 }
+
+

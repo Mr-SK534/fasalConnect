@@ -46,12 +46,45 @@ namespace FarmerMarketplace.Api.Services
 
             var products = await productsQuery
                 .OrderByDescending(p => p.CreatedAt)
+                .Select(p => new Product
+                {
+                    Id = p.Id,
+                    CropName = p.CropName,
+                    Price = p.Price,
+                    Quantity = p.Quantity,
+                    Unit = p.Unit,
+                    Category = p.Category,
+                    HarvestDate = p.HarvestDate,
+                    Description = p.Description,
+                    FarmerId = p.FarmerId,
+                    ImageContentType = p.ImageContentType,
+                    Farmer = p.Farmer,
+                    Region = p.Region,
+                    IsActive = p.IsActive,
+                    CreatedAt = p.CreatedAt,
+                    UpdatedAt = p.UpdatedAt
+                })
                 .ToListAsync();
+
+            var cropAggregates = products
+                .GroupBy(p => p.CropName.Trim().ToLower())
+                .ToDictionary(
+                    g => g.Key,
+                    g => new
+                    {
+                        TotalQtyKg = g.Sum(p => FarmerMarketplace.Api.Helpers.UnitConverter.ToKgQuantity(p.Quantity, p.Unit)),
+                        FarmerCount = g.Select(p => p.FarmerId).Distinct().Count()
+                    }
+                );
 
             var result = new List<ProductResponseDto>();
             foreach (var p in products)
             {
-                result.Add(await MapToResponseDtoAsync(p, isBuyerContext: true));
+                cropAggregates.TryGetValue(p.CropName.Trim().ToLower(), out var agg);
+                var totalQtyKg = agg?.TotalQtyKg ?? FarmerMarketplace.Api.Helpers.UnitConverter.ToKgQuantity(p.Quantity, p.Unit);
+                var farmerCount = agg?.FarmerCount ?? 1;
+
+                result.Add(await MapToResponseDtoAsync(p, isBuyerContext: true, totalQtyKg: totalQtyKg, farmerCount: farmerCount));
             }
             return result;
         }
@@ -135,6 +168,24 @@ namespace FarmerMarketplace.Api.Services
                 .Include(p => p.Farmer)
                 .Where(p => p.FarmerId == farmerId && (includeInactive || p.IsActive))
                 .OrderByDescending(p => p.CreatedAt)
+                .Select(p => new Product
+                {
+                    Id = p.Id,
+                    CropName = p.CropName,
+                    Price = p.Price,
+                    Quantity = p.Quantity,
+                    Unit = p.Unit,
+                    Category = p.Category,
+                    HarvestDate = p.HarvestDate,
+                    Description = p.Description,
+                    FarmerId = p.FarmerId,
+                    ImageContentType = p.ImageContentType,
+                    Farmer = p.Farmer,
+                    Region = p.Region,
+                    IsActive = p.IsActive,
+                    CreatedAt = p.CreatedAt,
+                    UpdatedAt = p.UpdatedAt
+                })
                 .ToListAsync();
 
             var result = new List<ProductResponseDto>();
@@ -240,7 +291,7 @@ namespace FarmerMarketplace.Api.Services
             await _context.SaveChangesAsync();
         }
 
-        private async Task<ProductResponseDto> MapToResponseDtoAsync(Product product, bool isBuyerContext = true)
+        private async Task<ProductResponseDto> MapToResponseDtoAsync(Product product, bool isBuyerContext = true, decimal totalQtyKg = 0m, int farmerCount = 0)
         {
             var insight = PricingInsightHelper.Calculate(product.CropName, product.Category, product.Price);
             var farmerPricePerKg = FarmerMarketplace.Api.Helpers.UnitConverter.ToPricePerKg(product.Price, product.Unit);
@@ -277,7 +328,9 @@ namespace FarmerMarketplace.Api.Services
                 FarmerLocation = product.Farmer?.Location,
                 TypicalFarmerSharePercent = insight.TypicalFarmerSharePercent,
                 EstimatedTraditionalRetailPrice = insight.EstimatedTraditionalRetailPrice,
-                FarmerEarningsAdvantagePercent = insight.FarmerEarningsAdvantagePercent
+                FarmerEarningsAdvantagePercent = insight.FarmerEarningsAdvantagePercent,
+                TotalAvailableQuantityKg = totalQtyKg > 0m ? totalQtyKg : quantityInKg,
+                FarmerCountForCrop = farmerCount > 0 ? farmerCount : 1
             };
         }
 

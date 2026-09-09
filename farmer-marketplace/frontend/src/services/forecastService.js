@@ -89,11 +89,13 @@ const generateFallbackCropForecast = (cropName, region = "", horizonDays = 30) =
   };
 };
 
-export const getCropForecast = async (cropName, region = "", horizonDays = 30) => {
+export const getCropForecast = async (cropName, region = "", horizonDays = 30, lang = "") => {
   try {
+    const currentLang = lang || localStorage.getItem("fasalconnect_lang") || localStorage.getItem("i18nextLng") || "en";
     const params = new URLSearchParams();
     if (region) params.append("region", region);
     if (horizonDays) params.append("horizonDays", horizonDays);
+    if (currentLang) params.append("lang", currentLang);
 
     const response = await api.get(`/forecast/crop/${encodeURIComponent(cropName)}?${params.toString()}`);
     return response.data;
@@ -103,9 +105,10 @@ export const getCropForecast = async (cropName, region = "", horizonDays = 30) =
   }
 };
 
-export const getFarmerForecast = async (farmerId, horizonDays = 30) => {
+export const getFarmerForecast = async (farmerId, horizonDays = 30, lang = "") => {
   try {
-    const response = await api.get(`/forecast/farmer/${farmerId}?horizonDays=${horizonDays}`);
+    const currentLang = lang || localStorage.getItem("fasalconnect_lang") || localStorage.getItem("i18nextLng") || "en";
+    const response = await api.get(`/forecast/farmer/${farmerId}?horizonDays=${horizonDays}&lang=${encodeURIComponent(currentLang)}`);
     return response.data;
   } catch (error) {
     console.warn(`[Farmer Forecast API Offline/Error] Serving fallback model for farmer ${farmerId}:`, error?.message);
@@ -140,9 +143,10 @@ export const getFarmersList = async (search = "") => {
   }
 };
 
-export const getTopCropsSummary = async (horizonDays = 14) => {
+export const getTopCropsSummary = async (horizonDays = 14, lang = "") => {
   try {
-    const response = await api.get(`/forecast/summary?horizonDays=${horizonDays}`);
+    const currentLang = lang || localStorage.getItem("fasalconnect_lang") || localStorage.getItem("i18nextLng") || "en";
+    const response = await api.get(`/forecast/summary?horizonDays=${horizonDays}&lang=${encodeURIComponent(currentLang)}`);
     return response.data;
   } catch (error) {
     console.warn("[Crops Summary API Offline] Serving fallback summary:", error?.message);
