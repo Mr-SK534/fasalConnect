@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../../hooks/useAuth";
-import api from "../../services/api";
+import api, { resolveImageUrl } from "../../services/api";
 
 export default function FarmerDashboard() {
   const { user } = useAuth();
@@ -119,7 +119,7 @@ export default function FarmerDashboard() {
                 <div className="flex items-center gap-3.5">
                   {product.imageUrl ? (
                     <img
-                      src={product.imageUrl}
+                      src={resolveImageUrl(product.imageUrl)}
                       alt=""
                       className="h-11 w-11 rounded-xl object-cover ring-1 ring-[#eadaaf]"
                     />

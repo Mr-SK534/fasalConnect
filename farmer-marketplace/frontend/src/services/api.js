@@ -42,4 +42,22 @@ api.interceptors.response.use(
   },
 );
 
+export const getApiBaseUrl = () => {
+  if (import.meta.env.DEV) {
+    return "";
+  }
+  const configured = import.meta.env.VITE_API_BASE_URL || "https://farmer-marketplace-api-fh0g.onrender.com/api";
+  return configured.replace(/\/api\/?$/, "");
+};
+
+export const resolveImageUrl = (url) => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+    return url;
+  }
+  const base = getApiBaseUrl();
+  const path = url.startsWith("/") ? url : `/${url}`;
+  return `${base}${path}`;
+};
+
 export default api;

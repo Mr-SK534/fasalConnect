@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiShoppingCart } from "react-icons/fi";
 import { toast } from "react-hot-toast";
-import api from "../../services/api";
+import api, { resolveImageUrl } from "../../services/api";
 import { useCart } from "../../hooks/useCart";
 import { toPricePerKg, toKgQuantity } from "../../utils/unitConverter";
 
@@ -221,7 +221,7 @@ export default function BrowseProducts() {
                     <div className="h-40 overflow-hidden bg-green-50">
                       {product.imageUrl ? (
                         <img
-                          src={product.imageUrl}
+                          src={resolveImageUrl(product.imageUrl)}
                           alt={product.cropName}
                           className="h-full w-full object-cover"
                         />

@@ -8,7 +8,7 @@ import {
   FiTrash2,
 } from "react-icons/fi";
 import { useCart } from "../../hooks/useCart";
-import api from "../../services/api";
+import api, { resolveImageUrl } from "../../services/api";
 import { toast } from "react-hot-toast";
 import { useMemo } from "react";
 const formatCurrency = (value) =>
@@ -151,7 +151,7 @@ export default function Cart() {
                     <div className="h-24 w-full overflow-hidden rounded-xl bg-green-50 sm:w-24">
                       {item.imageUrl ? (
                         <img
-                          src={item.imageUrl}
+                          src={resolveImageUrl(item.imageUrl)}
                           alt={item.cropName}
                           className="h-full w-full object-cover"
                         />
