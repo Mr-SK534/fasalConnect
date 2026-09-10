@@ -111,12 +111,22 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// CORS for frontend (Vite dev server)
+// CORS for frontend
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        var originsConfig = builder.Configuration["AllowedOrigins"];
+        var configuredOrigins = string.IsNullOrWhiteSpace(originsConfig)
+            ? new[] { "http://localhost:5173", "http://localhost:3000" }
+            : originsConfig.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        policy.WithOrigins(configuredOrigins)
+              .SetIsOriginAllowed(origin =>
+                  string.IsNullOrEmpty(origin) ||
+                  origin.StartsWith("http://localhost:") ||
+                  origin.EndsWith(".vercel.app") ||
+                  configuredOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase))
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
