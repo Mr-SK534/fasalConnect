@@ -103,7 +103,7 @@ export default function Checkout() {
       }
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: razorpayOrder.keyId || razorpayOrder.key || import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: Number(razorpayOrder.amount) * 100,
         currency: razorpayOrder.currency,
         order_id: razorpayOrder.razorpayOrderId,
