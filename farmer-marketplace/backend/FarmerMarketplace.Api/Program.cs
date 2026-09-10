@@ -42,9 +42,15 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// Database
+// Database connection string parsing (supports standard Key-Value & Render postgres:// or postgresql:// URLs)
+var rawConnStr = builder.Configuration.GetConnectionString("DefaultConnection") 
+    ?? builder.Configuration["DATABASE_URL"] 
+    ?? Environment.GetEnvironmentVariable("DATABASE_URL");
+
+string connectionString = ParsePostgresConnectionString(rawConnStr);
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionString));
 builder.Services.AddHttpClient();
 builder.Services.AddMemoryCache();
 
@@ -157,11 +163,13 @@ using (var scope = app.Services.CreateScope())
     ");
 }
 
-if (app.Environment.IsDevelopment())
+// Enable Swagger UI in both Dev and Production for easy testing
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "FarmerMarketplace API v1");
+    c.RoutePrefix = "swagger";
+});
 
 app.UseMiddleware<ExceptionMiddleware>();
 
@@ -175,3 +183,30 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Helper method to parse PostgreSQL URI strings (e.g. postgres://user:pass@host:5432/db)
+static string ParsePostgresConnectionString(string? rawConnStr)
+{
+    if (string.IsNullOrWhiteSpace(rawConnStr))
+    {
+        throw new InvalidOperationException("PostgreSQL Connection String is missing. Please set ConnectionStrings__DefaultConnection or DATABASE_URL environment variable.");
+    }
+
+    rawConnStr = rawConnStr.Trim();
+
+    if (rawConnStr.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
+        rawConnStr.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+    {
+        var uri = new Uri(rawConnStr);
+        var userInfo = uri.UserInfo.Split(':', 2);
+        var username = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : "";
+        var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
+        var host = uri.Host;
+        var port = uri.Port > 0 ? uri.Port : 5432;
+        var database = uri.AbsolutePath.TrimStart('/');
+
+        return $"Host={host};Port={port};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true";
+    }
+
+    return rawConnStr;
+}
