@@ -8,6 +8,10 @@
 .env.*.local
 backend/.env
 frontend/.env
+appsettings.json
+appsettings.*.json
+**/appsettings.json
+**/appsettings.*.json
 
 # --- .NET (backend) ---
 bin/
