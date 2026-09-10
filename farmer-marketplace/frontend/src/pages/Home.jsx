@@ -40,7 +40,7 @@ export default function Home() {
   const { t } = useTranslation();
 
   return (
-    <div className="relative h-screen w-full bg-[#8aceff] font-sans text-gray-800 overflow-hidden flex flex-col justify-between">
+    <div className="relative min-h-screen w-full bg-[#8aceff] font-sans text-gray-800 overflow-x-hidden flex flex-col justify-between">
 
       {/* BACKGROUND MOVING CLOUDS LAYER */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
@@ -163,13 +163,13 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3 pt-1">
+      {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
             <Link 
               to="/register" 
-              className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-extrabold px-5 py-3 rounded-xl 
+              className="flex items-center justify-center space-x-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-extrabold px-5 py-3 rounded-xl 
                          border-2 border-emerald-700 shadow-[0_4px_0_0_#047857] hover:shadow-[0_2px_0_0_#047857] 
-                         hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all"
+                         hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all w-full sm:w-auto"
             >
               <span>{t('cta.shopProducts', 'Shop Fresh Products')}</span>
               <ArrowRightIcon className="w-4 h-4" />
@@ -177,9 +177,9 @@ export default function Home() {
 
             <Link 
               to="/register" 
-              className="bg-white hover:bg-emerald-50 text-emerald-900 text-xs sm:text-sm font-extrabold px-5 py-3 rounded-xl 
+              className="flex items-center justify-center bg-white hover:bg-emerald-50 text-emerald-900 text-xs sm:text-sm font-extrabold px-5 py-3 rounded-xl 
                          border-2 border-emerald-300 shadow-[0_4px_0_0_#a7f3d0] hover:shadow-[0_2px_0_0_#a7f3d0] 
-                         hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all"
+                         hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all w-full sm:w-auto text-center"
             >
               {t('cta.joinFarmer', 'Join as a Farmer')}
             </Link>
