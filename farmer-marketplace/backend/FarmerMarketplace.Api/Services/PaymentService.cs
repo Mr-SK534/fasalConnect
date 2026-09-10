@@ -41,12 +41,13 @@ namespace FarmerMarketplace.Api.Services
             var amount = order.TotalAmount;
             var amountInPaise = (int)(amount * 100);
 
-            var keyId = _config["Razorpay:KeyId"];
-            var keySecret = _config["Razorpay:KeySecret"];
+            var keyId = _config["Razorpay:KeyId"] ?? _config["RAZORPAY_KEY_ID"] ?? Environment.GetEnvironmentVariable("RAZORPAY_KEY_ID") ?? Environment.GetEnvironmentVariable("Razorpay__KeyId");
+            var keySecret = _config["Razorpay:KeySecret"] ?? _config["RAZORPAY_KEY_SECRET"] ?? Environment.GetEnvironmentVariable("RAZORPAY_KEY_SECRET") ?? Environment.GetEnvironmentVariable("Razorpay__KeySecret");
+
             if (string.IsNullOrWhiteSpace(keyId) || string.IsNullOrWhiteSpace(keySecret))
             {
                 _logger.LogError("Razorpay configuration is missing. KeyId configured: {HasKeyId}, KeySecret configured: {HasKeySecret}", !string.IsNullOrWhiteSpace(keyId), !string.IsNullOrWhiteSpace(keySecret));
-                throw new InvalidOperationException("Razorpay configuration is missing.");
+                throw new InvalidOperationException("Razorpay credentials (KeyId and KeySecret) are missing. Please set Razorpay__KeyId and Razorpay__KeySecret in Render Environment settings.");
             }
 
             try
