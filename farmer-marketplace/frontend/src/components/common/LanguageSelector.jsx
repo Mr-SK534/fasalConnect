@@ -5,11 +5,10 @@ import { FiGlobe, FiChevronDown } from "react-icons/fi";
 import i18n from "../../i18n";
 
 const LANGUAGES = [
-  { code: "en", label: "English", native: "English", flag: "🇬🇧" },
-  { code: "hi", label: "Hindi", native: "हिंदी", flag: "🇮🇳" },
-  { code: "mr", label: "Marathi", native: "मराठी", flag: "🚩" },
-  { code: "ta", label: "Tamil", native: "தமிழ்", flag: "🏛️" },
-  { code: "gu", label: "Gujarati", native: "ગુજરાતી", flag: "🌾" },
+  { code: "en", label: "English", native: "English" },
+  { code: "hi", label: "Hindi", native: "हिंदी"},
+  { code: "mr", label: "Marathi", native: "मराठी"},
+  { code: "bn", label: "Bengali", native: "বাংলা"},
 ];
 
 export default function LanguageSelector({ className = "" }) {
