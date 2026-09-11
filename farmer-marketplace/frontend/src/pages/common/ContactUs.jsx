@@ -39,13 +39,13 @@ export default function ContactUs() {
     {
       name: "Platform Chief Administrator",
       role: "System Governance & Escrow Disputes",
-      phone: "+91 98765 43210",
+      phone: "+91 8582992746",
       email: "admin@fasalconnect.com",
     },
     {
       name: "Farmer & FPO Helpline Lead",
       role: "Onboarding & Technical Support",
-      phone: "+91 98123 45678",
+      phone: "+91 98123 4567",
       email: "support@fasalconnect.gov.in",
     },
     {
@@ -140,7 +140,7 @@ export default function ContactUs() {
               <div>
                 <p className="font-bold text-slate-900">Headquarters Address</p>
                 <p className="mt-0.5 text-slate-600">
-                  Ministry of Consumer Affairs, Food & Public Distribution Cell, FasalConnect Agritech Hub, New Delhi, India
+                   FasalConnect Agritech Hub, New Delhi, India
                 </p>
               </div>
             </div>
