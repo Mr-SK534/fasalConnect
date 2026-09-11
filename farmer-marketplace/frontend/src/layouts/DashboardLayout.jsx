@@ -35,14 +35,12 @@ const navigationByRole = {
       section: "SMART",
       items: [
         { label: "Demand Forecast", to: "/farmer/forecast", icon: FiTrendingUp },
-        { label: "Schedule", to: "/farmer/schedule", icon: FiCalendar },
       ],
     },
     {
       section: "ACCOUNT",
       items: [
         { label: "Profile", to: "/profile", icon: FiUser },
-        { label: "Settings", to: "/farmer/settings", icon: FiSettings },
       ],
     },
   ],
