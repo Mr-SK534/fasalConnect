@@ -3,9 +3,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.DEV
-    ? "/api"
-    : import.meta.env.VITE_API_BASE_URL || "http://localhost:5084/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "https://farmer-marketplace-api-fh0g.onrender.com/api",
   headers: {
     "Content-Type": "application/json",
   },
