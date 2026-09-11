@@ -78,15 +78,30 @@ graph TD
     end
 
     %% Flow Connections
-    UI_Farmer & UI_FPO & UI_Buyer & UI_Admin -->|HTTPS / REST API| Middleware
-    Middleware --> API_Auth & API_Catalog & API_Order & API_Escrow & API_Route & API_Forecast
-    
+    UI_Farmer -->|REST API| Middleware
+    UI_FPO -->|REST API| Middleware
+    UI_Buyer -->|REST API| Middleware
+    UI_Admin -->|REST API| Middleware
+
+    Middleware --> API_Auth
+    Middleware --> API_Catalog
+    Middleware --> API_Order
+    Middleware --> API_Escrow
+    Middleware --> API_Route
+    Middleware --> API_Forecast
+
     API_Route --> Engine_ORTools
     API_Forecast --> Engine_MLNet
     API_Escrow --> Engine_Razorpay
     API_Order --> Engine_Twilio
 
-    API_Auth & API_Catalog & API_Order & API_Escrow & API_Route & API_Forecast --> DB
+    API_Auth --> DB
+    API_Catalog --> DB
+    API_Order --> DB
+    API_Escrow --> DB
+    API_Route --> DB
+    API_Forecast --> DB
+
     Engine_Razorpay --> Ledger
     Engine_ORTools --> Storage
 
@@ -137,7 +152,7 @@ sequenceDiagram
     Backend->>DB: Save Delivery Routes & Fleet Assignments
 
     %% Step 5: Verification & Instant Farmer Payout
-    Note over Farmer,Buyer: Produce Delivered; Buyer Verifies OTP & Weight
+    Note over Farmer,Buyer: Produce Delivered - Buyer Verifies OTP & Weight
     Buyer->>Frontend: Confirm Delivery Receipt
     Frontend->>Backend: POST /api/payments/confirm-delivery
     Backend->>Escrow: Release Escrow Lock (Status = RELEASED)
