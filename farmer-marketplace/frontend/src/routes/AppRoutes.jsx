@@ -44,6 +44,7 @@ import AdminConfigDashboard from "../pages/admin/AdminConfigDashboard";
 import SuperAdminRevenueDashboard from "../pages/admin/SuperAdminRevenueDashboard";
 import ProfilePage from "../pages/profile/ProfilePage";
 import DemandForecastPage from "../pages/forecast/DemandForecastPage";
+import ContactUs from "../pages/common/ContactUs";
 
 import { useAuth } from "../hooks/useAuth";
 
@@ -118,6 +119,7 @@ export default function AppRoutes() {
         <Route path="orders" element={<FarmerOrders />} />
         <Route path="earnings" element={<FarmerEarningsDashboard />} />
         <Route path="forecast" element={<DemandForecastPage />} />
+        <Route path="contact" element={<ContactUs />} />
       </Route>
       {/* ---------- Buyer routes ---------- */}
       <Route
@@ -135,6 +137,7 @@ export default function AppRoutes() {
         <Route path="checkout" element={<Checkout />} />
         <Route path="orders" element={<MyOrders />} />
         <Route path="forecast" element={<DemandForecastPage />} />
+        <Route path="contact" element={<ContactUs />} />
       </Route>
       {/* ---------- FPO Admin routes ---------- */}
       <Route
@@ -153,6 +156,7 @@ export default function AppRoutes() {
         <Route path="farmers" element={<ManageLinkedFarmers />} />
         <Route path="earnings" element={<FpoEarningsDashboard />} />
         <Route path="forecast" element={<DemandForecastPage />} />
+        <Route path="contact" element={<ContactUs />} />
       </Route>
       {/* ---------- Platform Admin & Config Admin routes ---------- */}
       <Route
@@ -171,6 +175,7 @@ export default function AppRoutes() {
         <Route path="splits" element={<PaymentSplits />} />
         <Route path="routes" element={<RouteDashboard />} />
         <Route path="forecast" element={<DemandForecastPage />} />
+        <Route path="contact" element={<ContactUs />} />
         <Route
           path="config"
           element={

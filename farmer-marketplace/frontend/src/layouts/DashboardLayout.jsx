@@ -7,6 +7,7 @@ import {
   FiGrid,
   FiLogOut,
   FiMenu,
+  FiPhoneCall,
   FiSettings,
   FiShoppingCart,
   FiTrendingUp,
@@ -41,6 +42,7 @@ const navigationByRole = {
       section: "ACCOUNT",
       items: [
         { label: "Profile", to: "/profile", icon: FiUser },
+        { label: "Contact Admin", to: "/farmer/contact", icon: FiPhoneCall },
       ],
     },
   ],
@@ -56,7 +58,10 @@ const navigationByRole = {
     },
     {
       section: "ACCOUNT",
-      items: [{ label: "Profile", to: "/profile", icon: FiUser }],
+      items: [
+        { label: "Profile", to: "/profile", icon: FiUser },
+        { label: "Contact Admin", to: "/buyer/contact", icon: FiPhoneCall },
+      ],
     },
   ],
   [ROLES.FPO_ADMIN]: [
@@ -73,7 +78,10 @@ const navigationByRole = {
     },
     {
       section: "ACCOUNT",
-      items: [{ label: "Profile", to: "/profile", icon: FiUser }],
+      items: [
+        { label: "Profile", to: "/profile", icon: FiUser },
+        { label: "Contact Admin", to: "/fpo-admin/contact", icon: FiPhoneCall },
+      ],
     },
   ],
   [ROLES.SUPER_ADMIN]: [
@@ -96,7 +104,10 @@ const navigationByRole = {
     },
     {
       section: "ACCOUNT",
-      items: [{ label: "Profile", to: "/profile", icon: FiUser }],
+      items: [
+        { label: "Profile", to: "/profile", icon: FiUser },
+        { label: "Contact Support", to: "/admin/contact", icon: FiPhoneCall },
+      ],
     },
   ],
   [ROLES.PLATFORM_ADMIN]: [
@@ -118,7 +129,10 @@ const navigationByRole = {
     },
     {
       section: "ACCOUNT",
-      items: [{ label: "Profile", to: "/profile", icon: FiUser }],
+      items: [
+        { label: "Profile", to: "/profile", icon: FiUser },
+        { label: "Contact Support", to: "/admin/contact", icon: FiPhoneCall },
+      ],
     },
   ],
 };
