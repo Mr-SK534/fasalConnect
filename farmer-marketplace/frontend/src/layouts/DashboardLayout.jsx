@@ -161,9 +161,13 @@ function DashboardLayout() {
         <div className="flex h-16 items-center border-b border-white/10 px-6">
           <NavLink
             to={dashboardPath}
-            className="flex items-center gap-2 text-xl font-extrabold tracking-tight"
+            className="flex items-center gap-2.5 text-xl font-extrabold tracking-tight"
           >
-            <span className="text-2xl">🌱</span>
+            <img
+              src="/logo.png"
+              alt="FasalConnect Logo"
+              className="h-8 w-8 object-contain rounded-md"
+            />
             <span>
               Fasal<span className="text-[#f5d77f]">Connect</span>
             </span>
@@ -224,9 +228,13 @@ function DashboardLayout() {
               <NavLink
                 to={dashboardPath}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center gap-2 text-lg font-extrabold tracking-tight"
+                className="flex items-center gap-2.5 text-lg font-extrabold tracking-tight"
               >
-                <span className="text-2xl">🌱</span>
+                <img
+                  src="/logo.png"
+                  alt="FasalConnect Logo"
+                  className="h-8 w-8 object-contain rounded-md"
+                />
                 <span>
                   Fasal<span className="text-[#f5d77f]">Connect</span>
                 </span>
