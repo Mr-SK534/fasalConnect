@@ -44,6 +44,19 @@ namespace FarmerMarketplace.Api.Controllers
             return Ok(result);
         }
 
+        // POST /api/fpo/{fpoId}/farmers/create
+        [HttpPost("{fpoId}/farmers/create")]
+        [Authorize(Roles = "FpoAdmin")]
+        public async Task<ActionResult<UserResponseDto>> CreateFarmer(Guid fpoId, [FromBody] CreateFpoFarmerDto dto)
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+            if (userId.Value != fpoId) return Forbid();
+
+            var result = await _fpoService.CreateFarmerAsync(fpoId, userId.Value, dto);
+            return StatusCode(StatusCodes.Status201Created, result);
+        }
+
         // DELETE /api/fpo/{fpoId}/farmers/{farmerId}
         [HttpDelete("{fpoId}/farmers/{farmerId}")]
         [Authorize(Roles = "FpoAdmin")]
@@ -54,6 +67,32 @@ namespace FarmerMarketplace.Api.Controllers
 
             await _fpoService.UnlinkFarmerAsync(fpoId, farmerId, userId.Value);
             return NoContent();
+        }
+
+        // GET /api/fpo/{fpoId}/earnings
+        [HttpGet("{fpoId}/earnings")]
+        [Authorize(Roles = "FpoAdmin,PlatformAdmin")]
+        public async Task<ActionResult<FpoEarningsDto>> GetEarnings(Guid fpoId)
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var role = User.FindFirstValue(ClaimTypes.Role);
+            var result = await _fpoService.GetEarningsAsync(fpoId, userId.Value, role);
+            return Ok(result);
+        }
+
+        // GET /api/fpo/{fpoId}/earnings-detail
+        [HttpGet("{fpoId}/earnings-detail")]
+        [Authorize(Roles = "FpoAdmin,PlatformAdmin")]
+        public async Task<ActionResult<FpoDetailedEarningsDto>> GetDetailedEarnings(Guid fpoId)
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var role = User.FindFirstValue(ClaimTypes.Role);
+            var result = await _fpoService.GetDetailedEarningsAsync(fpoId, userId.Value, role);
+            return Ok(result);
         }
 
         private Guid? GetUserId()

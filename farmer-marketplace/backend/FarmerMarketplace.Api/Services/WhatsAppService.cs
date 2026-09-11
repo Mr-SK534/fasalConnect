@@ -1,7 +1,12 @@
+// backend/FarmerMarketplace.Api/Services/WhatsAppService.cs
+
+using System;
+using System.Linq;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
-using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using FarmerMarketplace.Api.Data;
 using FarmerMarketplace.Api.DTOs;
 using FarmerMarketplace.Api.Interfaces;
@@ -270,7 +275,7 @@ namespace FarmerMarketplace.Api.Services
                     await SendMessageAsync(new WhatsAppSendDto
                     {
                         To = rawRecipient,
-                        Message = "✅ *Password verified!*\n\nLet's update your profile:\n\n📍 What is your **Full Street / Village Address**?"
+                        Message = "✅ *Password verified!*\n\nLet's update your profile:\n\n📍 What is your **Full Street / Location Address**?"
                     });
                     return;
                 }
@@ -492,7 +497,7 @@ namespace FarmerMarketplace.Api.Services
                     await SendMessageAsync(new WhatsAppSendDto
                     {
                         To = rawRecipient,
-                        Message = "📍 *Location Details*\n\nWhat is your **Street / Village / Landmark Address**?\n_(e.g. Near Bus Stand, Rampur)_"
+                        Message = "📍 *Location Details*\n\nWhat is your **Street / Location / Landmark Address**?\n_(e.g. Near Bus Stand, Rampur)_"
                     });
                     return;
                 }
@@ -776,7 +781,7 @@ namespace FarmerMarketplace.Api.Services
                 if (step == "STEP_BUYER_DELIVERY_ADDRESS")
                 {
                     var deliv = message.Equals("skip", StringComparison.OrdinalIgnoreCase) ? user.Location : message;
-                    user.Village = Truncate(deliv, 200); // Temporary storage
+                    user.Address = Truncate(deliv, 200);
                     user.DeliveryAddress = $"{sessionPrefix}STEP_GST_NUMBER";
                     user.UpdatedAt = DateTime.UtcNow;
                     await _context.SaveChangesAsync();
@@ -808,8 +813,7 @@ namespace FarmerMarketplace.Api.Services
                     }
 
                     user.IsProfileComplete = true;
-                    user.DeliveryAddress = user.Village; // Move actual address to DeliveryAddress
-                    user.Village = null;
+                    user.DeliveryAddress = user.Address; // Stored directly in DeliveryAddress
                     user.UpdatedAt = DateTime.UtcNow;
                     await _context.SaveChangesAsync();
 

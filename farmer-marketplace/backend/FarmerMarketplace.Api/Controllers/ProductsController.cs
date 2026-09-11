@@ -1,6 +1,7 @@
-// backend/FarmerMarketplace.Api/Controllers/ProductsController.cs
-
+using System;
+using System.Collections.Generic;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using FarmerMarketplace.Api.DTOs;
 using FarmerMarketplace.Api.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -28,6 +29,14 @@ namespace FarmerMarketplace.Api.Controllers
             return Ok(result);
         }
 
+        // GET /api/products/aggregate/{cropName}
+        [HttpGet("aggregate/{cropName}")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ProductAggregateResponseDto>> GetAggregate(string cropName)
+        {
+            return Ok(await _productService.GetAggregateAsync(cropName));
+        }
+
         // GET /api/products/{id}
         [HttpGet("{id}")]
         [AllowAnonymous]
@@ -37,18 +46,32 @@ namespace FarmerMarketplace.Api.Controllers
             return Ok(result);
         }
 
+        // GET /api/products/{id}/image
+        [HttpGet("{id}/image")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetImage(Guid id)
+        {
+            var (data, contentType) = await _productService.GetImageAsync(id);
+            return File(data, contentType);
+        }
+
         // GET /api/products/farmer/{farmerId}
         [HttpGet("farmer/{farmerId}")]
         [Authorize]
-        public async Task<ActionResult<List<ProductResponseDto>>> GetByFarmerId(Guid farmerId)
+        public async Task<ActionResult<List<ProductResponseDto>>> GetByFarmerId(Guid farmerId, [FromQuery] bool includeInactive = false)
         {
-            var result = await _productService.GetByFarmerIdAsync(farmerId);
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            Guid? requestingUserId = Guid.TryParse(userIdClaim, out var parsedUserId) ? parsedUserId : null;
+            var role = User.FindFirstValue(ClaimTypes.Role);
+            includeInactive = includeInactive ||
+                (requestingUserId == farmerId && (role == "Farmer" || role == "FpoAdmin"));
+            var result = await _productService.GetByFarmerIdAsync(farmerId, requestingUserId, role, includeInactive);
             return Ok(result);
         }
 
         // POST /api/products
         [HttpPost]
-        [Authorize(Roles = "Farmer,FpoAdmin")]
+        [Authorize(Roles = "Farmer,FpoAdmin,PlatformAdmin,SuperAdmin,Admin,Manager")]
         public async Task<ActionResult<ProductResponseDto>> Create([FromBody] ProductDto dto)
         {
             var userId = GetUserId();
@@ -60,7 +83,7 @@ namespace FarmerMarketplace.Api.Controllers
 
         // PUT /api/products/{id}
         [HttpPut("{id}")]
-        [Authorize(Roles = "Farmer,FpoAdmin")]
+        [Authorize(Roles = "Farmer,FpoAdmin,PlatformAdmin,SuperAdmin,Admin,Manager")]
         public async Task<ActionResult<ProductResponseDto>> Update(Guid id, [FromBody] ProductDto dto)
         {
             var userId = GetUserId();
@@ -93,14 +116,6 @@ namespace FarmerMarketplace.Api.Controllers
                 return null;
 
             return userId;
-        }
-
-        [HttpGet("{id}/image")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetImage(Guid id)
-        {
-             var (data, contentType) = await _productService.GetImageAsync(id);
-             return File(data, contentType);
         }
     }
 }

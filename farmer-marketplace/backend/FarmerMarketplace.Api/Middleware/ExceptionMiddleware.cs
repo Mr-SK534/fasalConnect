@@ -24,7 +24,15 @@ namespace FarmerMarketplace.Api.Middleware
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unhandled exception occurred");
+                if (ex is UnauthorizedAccessException || ex is KeyNotFoundException || ex is ArgumentException || ex is InvalidOperationException)
+                {
+                    _logger.LogWarning("Request status {Path}: {Message}", context.Request.Path, ex.Message);
+                }
+                else
+                {
+                    _logger.LogError(ex, "Unhandled exception occurred on {Path}", context.Request.Path);
+                }
+
                 await HandleExceptionAsync(context, ex);
             }
         }

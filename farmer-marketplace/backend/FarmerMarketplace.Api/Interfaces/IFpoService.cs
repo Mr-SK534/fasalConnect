@@ -10,6 +10,12 @@ namespace FarmerMarketplace.Api.Interfaces
 
         Task<UserResponseDto> LinkFarmerAsync(Guid fpoId, Guid requestingUserId, LinkFarmerDto dto);
 
+        Task<UserResponseDto> CreateFarmerAsync(Guid fpoId, Guid requestingUserId, CreateFpoFarmerDto dto);
+
         Task UnlinkFarmerAsync(Guid fpoId, Guid farmerId, Guid requestingUserId);
+
+        Task<FpoEarningsDto> GetEarningsAsync(Guid fpoId, Guid requestingUserId, string? role);
+
+        Task<FpoDetailedEarningsDto> GetDetailedEarningsAsync(Guid fpoId, Guid requestingUserId, string? role);
     }
 }

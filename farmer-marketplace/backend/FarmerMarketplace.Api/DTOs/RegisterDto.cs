@@ -1,5 +1,6 @@
 // backend/FarmerMarketplace.Api/DTOs/RegisterDto.cs
 
+using System;
 using System.ComponentModel.DataAnnotations;
 using FarmerMarketplace.Api.Models;
 
@@ -11,12 +12,14 @@ namespace FarmerMarketplace.Api.DTOs
         [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
 
-        // v2: phone is now mandatory
+        // v2: phone is mandatory
         [Required]
         [MaxLength(15)]
+        [Phone]
         public string Phone { get; set; } = string.Empty;
 
-        // v2: email is now optional
+        // v2: email is optional
+        [MaxLength(150)]
         [EmailAddress]
         public string? Email { get; set; }
 
@@ -27,8 +30,12 @@ namespace FarmerMarketplace.Api.DTOs
         [Required]
         public UserRole Role { get; set; }
 
+        [MaxLength(200)]
         public string? Location { get; set; }
-        public string? PreferredLanguage { get; set; }
+
+        [MaxLength(10)]
+        public string? PreferredLanguage { get; set; } = "en";
+
         public Guid? FpoId { get; set; }
     }
 }
