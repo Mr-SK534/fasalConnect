@@ -1,5 +1,4 @@
 // backend/FarmerMarketplace.Api/Services/WhatsAppService.cs
-
 using System;
 using System.Linq;
 using System.Net.Http;
@@ -43,13 +42,9 @@ namespace FarmerMarketplace.Api.Services
         }
 
         // =========================================================================
-        // 1. ORDER & PAYMENT NOTIFICATIONS (STATUS & PAYMENT CONFIRMATIONS)
+        // 1. ORDER & PAYMENT NOTIFICATIONS (STATUS, PAYMENT & DELIVERY ALERTS)
         // =========================================================================
 
-        /// <summary>
-        /// Triggered when an order's status is updated via PUT /orders/{id}/status.
-        /// Alerts the buyer with the new status and next steps.
-        /// </summary>
         public async Task NotifyOrderStatusChangeAsync(Order order, OrderStatus newStatus)
         {
             if (order.Buyer == null || string.IsNullOrWhiteSpace(order.Buyer.Phone))
@@ -73,23 +68,61 @@ namespace FarmerMarketplace.Api.Services
             sb.AppendLine($"{statusEmoji} *{newStatus}*\n");
 
             if (newStatus == OrderStatus.Confirmed)
+            {
                 sb.AppendLine("Farmers have confirmed your order and started packing your produce.");
+            }
             else if (newStatus == OrderStatus.InTransit)
+            {
                 sb.AppendLine("Your fresh produce is out for delivery! 🚛");
+                if (order.VehicleNumber.HasValue)
+                    sb.AppendLine($"• *Vehicle Route #:* {order.VehicleNumber}");
+                if (order.EstimatedArrival.HasValue)
+                    sb.AppendLine($"• *Estimated Arrival:* {order.EstimatedArrival.Value:dd MMM, hh:mm tt} UTC");
+            }
             else if (newStatus == OrderStatus.Delivered)
+            {
                 sb.AppendLine("Your order has arrived. Enjoy your farm-fresh harvest! 🥗");
+            }
             else if (newStatus == OrderStatus.Cancelled)
+            {
                 sb.AppendLine("Your order has been cancelled.");
+            }
 
             sb.AppendLine("\nThank you for choosing FarmerMarketplace!");
 
             await SendMessageAsync(order.Buyer.Phone, sb.ToString());
         }
 
-        /// <summary>
-        /// Triggered when Razorpay payment is captured via webhook.
-        /// Confirms the payment and order placement to the buyer.
-        /// </summary>
+        public async Task NotifyDeliveryDispatchedAsync(Order order, string? vehicleNumber, DateTime? estimatedArrival)
+        {
+            if (order.Buyer == null || string.IsNullOrWhiteSpace(order.Buyer.Phone))
+                return;
+
+            var orderCode = order.Id.ToString()[..8].ToUpper();
+            var sb = new StringBuilder();
+            sb.AppendLine("🚛 *Your Order is Out for Delivery!*");
+            sb.AppendLine("━━━━━━━━━━━━━━━━━━━━");
+            sb.AppendLine($"Namaste, *{order.Buyer.Name}*! 🙏");
+            sb.AppendLine($"Your fresh farm order *#{orderCode}* has been dispatched on our delivery vehicle.");
+            sb.AppendLine();
+            if (!string.IsNullOrWhiteSpace(vehicleNumber))
+                sb.AppendLine($"• *Vehicle:* {vehicleNumber}");
+            if (estimatedArrival.HasValue)
+                sb.AppendLine($"• *Estimated Arrival:* {estimatedArrival.Value:dd MMM, hh:mm tt} UTC");
+            if (!string.IsNullOrWhiteSpace(order.DeliveryAddress))
+                sb.AppendLine($"• *Destination:* {order.DeliveryAddress}");
+            sb.AppendLine();
+            sb.AppendLine("Please ensure someone is available at the delivery location to receive the fresh harvest.");
+            sb.AppendLine("\n🌾 *FarmerMarketplace Logistics*");
+
+            await SendMessageAsync(order.Buyer.Phone, sb.ToString());
+        }
+
+        public async Task NotifyDeliveryDispatchedAsync(Order order, int? vehicleNumber, DateTime? estimatedArrival)
+        {
+            await NotifyDeliveryDispatchedAsync(order, vehicleNumber?.ToString(), estimatedArrival);
+        }
+
         public async Task NotifyPaymentCapturedAsync(Order order, decimal amount, string paymentId)
         {
             if (order.Buyer == null || string.IsNullOrWhiteSpace(order.Buyer.Phone))
@@ -126,22 +159,16 @@ namespace FarmerMarketplace.Api.Services
 
             try
             {
-                // Unique session marker stored strictly inside Users.DeliveryAddress
                 var sessionPrefix = $"WA:{incomingId}|";
 
-                // 1. Look for active registration draft in Users table
                 var user = await _context.Users.FirstOrDefaultAsync(u => 
                     u.DeliveryAddress != null && u.DeliveryAddress.StartsWith(sessionPrefix));
 
-                // 2. If no active draft, check for completed user by Phone
                 if (user == null)
                 {
                     user = await _context.Users.FirstOrDefaultAsync(u => u.Phone == incomingId && u.IsProfileComplete);
                 }
 
-                // =========================
-                // 1. CANCEL / RESET
-                // =========================
                 if (message.Equals("cancel", StringComparison.OrdinalIgnoreCase) ||
                     message.Equals("reset", StringComparison.OrdinalIgnoreCase))
                 {
@@ -159,9 +186,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // =========================
-                // 2. START REGISTRATION
-                // =========================
                 if (message.Equals("register", StringComparison.OrdinalIgnoreCase))
                 {
                     if (user != null && user.IsProfileComplete)
@@ -174,7 +198,6 @@ namespace FarmerMarketplace.Api.Services
                         return;
                     }
 
-                    // Clean up any stale incomplete drafts for this WhatsApp sender
                     var oldDrafts = await _context.Users
                         .Where(u => !u.IsProfileComplete && u.DeliveryAddress != null && u.DeliveryAddress.StartsWith(sessionPrefix))
                         .ToListAsync();
@@ -193,7 +216,7 @@ namespace FarmerMarketplace.Api.Services
                         PasswordHash = string.Empty,
                         IsProfileComplete = false,
                         PreferredLanguage = "en",
-                        DeliveryAddress = $"{sessionPrefix}STEP_NAME", // Track session state in Users table
+                        DeliveryAddress = $"{sessionPrefix}STEP_NAME",
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow
                     };
@@ -209,9 +232,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // =========================
-                // 3. PROFILE UPDATE (AUTHENTICATED)
-                // =========================
                 if (message.Equals("profile", StringComparison.OrdinalIgnoreCase))
                 {
                     if (user == null || !user.IsProfileComplete)
@@ -236,7 +256,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // If user is not currently in an active draft session
                 if (user == null || string.IsNullOrEmpty(user.DeliveryAddress) || !user.DeliveryAddress.StartsWith(sessionPrefix))
                 {
                     if (IsGreeting(message))
@@ -247,14 +266,11 @@ namespace FarmerMarketplace.Api.Services
                             Message = "🌾 *Welcome to FarmerMarketplace!*\n\n• Type *register* to create a new account.\n• Type *profile* to update your existing profile."
                         });
                     }
-                    // Silent on regular conversation chat
                     return;
                 }
 
-                // Extract current step from DeliveryAddress
                 var step = user.DeliveryAddress.Substring(sessionPrefix.Length);
 
-                // --- AUTHENTICATION CHALLENGE ---
                 if (step == "AUTH_CHALLENGE")
                 {
                     var isAuthorized = _passwordHasher.VerifyPassword(message, user.PasswordHash);
@@ -280,7 +296,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // --- 1. FULL NAME ---
                 if (step == "STEP_NAME")
                 {
                     if (message.Length < 2 || message.Length > 100)
@@ -306,7 +321,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // --- 2. 10-DIGIT MOBILE NUMBER (WITH DUPLICATE & ZOMBIE DRAFT DETECTION) ---
                 if (step == "STEP_PHONE")
                 {
                     var sanitizedPhone = ExtractTenDigitPhone(message);
@@ -321,8 +335,7 @@ namespace FarmerMarketplace.Api.Services
                         return;
                     }
 
-                    // Check for repeated digits like 9999999999
-                    if (new string(sanitizedPhone[0], 10) == sanitizedPhone)
+                    if (sanitizedPhone.Distinct().Count() == 1)
                     {
                         await SendMessageAsync(new WhatsAppSendDto
                         {
@@ -332,13 +345,11 @@ namespace FarmerMarketplace.Api.Services
                         return;
                     }
 
-                    // Check if another user row already exists with this phone number
                     var existingOtherUser = await _context.Users
                         .FirstOrDefaultAsync(u => u.Id != user.Id && u.Phone == sanitizedPhone);
 
                     if (existingOtherUser != null)
                     {
-                        // Case A: A completed active user already has this phone -> WARN!
                         if (existingOtherUser.IsProfileComplete)
                         {
                             await SendMessageAsync(new WhatsAppSendDto
@@ -350,7 +361,6 @@ namespace FarmerMarketplace.Api.Services
                         }
                         else
                         {
-                            // Case B: Old abandoned incomplete draft -> remove it to avoid zombie records!
                             _context.Users.Remove(existingOtherUser);
                             await _context.SaveChangesAsync();
                         }
@@ -369,7 +379,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // --- 3. ROLE ---
                 if (step == "STEP_ROLE")
                 {
                     var lower = message.ToLower();
@@ -407,7 +416,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // --- 4. EMAIL ---
                 if (step == "STEP_EMAIL")
                 {
                     if (message.Equals("skip", StringComparison.OrdinalIgnoreCase))
@@ -453,7 +461,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // --- 5. PASSWORD ---
                 if (step == "STEP_PASSWORD")
                 {
                     if (message.Length < 6)
@@ -479,7 +486,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // --- 6. PREFERRED LANGUAGE ---
                 if (step == "STEP_LANGUAGE")
                 {
                     var lang = "en";
@@ -502,7 +508,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // --- 7. ADDRESS / LOCATION ---
                 if (step == "STEP_ADDRESS")
                 {
                     user.Location = message.Equals("skip", StringComparison.OrdinalIgnoreCase) ? null : Truncate(message, 200);
@@ -518,7 +523,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // --- 8. DISTRICT ---
                 if (step == "STEP_DISTRICT")
                 {
                     user.District = Truncate(message, 100);
@@ -534,7 +538,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // --- 9. STATE ---
                 if (step == "STEP_STATE")
                 {
                     user.State = Truncate(message, 100);
@@ -550,7 +553,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // --- 10. REGION ---
                 if (step == "STEP_REGION")
                 {
                     user.Region = message.Equals("skip", StringComparison.OrdinalIgnoreCase) ? null : Truncate(message, 200);
@@ -566,7 +568,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // --- 11. PINCODE ---
                 if (step == "STEP_PINCODE")
                 {
                     var cleanPin = new string(message.Where(char.IsDigit).ToArray());
@@ -595,7 +596,7 @@ namespace FarmerMarketplace.Api.Services
                             Message = "🌾 What are your **Primary Crops**?\n_(e.g. Wheat, Tomato, Potato - comma separated, or type *skip*)_"
                         });
                     }
-                    else // Buyer
+                    else
                     {
                         user.DeliveryAddress = $"{sessionPrefix}STEP_BUSINESS_NAME";
                         user.UpdatedAt = DateTime.UtcNow;
@@ -614,7 +615,6 @@ namespace FarmerMarketplace.Api.Services
                 // FARMER / FPO ADMIN FLOW
                 // ==========================================
 
-                // --- FARMER 1: PRIMARY CROPS ---
                 if (step == "STEP_CROPS")
                 {
                     user.PrimaryCrops = message.Equals("skip", StringComparison.OrdinalIgnoreCase) ? null : Truncate(message, 500);
@@ -630,7 +630,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // --- FARMER 2: BANK ACCOUNT ---
                 if (step == "STEP_BANK_ACCOUNT")
                 {
                     if (message.Equals("skip", StringComparison.OrdinalIgnoreCase))
@@ -672,7 +671,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // --- FARMER 3: IFSC CODE ---
                 if (step == "STEP_BANK_IFSC")
                 {
                     var cleanIfsc = message.Replace(" ", "").ToUpper();
@@ -700,7 +698,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // --- FARMER 4: ACCOUNT HOLDER NAME ---
                 if (step == "STEP_ACCOUNT_HOLDER")
                 {
                     user.AccountHolderName = Truncate(message, 100);
@@ -716,7 +713,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // --- FARMER 5: UPI ID & COMPLETE ---
                 if (step == "STEP_UPI")
                 {
                     if (!message.Equals("skip", StringComparison.OrdinalIgnoreCase))
@@ -735,7 +731,7 @@ namespace FarmerMarketplace.Api.Services
                     }
 
                     user.IsProfileComplete = true;
-                    user.DeliveryAddress = null; // Clear session prefix completely
+                    user.DeliveryAddress = null;
                     user.UpdatedAt = DateTime.UtcNow;
                     await _context.SaveChangesAsync();
 
@@ -761,7 +757,6 @@ namespace FarmerMarketplace.Api.Services
                 // BUYER FLOW
                 // ==========================================
 
-                // --- BUYER 1: BUSINESS NAME ---
                 if (step == "STEP_BUSINESS_NAME")
                 {
                     user.BusinessName = message.Equals("skip", StringComparison.OrdinalIgnoreCase) ? null : Truncate(message, 150);
@@ -777,7 +772,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // --- BUYER 2: DELIVERY ADDRESS ---
                 if (step == "STEP_BUYER_DELIVERY_ADDRESS")
                 {
                     var deliv = message.Equals("skip", StringComparison.OrdinalIgnoreCase) ? user.Location : message;
@@ -794,7 +788,6 @@ namespace FarmerMarketplace.Api.Services
                     return;
                 }
 
-                // --- BUYER 3: GST NUMBER & COMPLETE ---
                 if (step == "STEP_GST_NUMBER")
                 {
                     if (!message.Equals("skip", StringComparison.OrdinalIgnoreCase))
@@ -813,7 +806,7 @@ namespace FarmerMarketplace.Api.Services
                     }
 
                     user.IsProfileComplete = true;
-                    user.DeliveryAddress = user.Address; // Stored directly in DeliveryAddress
+                    user.DeliveryAddress = user.Address;
                     user.UpdatedAt = DateTime.UtcNow;
                     await _context.SaveChangesAsync();
 
@@ -851,10 +844,6 @@ namespace FarmerMarketplace.Api.Services
         // 3. DISPATCH & FORMATTING UTILITIES
         // =========================================================================
 
-        /// <summary>
-        /// Convenience overload accepting phone number and text string directly.
-        /// Normalizes Indian 10-digit mobile numbers to the standard JID format.
-        /// </summary>
         public async Task<bool> SendMessageAsync(string phoneNumber, string message)
         {
             if (string.IsNullOrWhiteSpace(phoneNumber) || string.IsNullOrWhiteSpace(message))
@@ -883,9 +872,6 @@ namespace FarmerMarketplace.Api.Services
             }
         }
 
-        /// <summary>
-        /// Dispatches the payload to the external Node.js Baileys gateway at http://localhost:4000/send.
-        /// </summary>
         public async Task SendMessageAsync(WhatsAppSendDto request)
         {
             try
