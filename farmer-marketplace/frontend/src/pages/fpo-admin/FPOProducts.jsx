@@ -146,6 +146,9 @@ export default function FPOProducts() {
                       ? "date"
                       : "text"
                 }
+                step={
+                  name === "price" || name === "quantity" ? "any" : undefined
+                }
                 min={
                   name === "price" || name === "quantity" ? "0.01" : undefined
                 }
