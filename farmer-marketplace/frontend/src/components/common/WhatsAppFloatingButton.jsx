@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { FaWhatsapp } from "react-icons/fa";
 
 export default function WhatsAppFloatingButton({
-  phoneNumber = "911234567890",
+  phoneNumber = "7439461710",
   message = "Hello FasalConnect Support! I need assistance with marketplace orders and services.",
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
@@ -20,11 +20,10 @@ export default function WhatsAppFloatingButton({
     >
       {/* Tooltip Popup */}
       <div
-        className={`hidden sm:flex items-center gap-2 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white shadow-xl transition-all duration-300 ${
-          showTooltip
+        className={`hidden sm:flex items-center gap-2 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white shadow-xl transition-all duration-300 ${showTooltip
             ? "opacity-100 translate-x-0 pointer-events-auto"
             : "opacity-0 translate-x-2 pointer-events-none"
-        }`}
+          }`}
       >
         <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
         <span>Chat on WhatsApp</span>
