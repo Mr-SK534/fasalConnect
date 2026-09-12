@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useCart } from "../../hooks/useCart";
 import { placeOrder } from "../../services/orderService";
-import { createRazorpayOrder } from "../../services/paymentService";
+import { createRazorpayOrder, confirmPayment, failPayment } from "../../services/paymentService";
 import api from "../../services/api";
 
 const formatCurrency = (value) =>
@@ -37,6 +37,8 @@ export default function Checkout() {
     if (!cartItems.length) return;
     setError("");
     setIsSubmitting(true);
+
+    let createdOrderId = null;
 
     try {
       console.log("[Checkout] validating aggregate stock");
@@ -85,6 +87,7 @@ export default function Checkout() {
         deliveryType,
         ...(deliveryType === "Delivery" ? { deliveryAddress } : {}),
       });
+      createdOrderId = order.id;
       console.log("[Checkout] internal order created", order.id);
       console.log("[Checkout] creating Razorpay order");
       const razorpayOrder = await createRazorpayOrder(
@@ -109,8 +112,18 @@ export default function Checkout() {
         order_id: razorpayOrder.razorpayOrderId,
         name: "FasalConnect",
         description: "Fresh produce order",
-        handler: () => {
-          console.log("[Checkout] payment succeeded");
+        handler: async (response) => {
+          console.log("[Checkout] payment succeeded", response);
+          try {
+            await confirmPayment({
+              orderId: order.id,
+              razorpayPaymentId: response?.razorpay_payment_id,
+              razorpayOrderId: response?.razorpay_order_id,
+              razorpaySignature: response?.razorpay_signature,
+            });
+          } catch (err) {
+            console.error("[Checkout] Failed to confirm payment on backend", err);
+          }
           clearCart();
           window.dispatchEvent(new Event("products:refresh"));
           navigate("/buyer/orders");
@@ -120,12 +133,31 @@ export default function Checkout() {
           contact: user?.phone || "",
         },
         theme: { color: "#16a34a" },
-        modal: { ondismiss: () => setIsSubmitting(false) },
+        modal: {
+          ondismiss: async () => {
+            console.log("[Checkout] payment modal dismissed");
+            if (createdOrderId) {
+              try {
+                await failPayment({ orderId: createdOrderId, reason: "Modal dismissed" });
+              } catch (e) {
+                console.error("Error syncing order cancellation on dismiss", e);
+              }
+            }
+            setIsSubmitting(false);
+          },
+        },
       };
 
       new window.Razorpay(options).open();
     } catch (requestError) {
       console.error("[Checkout] payment flow failed", requestError);
+      if (createdOrderId) {
+        try {
+          await failPayment({ orderId: createdOrderId, reason: requestError.message });
+        } catch (e) {
+          console.error("Error syncing order cancellation on failure", e);
+        }
+      }
       const backendMessage =
         requestError.response?.data?.message ||
         requestError.message ||

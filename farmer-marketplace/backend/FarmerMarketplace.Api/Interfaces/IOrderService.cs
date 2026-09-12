@@ -17,5 +17,9 @@ namespace FarmerMarketplace.Api.Interfaces
         Task<List<OrderResponseDto>> GetByFarmerIdAsync(Guid farmerId, Guid requestingUserId, string? role);
 
         Task<OrderResponseDto> UpdateStatusAsync(Guid id, Guid requestingUserId, string? role, OrderStatusUpdateDto dto);
+
+        Task DeductStockAndRecordSalesAsync(Guid orderId);
+
+        Task RestoreStockAsync(Guid orderId);
     }
 }

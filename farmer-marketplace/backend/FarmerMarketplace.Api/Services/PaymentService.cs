@@ -15,12 +15,14 @@ namespace FarmerMarketplace.Api.Services
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
+        private readonly IOrderService _orderService;
         private readonly ILogger<PaymentService> _logger;
 
-        public PaymentService(AppDbContext context, IConfiguration config, ILogger<PaymentService> logger)
+        public PaymentService(AppDbContext context, IConfiguration config, IOrderService orderService, ILogger<PaymentService> logger)
         {
             _context = context;
             _config = config;
+            _orderService = orderService;
             _logger = logger;
         }
 
@@ -130,19 +132,100 @@ namespace FarmerMarketplace.Api.Services
                 payment.Status = PaymentStatus.Paid;
                 payment.RazorpayPaymentId = razorpayPaymentId;
 
-                if (payment.Order != null)
+                if (payment.Order != null && payment.Order.Status != OrderStatus.Confirmed)
+                {
+                    await _orderService.DeductStockAndRecordSalesAsync(payment.Order.Id);
                     payment.Order.Status = OrderStatus.Confirmed;
-
-                // TODO: trigger WhatsApp "payment confirmed" notification once
-                // WhatsAppService exists (per contract's NotificationService triggers)
+                }
             }
             else
             {
                 payment.Status = PaymentStatus.Failed;
+                if (payment.Order != null && payment.Order.Status == OrderStatus.Pending)
+                {
+                    payment.Order.Status = OrderStatus.Cancelled;
+                }
             }
 
             payment.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<OrderResponseDto> ConfirmPaymentAsync(Guid buyerId, ConfirmPaymentDto dto)
+        {
+            var order = await _context.Orders
+                .Include(o => o.Items)
+                .FirstOrDefaultAsync(o => o.Id == dto.OrderId);
+
+            if (order == null)
+                throw new KeyNotFoundException("Order not found");
+
+            if (order.BuyerId != buyerId)
+                throw new UnauthorizedAccessException("This order does not belong to you");
+
+            var payment = await _context.Payments.FirstOrDefaultAsync(p => p.OrderId == dto.OrderId);
+            if (payment == null)
+            {
+                payment = new FarmerMarketplace.Api.Models.Payment
+                {
+                    OrderId = order.Id,
+                    RazorpayOrderId = dto.RazorpayOrderId ?? $"rzp_ord_{Guid.NewGuid().ToString()[..8]}",
+                    RazorpayPaymentId = dto.RazorpayPaymentId ?? $"rzp_pay_{Guid.NewGuid().ToString()[..8]}",
+                    Amount = order.TotalAmount,
+                    Currency = "INR",
+                    Status = PaymentStatus.Paid,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.Payments.Add(payment);
+            }
+            else
+            {
+                payment.Status = PaymentStatus.Paid;
+                if (!string.IsNullOrWhiteSpace(dto.RazorpayPaymentId))
+                {
+                    payment.RazorpayPaymentId = dto.RazorpayPaymentId;
+                }
+                payment.UpdatedAt = DateTime.UtcNow;
+            }
+
+            if (order.Status != OrderStatus.Confirmed)
+            {
+                await _orderService.DeductStockAndRecordSalesAsync(order.Id);
+                order.Status = OrderStatus.Confirmed;
+                order.UpdatedAt = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return await _orderService.GetByIdAsync(order.Id, buyerId, nameof(UserRole.Buyer));
+        }
+
+        public async Task<OrderResponseDto> FailPaymentAsync(Guid buyerId, FailPaymentDto dto)
+        {
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == dto.OrderId);
+
+            if (order == null)
+                throw new KeyNotFoundException("Order not found");
+
+            if (order.BuyerId != buyerId)
+                throw new UnauthorizedAccessException("This order does not belong to you");
+
+            var payment = await _context.Payments.FirstOrDefaultAsync(p => p.OrderId == dto.OrderId);
+            if (payment != null)
+            {
+                payment.Status = PaymentStatus.Failed;
+                payment.UpdatedAt = DateTime.UtcNow;
+            }
+
+            if (order.Status == OrderStatus.Pending)
+            {
+                order.Status = OrderStatus.Cancelled;
+                order.UpdatedAt = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return await _orderService.GetByIdAsync(order.Id, buyerId, nameof(UserRole.Buyer));
         }
 
         public async Task<List<PaymentSplitResultDto>> SplitAsync(Guid orderId)

@@ -61,6 +61,62 @@ namespace FarmerMarketplace.Api.Controllers
             }
         }
 
+        // POST /api/payments/confirm
+        [HttpPost("confirm")]
+        [Authorize]
+        public async Task<ActionResult<OrderResponseDto>> ConfirmPayment([FromBody] ConfirmPaymentDto dto)
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            try
+            {
+                var result = await _paymentService.ConfirmPaymentAsync(userId.Value, dto);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { statusCode = 404, message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { statusCode = 403, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Payment confirmation failed: {Message}", ex.Message);
+                return StatusCode(500, new { statusCode = 500, message = ex.Message });
+            }
+        }
+
+        // POST /api/payments/fail
+        [HttpPost("fail")]
+        [Authorize]
+        public async Task<ActionResult<OrderResponseDto>> FailPayment([FromBody] FailPaymentDto dto)
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            try
+            {
+                var result = await _paymentService.FailPaymentAsync(userId.Value, dto);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { statusCode = 404, message = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { statusCode = 403, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Payment failure sync failed: {Message}", ex.Message);
+                return StatusCode(500, new { statusCode = 500, message = ex.Message });
+            }
+        }
+
         // POST /api/payments/webhook
         [HttpPost("webhook")]
         [AllowAnonymous]

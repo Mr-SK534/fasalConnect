@@ -12,6 +12,10 @@ namespace FarmerMarketplace.Api.Interfaces
         // bytes Razorpay signed — needed for HMAC verification to match
         Task HandleWebhookAsync(string rawBody, string? signatureHeader);
 
+        Task<OrderResponseDto> ConfirmPaymentAsync(Guid buyerId, ConfirmPaymentDto dto);
+
+        Task<OrderResponseDto> FailPaymentAsync(Guid buyerId, FailPaymentDto dto);
+
         Task<List<PaymentSplitResultDto>> SplitAsync(Guid orderId);
     }
 }

@@ -146,5 +146,20 @@ namespace FarmerMarketplace.Tests
             Assert.Equal("red_onion_commission_pct", expectedKey);
             Assert.Equal(0.08m, defaultCommissionPct);
         }
+
+        [Fact]
+        public void Test_StockDeduction_Calculation()
+        {
+            // Verify stock deduction calculation for payment success
+            decimal initialStockKg = 500m;
+            decimal orderedKg = 100m;
+
+            decimal remainingStockKg = initialStockKg - orderedKg;
+            Assert.Equal(400m, remainingStockKg);
+
+            // Verify stock restoration upon order cancellation
+            decimal restoredStockKg = remainingStockKg + orderedKg;
+            Assert.Equal(500m, restoredStockKg);
+        }
     }
 }

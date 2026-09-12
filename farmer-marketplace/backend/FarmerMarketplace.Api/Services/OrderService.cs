@@ -122,10 +122,7 @@ namespace FarmerMarketplace.Api.Services
                         SubTotal = subTotal
                     });
 
-                    var takenInOriginalUnit = FarmerMarketplace.Api.Helpers.UnitConverter.ToOriginalUnitQuantity(fromThisFarmer, product.Unit);
-                    product.Quantity -= takenInOriginalUnit;
-                    if (product.Quantity <= 0) product.IsActive = false;
-
+                    // Stock availability is verified; deduction happens upon successful payment.
                     totalAmount += subTotal;
                     remaining -= fromThisFarmer;
                 }
@@ -170,10 +167,7 @@ namespace FarmerMarketplace.Api.Services
                             SubTotal = subTotal
                         });
 
-                        var supplierTakenInOriginalUnit = FarmerMarketplace.Api.Helpers.UnitConverter.ToOriginalUnitQuantity(take, supplier.Unit);
-                        supplier.Quantity -= supplierTakenInOriginalUnit;
-                        if (supplier.Quantity <= 0) supplier.IsActive = false;
-
+                        // Stock availability is verified; deduction happens upon successful payment.
                         totalAmount += subTotal;
                         remaining -= take;
                     }
@@ -210,30 +204,6 @@ namespace FarmerMarketplace.Api.Services
                 HeldDate = DateTime.UtcNow
             };
             _context.EscrowTransactions.Add(escrow);
-
-            // Sync order items to SalesHistories for real-time AI Demand Forecasting
-            foreach (var orderItem in order.Items)
-            {
-                var prod = await _context.Products
-                    .Include(p => p.Farmer)
-                    .FirstOrDefaultAsync(p => p.Id == orderItem.ProductId);
-
-                string crop = prod?.CropName ?? order.CropName ?? "Produce";
-                string category = prod?.Category.ToString() ?? "Vegetables";
-                string region = prod?.Farmer?.District ?? prod?.Farmer?.Location ?? order.DeliveryAddress ?? "Nashik";
-
-                _context.SalesHistories.Add(new SalesHistory
-                {
-                    Id = Guid.NewGuid(),
-                    CropName = crop,
-                    Category = category,
-                    Region = region,
-                    Date = DateTime.UtcNow.Date,
-                    QuantitySoldKg = (float)orderItem.Quantity,
-                    AveragePricePerKg = (float)orderItem.PriceAtOrderTime,
-                    CreatedAt = DateTime.UtcNow
-                });
-            }
 
             await _context.SaveChangesAsync();
 
@@ -509,8 +479,18 @@ namespace FarmerMarketplace.Api.Services
             if (!validTransition)
                 throw new InvalidOperationException($"Cannot change order status from {order.Status} to {dto.Status}.");
 
+            var previousStatus = order.Status;
             order.Status = dto.Status;
             order.UpdatedAt = DateTime.UtcNow;
+
+            if (previousStatus == OrderStatus.Pending && dto.Status == OrderStatus.Confirmed)
+            {
+                await DeductStockAndRecordSalesAsync(order.Id);
+            }
+            else if (previousStatus == OrderStatus.Confirmed && dto.Status == OrderStatus.Cancelled)
+            {
+                await RestoreStockAsync(order.Id);
+            }
 
             if (dto.Status == OrderStatus.Delivered)
             {
@@ -640,6 +620,79 @@ namespace FarmerMarketplace.Api.Services
                 VehicleNumber = order.VehicleNumber,
                 EstimatedArrival = order.EstimatedArrival
             };
+        }
+
+        public async Task DeductStockAndRecordSalesAsync(Guid orderId)
+        {
+            var order = await _context.Orders
+                .Include(o => o.Items)
+                .ThenInclude(i => i.Product)
+                .ThenInclude(p => p!.Farmer)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null) return;
+
+            foreach (var orderItem in order.Items)
+            {
+                var product = orderItem.Product ?? await _context.Products
+                    .Include(p => p.Farmer)
+                    .FirstOrDefaultAsync(p => p.Id == orderItem.ProductId);
+
+                if (product != null)
+                {
+                    var takenInOriginalUnit = FarmerMarketplace.Api.Helpers.UnitConverter.ToOriginalUnitQuantity(orderItem.Quantity, product.Unit);
+                    product.Quantity = Math.Max(0, product.Quantity - takenInOriginalUnit);
+                    if (product.Quantity <= 0)
+                    {
+                        product.Quantity = 0;
+                        product.IsActive = false;
+                    }
+
+                    string crop = product.CropName ?? order.CropName ?? "Produce";
+                    string category = product.Category.ToString();
+                    string region = product.Farmer?.District ?? product.Farmer?.Location ?? order.DeliveryAddress ?? "Nashik";
+
+                    _context.SalesHistories.Add(new SalesHistory
+                    {
+                        Id = Guid.NewGuid(),
+                        CropName = crop,
+                        Category = category,
+                        Region = region,
+                        Date = DateTime.UtcNow.Date,
+                        QuantitySoldKg = (float)orderItem.Quantity,
+                        AveragePricePerKg = (float)orderItem.PriceAtOrderTime,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task RestoreStockAsync(Guid orderId)
+        {
+            var order = await _context.Orders
+                .Include(o => o.Items)
+                .ThenInclude(i => i.Product)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null) return;
+
+            foreach (var orderItem in order.Items)
+            {
+                var product = orderItem.Product ?? await _context.Products.FirstOrDefaultAsync(p => p.Id == orderItem.ProductId);
+                if (product != null)
+                {
+                    var restoredInOriginalUnit = FarmerMarketplace.Api.Helpers.UnitConverter.ToOriginalUnitQuantity(orderItem.Quantity, product.Unit);
+                    product.Quantity += restoredInOriginalUnit;
+                    if (product.Quantity > 0)
+                    {
+                        product.IsActive = true;
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
         }
     }
 }
