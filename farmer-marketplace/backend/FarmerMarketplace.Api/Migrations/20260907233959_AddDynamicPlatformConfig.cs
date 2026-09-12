@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -73,7 +73,7 @@ namespace FarmerMarketplace.Api.Migrations
                     { 11, "thresholds", new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2908), "Auto-refund without dispute if loss below this %", true, "weight_loss_auto_refund_pct", 100m, 0m, "admin", new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2898), null, "2.0", 2 },
                     { 12, "thresholds", new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2936), "Hours buyer has to dispute after delivery", true, "dispute_resolution_window_hours", 168m, 1m, "admin", new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2922), null, "24", 1 },
                     { 13, "thresholds", new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2965), "Auto-release farmer payment after this many hours if no dispute", true, "auto_release_escrow_after_hours", 168m, 1m, "admin", new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2951), null, "24", 1 },
-                    { 14, "thresholds", new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2989), "Minimum order size in kg", true, "min_order_quantity_kg", 1000m, 0.1m, "admin", new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2979), null, "1.0", 0 },
+                    { 14, "thresholds", new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2989), "Minimum order size in kg", true, "min_order_quantity_kg", 1000m, 0.1m, "admin", new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(2979), null, "10.0", 0 },
                     { 15, "thresholds", new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3059), "Maximum order size in kg", true, "max_order_quantity_kg", 100000m, 1m, "admin", new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3045), null, "10000.0", 0 },
                     { 16, "payouts", new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3082), "Run payout batch every N hours", true, "payout_batch_frequency_hours", 168m, 1m, "admin", new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3073), null, "24", 1 },
                     { 17, "payouts", new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3110), "Minimum accumulated amount to trigger payout (₹)", true, "minimum_payout_amount_rs", 10000m, 0m, "admin", new DateTime(2026, 9, 7, 23, 39, 58, 192, DateTimeKind.Utc).AddTicks(3096), null, "100.0", 0 },

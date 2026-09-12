@@ -39,7 +39,7 @@ namespace FarmerMarketplace.Api.Services
             if (!buyerExists)
                 throw new KeyNotFoundException("Buyer account not found.");
 
-            var minQty = await _configService.GetDoubleAsync("min_order_quantity_kg", 1.0);
+            var minQty = await _configService.GetDoubleAsync("min_order_quantity_kg", 10.0);
             var maxQty = await _configService.GetDoubleAsync("max_order_quantity_kg", 10000.0);
 
             var totalRequestedKg = (double)dto.Items.Sum(i => i.Quantity);
